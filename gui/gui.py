@@ -21,7 +21,7 @@ from datastorage.camerainfo import CameraManager
 from datastorage.deviceoffsets import OffsetManager
 from datastorage.labelstorage import LabelManager
 from datastorage.subjectmapping import SubjectManager
-from gui.designer_gui import Ui_VideoPlayer
+from gui.designer_gui_3 import Ui_MainWindow
 from gui.export_dialog import ExportDialog
 from gui.label_dialog import LabelSpecs
 from gui.label_settings_dialog import LabelSettingsDialog
@@ -49,7 +49,7 @@ def add_time_strings(time1, time2):
         time2[0:2]), minutes=int(time2[3:5]), seconds=int(time2[6:8]))
 
 
-class GUI(QMainWindow, Ui_VideoPlayer):
+class GUI(QMainWindow, Ui_MainWindow):
 
     def __init__(self):
         super().__init__()
@@ -80,43 +80,33 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         self.shortcut_pause = QShortcut(Qt.Key_Space, self)
 
         # Connect all the buttons, spin boxes, combo boxes and line edits to their appropriate helper functions.
-        self.playButton.clicked.connect(self.play)
+        self.pushButton_play.clicked.connect(self.play)
         self.shortcut_pause.activated.connect(self.play)
         self.shortcut_plus_10s.activated.connect(self.video_plus_10s)
         self.shortcut_minus_10s.activated.connect(self.video_minus_10s)
-        self.actionOpen_video.triggered.connect(self.open_video)
-        self.actionOpen_sensordata.triggered.connect(self.open_sensordata)
+        self.actionOpen_Video.triggered.connect(self.open_video)
+        self.actionOpen_Sensor_Data.triggered.connect(self.open_sensordata)
         self.pushButton_label.clicked.connect(self.open_label)
-        self.actionSettings.triggered.connect(self.open_settings)
+        self.actionImport_Settings.triggered.connect(self.open_settings)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings)
-        self.comboBox_camera.currentTextChanged.connect(self.change_camera)
-        self.lineEdit_camera.returnPressed.connect(self.add_camera)
-        self.lineEdit.returnPressed.connect(self.new_plot)
-        self.doubleSpinBox_offset.valueChanged.connect(self.change_offset)
+        self.comboBox_camera_ids.currentTextChanged.connect(self.change_camera)
+        self.lineEdit_new_camera.returnPressed.connect(self.add_camera)
+        self.lineEdit_function_regex.returnPressed.connect(self.new_plot)
+        self.doubleSpinBox_video_offset.valueChanged.connect(self.change_offset)
         self.doubleSpinBox_speed.valueChanged.connect(self.change_speed)
-        self.plot_width_box.valueChanged.connect(self.change_plot_width)
-        self.comboBox_plot.activated.connect(self.change_plot)
-        self.pushButton_camera_ok.clicked.connect(self.add_camera)
-        self.pushButton_camera_del.clicked.connect(self.delete_camera)
+        self.doubleSpinBox_plot_width.valueChanged.connect(self.change_plot_width)
+        self.comboBox_functions.activated.connect(self.change_plot)
+        self.pushButton_add.clicked.connect(self.add_camera)
+        # self.pushButton_camera_del.clicked.connect(self.delete_camera)
         self.actionSubject_Mapping.triggered.connect(self.open_subject_mapping)
-        self.actionExport_Sensordata.triggered.connect(self.open_export)
+        self.actionExport_Sensor_Data.triggered.connect(self.open_export)
         self.actionMachine_Learning.triggered.connect(self.open_machine_learning)
-
-        # Connect the QMediaPlayer to the right widget.
-        self.mediaplayer.setVideoOutput(self.widget)
-
-        # Connect some events that QMediaPlayer generates to their appropriate helper functions.
-        self.mediaplayer.positionChanged.connect(self.position_changed)
-        self.mediaplayer.durationChanged.connect(self.duration_changed)
-
-        # Connect the usage of the slider to its appropriate helper function.
-        self.horizontalSlider.sliderMoved.connect(self.set_position)
-        self.horizontalSlider.setEnabled(False)
 
         # Initialize the libraries that are needed to plot the sensor data, and add them to the GUI.
         self.figure = matplotlib.pyplot.figure()
         self.canvas = FigureCanvasQTAgg(self.figure)
-        self.verticalLayout_sensordata.addWidget(self.canvas)
+        # self.canvas.setFixedHeight(200)
+        self.verticalLayout_plot.addWidget(self.canvas)
         self.canvas.mpl_connect('button_press_event', self.onclick)
         self.canvas.mpl_connect('button_release_event', self.onrelease)
 
@@ -136,7 +126,7 @@ class GUI(QMainWindow, Ui_VideoPlayer):
 
         # Load the stored width that the data-plot should have
         self.plot_width = self.settings.get_setting("plot_width")
-        self.plot_width_box.setValue(self.plot_width)
+        self.doubleSpinBox_plot_width.setValue(self.plot_width)
 
         # Initialize the classes that retrieve information from the database.
         self.camera_manager = CameraManager()
@@ -147,7 +137,7 @@ class GUI(QMainWindow, Ui_VideoPlayer):
 
         # Add the known camera's to the camera combo box in the GUI.
         for camera in self.camera_manager.get_all_cameras():
-            self.comboBox_camera.addItem(camera)
+            self.comboBox_camera_ids.addItem(camera)
 
         # Machine learning fields
         self.ml_dataframe = None
@@ -160,6 +150,17 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         A function that allows a user to open a video in the QMediaPlayer via the menu bar.
         :return:
         """
+        # Connect the QMediaPlayer to the right widget.
+        self.mediaPlayer.setVideoOutput(self.videoWidget_player)
+
+        # Connect some events that QMediaPlayer generates to their appropriate helper functions.
+        self.mediaPlayer.positionChanged.connect(self.position_changed)
+        self.mediaPlayer.durationChanged.connect(self.duration_changed)
+
+        # Connect the usage of the slider to its appropriate helper function.
+        self.horizontalSlider_time.sliderMoved.connect(self.set_position)
+        self.horizontalSlider_time.setEnabled(False)
+
         # Check if last used path is known.
         path = "" if self.settings.get_setting("last_videofile") is None else self.settings.get_setting("last_videofile")
         if not os.path.isfile(path):
@@ -177,10 +178,10 @@ class GUI(QMainWindow, Ui_VideoPlayer):
                                                                   , '%H:%M:%S')
 
             # Play the video in the QMediaPlayer and activate the associated widgets.
-            self.mediaplayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_filename)))
-            self.mediaplayer.play()
-            self.playButton.setEnabled(True)
-            self.horizontalSlider.setEnabled(True)
+            self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_filename)))
+            self.mediaPlayer.play()
+            self.pushButton_play.setEnabled(True)
+            self.horizontalSlider_time.setEnabled(True)
             self.label_date.setText(vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename),
                                                                   '%d-%B-%Y'))
             self.label_time.setText(vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename),
@@ -226,11 +227,11 @@ class GUI(QMainWindow, Ui_VideoPlayer):
 
             # Add every column in the DataFrame to the possible Data Series that can be plotted, except for time,
             # and plot the first one.
-            self.comboBox_plot.clear()
+            self.comboBox_functions.clear()
             for column in self.data.columns:
-                self.comboBox_plot.addItem(column)
-            self.comboBox_plot.removeItem(0)
-            self.current_plot = self.comboBox_plot.currentText()
+                self.comboBox_functions.addItem(column)
+            self.comboBox_functions.removeItem(0)
+            self.current_plot = self.comboBox_functions.currentText()
 
             # Save the starting time of the sensordata in a DateTime object.
             self.combidt = self.sensordata.metadata['datetime']
@@ -251,12 +252,12 @@ class GUI(QMainWindow, Ui_VideoPlayer):
 
             # Draw the graph, set the value of the offset spinbox in the GUI to the correct value.
             self.canvas.draw()
-            if self.comboBox_camera.currentText():
-                self.doubleSpinBox_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera.currentText(),
+            if self.comboBox_camera_ids.currentText():
+                self.doubleSpinBox_video_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
                                                                             self.sensordata.metadata['sn'],
                                                                             self.sensordata.metadata['date']))
 
-            # Check if the sensordata file is already in the label database, if not add it.
+            # Check if the sensor data file is already in the label database, if not add it.
             if not self.label_storage.file_is_added(filename):
                 self.label_storage.add_file(filename, self.sensordata.metadata['sn'], self.combidt)
 
@@ -264,32 +265,32 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         """
         Makes sure the play button pauses or plays the video, and switches the pause/play icons.
         """
-        if self.mediaplayer.media().isNull():
+        if self.mediaPlayer.media().isNull():
             return
-        if self.mediaplayer.state() == QMediaPlayer.PlayingState:
+        if self.mediaPlayer.state() == QMediaPlayer.PlayingState:
             icon = QtGui.QIcon()
-            self.mediaplayer.pause()
+            self.mediaPlayer.pause()
             icon.addPixmap(QtGui.QPixmap("resources/1600.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-            self.playButton.setIcon(icon)
+            self.pushButton_play.setIcon(icon)
         else:
             icon = QtGui.QIcon()
-            self.mediaplayer.play()
+            self.mediaPlayer.play()
             icon.addPixmap(QtGui.QPixmap("resources/pause-512.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-            self.playButton.setIcon(icon)
+            self.pushButton_play.setIcon(icon)
 
     def video_plus_10s(self):
         """
         Sets the position of the video player 10 seconds forward
         """
-        if not self.mediaplayer.media().isNull():
-            self.mediaplayer.setPosition(self.mediaplayer.position() + 10000)
+        if not self.mediaPlayer.media().isNull():
+            self.mediaPlayer.setPosition(self.mediaPlayer.position() + 10000)
 
     def video_minus_10s(self):
         """
         Sets the position of the video player 10 seconds backward
         """
-        if not self.mediaplayer.media().isNull():
-            self.mediaplayer.setPosition(self.mediaplayer.position() - 10000)
+        if not self.mediaPlayer.media().isNull():
+            self.mediaPlayer.setPosition(self.mediaPlayer.position() - 10000)
 
     def position_changed(self, position):
         """
@@ -299,8 +300,8 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         """
         if self.loop is not None and position >= self.loop[1]:
             position = self.loop[0] if self.loop[0] >= 0 else 0
-            self.mediaplayer.setPosition(position)
-        self.horizontalSlider.setValue(position)
+            self.mediaPlayer.setPosition(position)
+        self.horizontalSlider_time.setValue(position)
         self.label_duration.setText(self.ms_to_time(position))
         self.label_time.setText(str(add_time_strings(self.ms_to_time(position), self.video_start_time)))
 
@@ -314,9 +315,9 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         """
         Every time the timer calls this function, the axis of the graph is updated.
         """
-        new_position = (self.mediaplayer.position() / 1000) if position == -1.0 else position
-        xmin = -(self.plot_width / 2) + new_position - self.doubleSpinBox_offset.value()
-        xmax = (self.plot_width / 2) + new_position - self.doubleSpinBox_offset.value()
+        new_position = (self.mediaPlayer.position() / 1000) if position == -1.0 else position
+        xmin = -(self.plot_width / 2) + new_position - self.doubleSpinBox_video_offset.value()
+        xmax = (self.plot_width / 2) + new_position - self.doubleSpinBox_video_offset.value()
         self.dataplot.axis([xmin, xmax, self.ymin, self.ymax])
         self.vertical_line.set_xdata((xmin + xmax) / 2)
         self.canvas.draw()
@@ -326,7 +327,7 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         Every time the user uses the slider, this function updates the QMediaPlayer position.
         :param position: The position as indicated by the slider.
         """
-        self.mediaplayer.setPosition(position)
+        self.mediaPlayer.setPosition(position)
 
     def duration_changed(self, duration):
         """
@@ -334,7 +335,7 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         video), this function updates the range of the slider.
         :param duration: The duration of the (new) video.
         """
-        self.horizontalSlider.setRange(0, duration)
+        self.horizontalSlider_time.setRange(0, duration)
 
     def ms_to_time(self, duration):
         """
@@ -414,7 +415,7 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         Opens the machine learning dialog window.
         :return:
         """
-        columns = [self.comboBox_plot.itemText(i) for i in range(self.comboBox_plot.count())]
+        columns = [self.comboBox_functions.itemText(i) for i in range(self.comboBox_functions.count())]
         dialog = MachineLearningDialog(columns)
         dialog.exec()
 
@@ -427,7 +428,7 @@ class GUI(QMainWindow, Ui_VideoPlayer):
 
         if dialog.is_accepted:
             # save current position in the video
-            original_position = self.mediaplayer.position()
+            original_position = self.mediaPlayer.position()
 
             at_least_1_column = False
             # for each selected column, add new column names to the lists for machine learning
@@ -476,7 +477,7 @@ class GUI(QMainWindow, Ui_VideoPlayer):
             working_msg.close()
 
             # start video if it is paused
-            if self.mediaplayer.state() == QMediaPlayer.PausedState:
+            if self.mediaPlayer.state() == QMediaPlayer.PausedState:
                 self.play()
 
             for prediction in make_predictions(res):
@@ -488,15 +489,15 @@ class GUI(QMainWindow, Ui_VideoPlayer):
 
                 # add highlight to data-plot and play video in a loop
                 span, text = self.add_suggestion_highlight(start, end, label)
-                self.loop = (int((start + self.doubleSpinBox_offset.value()) * 1000),
-                             int((end + self.doubleSpinBox_offset.value()) * 1000))
-                if not self.mediaplayer.media().isNull():
+                self.loop = (int((start + self.doubleSpinBox_video_offset.value()) * 1000),
+                             int((end + self.doubleSpinBox_video_offset.value()) * 1000))
+                if not self.mediaPlayer.media().isNull():
                     # if a video is opened set video position to start of the suggested label
-                    self.mediaplayer.setPosition(self.loop[0])
+                    self.mediaPlayer.setPosition(self.loop[0])
                 else:
                     # no video; stop updating-timer and move plot to start of the suggested label
                     self.timer.stop()
-                    self.update_plot(position=start + self.doubleSpinBox_offset.value())
+                    self.update_plot(position=start + self.doubleSpinBox_video_offset.value())
 
                 # ask user to accept or reject the suggested label
                 msg = QMessageBox()
@@ -527,8 +528,8 @@ class GUI(QMainWindow, Ui_VideoPlayer):
                     self.canvas.draw()
 
             # reset the video-player and data-plot to the original position and pause the video
-            if not self.mediaplayer.media().isNull():
-                self.mediaplayer.setPosition(original_position)
+            if not self.mediaPlayer.media().isNull():
+                self.mediaPlayer.setPosition(original_position)
             else:
                 # no video was playing, restart the updating-timer
                 self.timer.start(25)
@@ -539,13 +540,13 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         """
         Adds a camera to the database and to the combobox in the GUI.
         """
-        if self.lineEdit_camera.text() and self.lineEdit_camera.text() not in self.camera_manager.get_all_cameras():
-            self.camera_manager.add_camera(self.lineEdit_camera.text())
-            self.comboBox_camera.addItem(self.lineEdit_camera.text())
-            self.comboBox_camera.setCurrentText(self.lineEdit_camera.text())
-            self.lineEdit_camera.clear()
-            if self.comboBox_camera.currentText() and self.sensordata:
-                self.doubleSpinBox_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera.currentText(),
+        if self.lineEdit_new_camera.text() and self.lineEdit_new_camera.text() not in self.camera_manager.get_all_cameras():
+            self.camera_manager.add_camera(self.lineEdit_new_camera.text())
+            self.comboBox_camera_ids.addItem(self.lineEdit_new_camera.text())
+            self.comboBox_camera_ids.setCurrentText(self.lineEdit_new_camera.text())
+            self.lineEdit_new_camera.clear()
+            if self.comboBox_camera_ids.currentText() and self.sensordata:
+                self.doubleSpinBox_video_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
                                                                             self.sensordata.metadata['sn'],
                                                                             self.sensordata.metadata['date']))
 
@@ -553,8 +554,8 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         """
         If the user chooses a different camera, this function retrieves the right offset with the sensordata.
         """
-        if self.comboBox_camera.currentText() and self.sensordata:
-            self.doubleSpinBox_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera.currentText(),
+        if self.comboBox_camera_ids.currentText() and self.sensordata:
+            self.doubleSpinBox_video_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
                                                                               self.sensordata.metadata['sn'],
                                                                               self.sensordata.metadata['date']))
 
@@ -562,38 +563,38 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         """
         If the user changes the offset, this function sends it to the database.
         """
-        if self.comboBox_camera.currentText() and self.sensordata:
-            self.offset_manager.set_offset(self.comboBox_camera.currentText(), self.sensordata.metadata['sn'],
-                                           self.doubleSpinBox_offset.value(), self.sensordata.metadata['date'])
+        if self.comboBox_camera_ids.currentText() and self.sensordata:
+            self.offset_manager.set_offset(self.comboBox_camera_ids.currentText(), self.sensordata.metadata['sn'],
+                                           self.doubleSpinBox_video_offset.value(), self.sensordata.metadata['date'])
 
     def delete_camera(self):
         """
         Deletes the current camera.
         """
-        if self.comboBox_camera.currentText():
+        if self.comboBox_camera_ids.currentText():
             reply = QMessageBox.question(self, 'Message', "Are you sure you want to delete the current camera?",
                                          QMessageBox.Yes, QMessageBox.No)
             if reply == QMessageBox.Yes:
-                self.camera_manager.delete_camera(self.comboBox_camera.currentText())
-                self.comboBox_camera.clear()
+                self.camera_manager.delete_camera(self.comboBox_camera_ids.currentText())
+                self.comboBox_camera_ids.clear()
                 for camera in self.camera_manager.get_all_cameras():
-                    self.comboBox_camera.addItem(camera)
-                self.doubleSpinBox_offset.clear()
-                if self.comboBox_camera.currentText() and self.sensordata:
-                    self.doubleSpinBox_offset.setValue(
-                        self.offset_manager.get_offset(self.comboBox_camera.currentText(),
+                    self.comboBox_camera_ids.addItem(camera)
+                self.doubleSpinBox_video_offset.clear()
+                if self.comboBox_camera_ids.currentText() and self.sensordata:
+                    self.doubleSpinBox_video_offset.setValue(
+                        self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
                                                        self.sensordata.metadata['sn'],
                                                        self.sensordata.metadata['date']))
                 else:
-                    self.doubleSpinBox_offset.setValue(0)
+                    self.doubleSpinBox_video_offset.setValue(0)
 
     def change_plot(self):
         """
         If the user changes the variable on the y-axis, this function changes the label if necessary and redraws the plot.
         """
-        self.current_plot = self.comboBox_plot.currentText()
-        if self.comboBox_plot.currentText() in self.formula_dict:
-            self.label_current_formula.setText(self.formula_dict[self.comboBox_plot.currentText()])
+        self.current_plot = self.comboBox_functions.currentText()
+        if self.comboBox_functions.currentText() in self.formula_dict:
+            self.label_current_formula.setText(self.formula_dict[self.comboBox_functions.currentText()])
         else:
             self.label_current_formula.clear()
         self.ymin = self.data[self.current_plot].min()
@@ -605,17 +606,17 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         Adds a function to the DataFrame as new column.
         """
         try:
-            if not self.lineEdit_2.text():
+            if not self.lineEdit_function_name.text():
                 raise Exception
-            self.sensordata.add_column_from_func(self.lineEdit_2.text(), self.lineEdit.text())
+            self.sensordata.add_column_from_func(self.lineEdit_function_name.text(), self.lineEdit_function_regex.text())
             self.data = self.sensordata.get_data()
-            self.comboBox_plot.addItem(self.lineEdit_2.text())
-            self.formula_dict[self.lineEdit_2.text()] = self.lineEdit.text()
+            self.comboBox_functions.addItem(self.lineEdit_function_name.text())
+            self.formula_dict[self.lineEdit_function_name.text()] = self.lineEdit_function_regex.text()
             stored_formulas = self.settings.get_setting("formulas")
-            stored_formulas[self.lineEdit_2.text()] = self.lineEdit.text()
+            stored_formulas[self.lineEdit_function_name.text()] = self.lineEdit_function_regex.text()
             self.settings.set_setting("formulas", stored_formulas)
-            self.lineEdit.clear()
-            self.lineEdit_2.clear()
+            self.lineEdit_function_regex.clear()
+            self.lineEdit_function_name.clear()
         except:
             QMessageBox.warning(self, 'Warning', "Please enter a valid regular expression",
                                 QMessageBox.Cancel)
@@ -624,7 +625,7 @@ class GUI(QMainWindow, Ui_VideoPlayer):
         """
         Changes the playback rate of the video.
         """
-        self.mediaplayer.setPlaybackRate(self.doubleSpinBox_speed.value())
+        self.mediaPlayer.setPlaybackRate(self.doubleSpinBox_speed.value())
 
     def onclick(self, event):
         """
