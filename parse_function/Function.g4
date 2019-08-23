@@ -10,7 +10,7 @@ expr    : left=expr POWER right=expr    #powExpr
         | NUM                           #numExpr
         ;
 
-/* Multipliative operator */
+/* Multiplicative operator */
 multOp  : MULT | DIV;
 
 /* Addition operator */

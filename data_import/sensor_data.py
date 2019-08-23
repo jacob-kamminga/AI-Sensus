@@ -14,6 +14,7 @@ def parse_header_option(file, row_nr, col_nr):
     """
     Parses a specific part of the header with a line number and a column number. Raises an ImportException if the file
     is smaller than the given row number or if the line is smaller than the given column number.
+
     :param file: file to be parsed
     :param row_nr: row number of header
     :param col_nr: column number of header data
@@ -23,6 +24,7 @@ def parse_header_option(file, row_nr, col_nr):
     file.seek(0)
 
     i = 1  # row numbers start at 1
+
     for line in file:
         if i == row_nr:
             # Turn line into list of columns
@@ -32,9 +34,11 @@ def parse_header_option(file, row_nr, col_nr):
             if col_nr - 1 >= len(line_list):
                 raise ImportException("Given column number exceeds number of columns in line - given column number: "
                                       + str(col_nr) + ", number of columns: " + str(len(line_list)))
+
             return line_list[col_nr - 1]  # column numbers start at 1
         else:
             i += 1
+
     # row_nr is higher than number of rows in file
     raise ImportException("Given row number exceeds numbers of rows in file - given row number: "
                           + str(row_nr) + ", number of rows: " + str(i))
@@ -44,6 +48,7 @@ def parse_names(file, row_nr):
     """
     Parses the names of the data columns using a row number. Raises an ImportException if the file is smaller than
     the given row number.
+
     :param file: file to be parsed
     :param row_nr: row number of names
     :return: list of column names
@@ -90,7 +95,7 @@ class SensorData:
             - <name>_conversion    (conversion function for the data,
                                     for more information on the function see parse_function.custom_function_parser)
         """
-        # Initiate primitives
+        # Initialize primitives
         self.file_path = file_path
         self.metadata = dict()
         self.col_metadata = dict()
@@ -100,9 +105,9 @@ class SensorData:
         self._data = self.parse(self._settings)
 
     def __copy__(self):
-        newone = type(self)(self.file_path, self._settings)
-        newone.__dict__.update(self.__dict__)
-        return newone
+        new = type(self)(self.file_path, self._settings)
+        new.__dict__.update(self.__dict__)
+        return new
 
     def parse(self, settings):
         """

@@ -20,11 +20,14 @@ class NewProject(QtWidgets.QDialog, Ui_NewProject):
         self.setupUi(self)
         self.accepted.connect(self.open_project)
         self.rejected.connect(exit_project)
+
         for folder in os.listdir("projects"):
             self.comboBox_existing.addItem(folder)
+
         self.lineEdit_new.textChanged.connect(self.text_changed)
         self.comboBox_existing.currentTextChanged.connect(self.name_changed)
         self.project_name = ""
+
         if os.listdir("projects"):
             self.project_name = os.listdir("projects")[0]
             self.spinBox_timerow.setEnabled(False)
@@ -39,6 +42,7 @@ class NewProject(QtWidgets.QDialog, Ui_NewProject):
             self.lineEdit_comment.setEnabled(False)
         else:
             self.comboBox_existing.setEnabled(False)
+
         self.time_row = 3
         self.spinBox_timerow.valueChanged.connect(self.set_timerow)
         self.time_col = 3

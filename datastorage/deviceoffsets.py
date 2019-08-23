@@ -3,7 +3,7 @@ from datetime import date
 from statistics import mean
 
 sql_queryDate = "SELECT Offset FROM offsets WHERE Camera = ? AND Sensor = ? AND Date = ?"
-sql_queryNoDate = "SELECT Offset FROM offsets WHERE Camera = ? AND Sensor = ?"
+sql_queryNoDate = "SELECT Offset FROM offsets WHERE Camera = ? AND Sensor = ? ORDER BY Date DESC"
 sql_insertOffset = "INSERT INTO offsets(Camera, Sensor, Offset, Date) VALUES (?, ?, ?, ?)"
 sql_updateOffset = "UPDATE Offsets SET Offset = ? WHERE Camera = ? AND Sensor = ? AND Date = ?"
 
@@ -23,8 +23,8 @@ class OffsetManager:
     def get_offset(self, cam_id: str, sens_id: str, date: date) -> float:
         """
         Returns the offset between a camera and sensor on a given date.
-        If there is no known offset for the given date, this returns the average of the offsets of previous dates.
-        If no offset is known at all between the given camera and sensor, this returns a default offset of 0.
+        If there is no known offset for the given date, then the offset of the most recent known date is returned.
+        If no offset is known at all between the given camera and sensor, then a default offset of 0 is returned.
 
         :param cam_id: The name of the camera
         :param sens_id: The sensor ID of the sensor
@@ -35,11 +35,11 @@ class OffsetManager:
         c.execute(sql_queryDate, (cam_id, sens_id, date))
         results = [x[0] for x in c.fetchall()]
 
-        # if there is a known offset, return it
+        # If there is a known offset, return it
         if len(results) != 0:
             return results[0]
 
-        # otherwise check again without date and return the average, or 0 if no offset is known at all
+        # Otherwise check again without date and return the most recent offset, or 0 if no offset is known at all
         c.execute(sql_queryNoDate, (cam_id, sens_id))
         results = [x[0] for x in c.fetchall()]
 
@@ -49,11 +49,11 @@ class OffsetManager:
             self._conn.commit()
             return 0
 
-        # Camera-Sensor combination known; add to table with average offset and requested date
-        avg = mean(results)
-        c.execute(sql_insertOffset, (cam_id, sens_id, avg, date))
+        # Camera-Sensor combination known
+        res = results[0]
+        c.execute(sql_insertOffset, (cam_id, sens_id, res, date))
         self._conn.commit()
-        return avg
+        return res
 
     def set_offset(self, cam_id: str, sens_id: str, offset: float, date: date) -> None:
         """

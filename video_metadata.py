@@ -50,7 +50,28 @@ def parse_duration_from_file(file_path):
     return float(ffprobe_output)
 
 
-def parse_start_time_from_file(file_path, timezone=pytz.timezone('Europe/Amsterdam')):
+# def parse_start_time_from_file(file_path, timezone=pytz.timezone('Europe/Amsterdam')):
+#     """
+#     Parses the start time of video files.
+#
+#     :param file_path: The path of the video
+#     :param timezone: The timezone that should be used
+#     :return: datetime: The start time of the video
+#     """
+#     if not os.path.isfile(file_path):
+#         raise FileNotFoundException(file_path)
+#
+#     args = 'ffprobe -v error -select_streams v:0 -show_entries stream_tags=creation_time ' \
+#            '-of default=noprint_wrappers=1:nokey=1 "{}"'.format(file_path)
+#     ffprobe_output = subprocess.check_output(args).decode('utf-8')
+#
+#     datetime_without_tz = datetime.datetime.strptime(ffprobe_output, '%Y-%m-%dT%H:%M:%S.000000Z\n')
+#     datetime_with_tz = timezone.localize(datetime_without_tz)
+#
+#     return datetime_with_tz
+
+
+def parse_start_time_from_file(file_path):
     """
     Parses the start time of video files.
 
@@ -66,9 +87,7 @@ def parse_start_time_from_file(file_path, timezone=pytz.timezone('Europe/Amsterd
     ffprobe_output = subprocess.check_output(args).decode('utf-8')
 
     datetime_without_tz = datetime.datetime.strptime(ffprobe_output, '%Y-%m-%dT%H:%M:%S.000000Z\n')
-    datetime_with_tz = timezone.localize(datetime_without_tz)
-
-    return datetime_with_tz
+    return datetime_without_tz + timedelta(hours=2)
 
 
 def datetime_with_tz_to_string(datetime_string, format_string, timezone=pytz.timezone('Europe/Amsterdam')):

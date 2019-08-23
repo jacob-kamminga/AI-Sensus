@@ -5,12 +5,16 @@ from datetime import timedelta
 import matplotlib.animation
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import pytz
+from pandas.plotting import register_matplotlib_converters
 from PyQt5 import QtCore
 from PyQt5 import QtGui
 from PyQt5.QtCore import QUrl, QDir, Qt
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QShortcut, QDialog
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
+from matplotlib.dates import date2num, num2date
 from sklearn.naive_bayes import GaussianNB
 
 import video_metadata as vm
@@ -56,6 +60,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         # Initialize the generated UI from designer_gui.py.
         self.setupUi(self)
 
+        register_matplotlib_converters()
+
         # Initialize the dictionary that is used to map a label type to a color.
         self.color_dict = dict()
 
@@ -94,7 +100,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.lineEdit_function_regex.returnPressed.connect(self.new_plot)
         self.doubleSpinBox_video_offset.valueChanged.connect(self.change_offset)
         self.doubleSpinBox_speed.valueChanged.connect(self.change_speed)
-        self.doubleSpinBox_plot_width.valueChanged.connect(self.change_plot_width)
+        # self.doubleSpinBox_plot_width.valueChanged.connect(self.change_plot_width)
         self.comboBox_functions.activated.connect(self.change_plot)
         self.pushButton_add.clicked.connect(self.add_camera)
         # self.pushButton_camera_del.clicked.connect(self.delete_camera)
@@ -174,18 +180,19 @@ class GUI(QMainWindow, Ui_MainWindow):
         # Save the path for next time.
         if self.video_filename != '':
             self.settings.set_setting("last_videofile", self.video_filename)
-            self.video_start_time = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename)
-                                                                  , '%H:%M:%S')
+            self.video_start_time_str = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename),
+                                                                  '%H:%M:%S')
+            self.video_start_dt = vm.parse_start_time_from_file(self.video_filename)
+            video_date = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename), '%d-%B-%Y')
 
             # Play the video in the QMediaPlayer and activate the associated widgets.
             self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_filename)))
             self.mediaPlayer.play()
             self.pushButton_play.setEnabled(True)
             self.horizontalSlider_time.setEnabled(True)
-            self.label_date.setText(vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename),
-                                                                  '%d-%B-%Y'))
-            self.label_time.setText(vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename),
-                                                                  '%H:%M:%S'))
+            self.label_date.setText(video_date)
+            self.label_time.setText(self.video_start_time_str)
+            self.play()
 
     def open_sensordata(self):
         """
@@ -228,8 +235,10 @@ class GUI(QMainWindow, Ui_MainWindow):
             # Add every column in the DataFrame to the possible Data Series that can be plotted, except for time,
             # and plot the first one.
             self.comboBox_functions.clear()
+
             for column in self.data.columns:
                 self.comboBox_functions.addItem(column)
+
             self.comboBox_functions.removeItem(0)
             self.current_plot = self.comboBox_functions.currentText()
 
@@ -238,20 +247,24 @@ class GUI(QMainWindow, Ui_MainWindow):
 
             # Reset the figure and add a new subplot to it.
             self.figure.clear()
-            self.dataplot = self.figure.add_subplot(111)
+            self.dataplot = self.figure.add_subplot(1, 1, 1)
 
             # Determine the length of the y-axis and plot the graph with the specified width.
             self.ymin = self.data[self.current_plot].min()
             self.ymax = self.data[self.current_plot].max()
+
             self.draw_graph()
-            self.dataplot.axis([-(self.plot_width / 2), self.plot_width / 2, self.ymin, self.ymax])
+            x_window_start = self.x_min - (self.plot_width / 2)
+            x_window_end = self.x_min + (self.plot_width / 2)
+            self.dataplot.axis([x_window_start, x_window_end, self.ymin, self.ymax])
 
             # Start the timer that makes the graph scroll smoothly.
-            self.timer.timeout.connect(self.update_plot)
+            self.timer.timeout.connect(self.update_plot_axis)
             self.timer.start(25)
 
             # Draw the graph, set the value of the offset spinbox in the GUI to the correct value.
             self.canvas.draw()
+
             if self.comboBox_camera_ids.currentText():
                 self.doubleSpinBox_video_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
                                                                             self.sensordata.metadata['sn'],
@@ -260,6 +273,15 @@ class GUI(QMainWindow, Ui_MainWindow):
             # Check if the sensor data file is already in the label database, if not add it.
             if not self.label_storage.file_is_added(filename):
                 self.label_storage.add_file(filename, self.sensordata.metadata['sn'], self.combidt)
+
+            # Set the video time equal to the start of the sensor data
+            print('self.x_min_dt ' + str(self.x_min_dt))
+            print('self.video_start_dt ' + str(self.video_start_dt))
+
+            self.video_begin_offset_td = self.x_min_dt - self.video_start_dt
+            self.video_begin_offset_ms = self.video_begin_offset_td / timedelta(milliseconds=1)
+
+            self.mediaPlayer.setPosition(self.video_begin_offset_ms)
 
     def play(self):
         """
@@ -301,25 +323,37 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.loop is not None and position >= self.loop[1]:
             position = self.loop[0] if self.loop[0] >= 0 else 0
             self.mediaPlayer.setPosition(position)
+
         self.horizontalSlider_time.setValue(position)
         self.label_duration.setText(self.ms_to_time(position))
-        self.label_time.setText(str(add_time_strings(self.ms_to_time(position), self.video_start_time)))
+        self.label_time.setText(str(add_time_strings(self.ms_to_time(position), self.video_start_time_str)))
 
     def change_plot_width(self, value):
         self.settings.set_setting("plot_width", value)
         self.plot_width = value
-        if self.sensordata:
-            self.update_plot()
 
-    def update_plot(self, position=-1.0):
+        if self.sensordata:
+            self.update_plot_axis()
+
+    def update_plot_axis(self, position=-1.0):
         """
         Every time the timer calls this function, the axis of the graph is updated.
         """
-        new_position = (self.mediaPlayer.position() / 1000) if position == -1.0 else position
-        xmin = -(self.plot_width / 2) + new_position - self.doubleSpinBox_video_offset.value()
-        xmax = (self.plot_width / 2) + new_position - self.doubleSpinBox_video_offset.value()
-        self.dataplot.axis([xmin, xmax, self.ymin, self.ymax])
-        self.vertical_line.set_xdata((xmin + xmax) / 2)
+        position_dt = self.x_min_dt + timedelta(seconds=self.mediaPlayer.position() / 1000)
+        new_position_dt = position_dt if position == -1.0 else position
+
+        plot_width_delta = timedelta(seconds=(self.plot_width / 2))
+        video_offset_delta = timedelta(seconds=self.doubleSpinBox_video_offset.value())
+        video_begin_offset_delta = timedelta(seconds=0)
+
+        if self.video_begin_offset_td is not None:
+            video_begin_offset_delta = self.video_begin_offset_td
+
+        x_min = date2num(new_position_dt - plot_width_delta - video_offset_delta - video_begin_offset_delta)
+        x_max = date2num(new_position_dt + plot_width_delta - video_offset_delta - video_begin_offset_delta)
+
+        self.dataplot.set_xlim(x_min, x_max)
+        self.vertical_line.set_xdata((x_min + x_max) / 2)
         self.canvas.draw()
 
     def set_position(self, position):
@@ -497,7 +531,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                 else:
                     # no video; stop updating-timer and move plot to start of the suggested label
                     self.timer.stop()
-                    self.update_plot(position=start + self.doubleSpinBox_video_offset.value())
+                    self.update_plot_axis(position=start + self.doubleSpinBox_video_offset.value())
 
                 # ask user to accept or reject the suggested label
                 msg = QMessageBox()
@@ -533,7 +567,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             else:
                 # no video was playing, restart the updating-timer
                 self.timer.start(25)
-            self.update_plot(position=original_position / 1000)
+            self.update_plot_axis(position=original_position / 1000)
             self.play()
 
     def add_camera(self):
@@ -593,10 +627,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         If the user changes the variable on the y-axis, this function changes the label if necessary and redraws the plot.
         """
         self.current_plot = self.comboBox_functions.currentText()
+
         if self.comboBox_functions.currentText() in self.formula_dict:
             self.label_current_formula.setText(self.formula_dict[self.comboBox_functions.currentText()])
         else:
             self.label_current_formula.clear()
+
         self.ymin = self.data[self.current_plot].min()
         self.ymax = self.data[self.current_plot].max()
         self.draw_graph()
@@ -695,13 +731,16 @@ class GUI(QMainWindow, Ui_MainWindow):
             # part of onclick.
             if event.button == 1:
                 deleting = False
+
                 if event.xdata < self.new_label.doubleSpinBox_start.value():
                     self.new_label.doubleSpinBox_end.setValue(self.new_label.doubleSpinBox_start.value())
                     self.new_label.doubleSpinBox_start.setValue(event.xdata)
                 else:
                     self.new_label.doubleSpinBox_end.setValue(event.xdata)
+
                 start = self.new_label.doubleSpinBox_start.value()
                 end = self.new_label.doubleSpinBox_end.value()
+
                 for label in self.label_storage.get_labels_date(self.sensordata.metadata['sn'], self.sensordata.metadata['datetime'].date()):
                     label_start = (label[0] - self.sensordata.metadata['datetime']).total_seconds()
                     label_end = (label[1] - self.sensordata.metadata['datetime']).total_seconds()
@@ -724,6 +763,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                         self.label_highlights[(delete_label[0] - self.combidt).total_seconds()][1].remove()
                 else:
                     self.new_label.exec_()
+
                 if self.new_label.is_accepted:
                     new_label_start = (datetime.fromtimestamp(self.new_label.label.start) - self.combidt).total_seconds()
                     new_label_end = (datetime.fromtimestamp(self.new_label.label.end) - self.combidt).total_seconds()
@@ -738,20 +778,33 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         if not self.sensordata:
             return
+
         self.dataplot.clear()
 
-        self.dataplot.plot(self.data[self.data.columns[0]], self.data[self.current_plot], ',-', linewidth=1, color='black')
+        time = self.data[self.data.columns[0]]
+        self.data['clock_time'] = self.combidt + pd.to_timedelta(time, unit='s')
+
+        self.x_min_dt = self.data['clock_time'].min()
+        self.x_max_dt = self.data['clock_time'].max()
+        self.x_min = date2num(self.data['clock_time'].min())
+        self.x_max = date2num(self.data['clock_time'].max())
+
+        self.dataplot.axis([self.x_min, self.x_max, self.ymin, self.ymax])
+        self.dataplot.plot(self.data['clock_time'], self.data[self.current_plot], ',-', linewidth=1, color='black')
         self.vertical_line = self.dataplot.axvline(x=0)
         self.vertical_line.set_color('red')
 
         for label_type in self.label_storage.get_label_types():
             self.color_dict[label_type[0]] = label_type[1]
+
         labels = self.label_storage.get_labels_date(self.sensordata.metadata['sn'], self.sensordata.metadata['datetime'].date())
         self.label_highlights = {}
+
         for label in labels:
             label_start = (label[0] - self.sensordata.metadata['datetime']).total_seconds()
             label_end = (label[1] - self.sensordata.metadata['datetime']).total_seconds()
             self.add_label_highlight(label_start, label_end, label[2])
+
         self.canvas.draw()
 
     def add_label_highlight(self, label_start: float, label_end: float, label_type: str):
@@ -765,3 +818,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         text = self.dataplot.text((start + end) / 2, self.ymax * 0.5, "Suggested label:\n" + label, horizontalalignment='center')
         self.canvas.draw()
         return span, text
+
+
+def add_seconds_to_datetime(date_time: datetime, seconds: float):
+    """
+    Returns a datetime object after adding the specified number of seconds to it.
+
+    :param date_time: The datetime object
+    :param seconds: The number of seconds to add
+    :return: A datetime object with the number of seconds added to it
+    """
+    return date_time + timedelta(seconds=seconds)
