@@ -35,7 +35,7 @@
      <x>30</x>
      <y>90</y>
      <width>351</width>
-     <height>111</height>
+     <height>142</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -79,9 +79,9 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="label_from">
           <property name="text">
-           <string>From (s)</string>
+           <string>From</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignBottom|Qt::AlignHCenter</set>
@@ -89,9 +89,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_start">
-          <property name="maximum">
-           <double>99999.990000000005239</double>
+         <widget class="QDateTimeEdit" name="dateTimeEdit_start">
+          <property name="currentSection">
+           <enum>QDateTimeEdit::MonthSection</enum>
+          </property>
+          <property name="displayFormat">
+           <string>MMM-dd HH:mm:ss.zzz</string>
           </property>
          </widget>
         </item>
@@ -100,9 +103,9 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QLabel" name="label_2">
+         <widget class="QLabel" name="label_to">
           <property name="text">
-           <string>To (s)</string>
+           <string>To</string>
           </property>
           <property name="alignment">
            <set>Qt::AlignBottom|Qt::AlignHCenter</set>
@@ -110,9 +113,12 @@
          </widget>
         </item>
         <item>
-         <widget class="QDoubleSpinBox" name="doubleSpinBox_end">
-          <property name="maximum">
-           <double>99999.990000000005239</double>
+         <widget class="QDateTimeEdit" name="dateTimeEdit_end">
+          <property name="currentSection">
+           <enum>QDateTimeEdit::MonthSection</enum>
+          </property>
+          <property name="displayFormat">
+           <string>MMM-dd HH:mm:ss.zzz</string>
           </property>
          </widget>
         </item>

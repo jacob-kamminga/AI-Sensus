@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'designer_labelspecs.ui'
+# Form implementation generated from reading ui file 'C:\Users\Dennis\Documents\Work\labeling_app\project\gui\designer_labelspecs.ui'
 #
-# Created by: PyQt5 UI code generator 5.11.2
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_LabelSpecs(object):
     def setupUi(self, LabelSpecs):
@@ -18,7 +20,7 @@ class Ui_LabelSpecs(object):
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
         self.verticalLayoutWidget_3 = QtWidgets.QWidget(LabelSpecs)
-        self.verticalLayoutWidget_3.setGeometry(QtCore.QRect(30, 90, 351, 111))
+        self.verticalLayoutWidget_3.setGeometry(QtCore.QRect(30, 90, 351, 142))
         self.verticalLayoutWidget_3.setObjectName("verticalLayoutWidget_3")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_3)
         self.verticalLayout_3.setContentsMargins(0, 0, 0, 0)
@@ -42,25 +44,25 @@ class Ui_LabelSpecs(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
-        self.label = QtWidgets.QLabel(self.verticalLayoutWidget_3)
-        self.label.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignHCenter)
-        self.label.setObjectName("label")
-        self.verticalLayout.addWidget(self.label)
-        self.doubleSpinBox_start = QtWidgets.QDoubleSpinBox(self.verticalLayoutWidget_3)
-        self.doubleSpinBox_start.setMaximum(99999.99)
-        self.doubleSpinBox_start.setObjectName("doubleSpinBox_start")
-        self.verticalLayout.addWidget(self.doubleSpinBox_start)
+        self.label_from = QtWidgets.QLabel(self.verticalLayoutWidget_3)
+        self.label_from.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignHCenter)
+        self.label_from.setObjectName("label_from")
+        self.verticalLayout.addWidget(self.label_from)
+        self.dateTimeEdit_start = QtWidgets.QDateTimeEdit(self.verticalLayoutWidget_3)
+        self.dateTimeEdit_start.setCurrentSection(QtWidgets.QDateTimeEdit.MonthSection)
+        self.dateTimeEdit_start.setObjectName("dateTimeEdit_start")
+        self.verticalLayout.addWidget(self.dateTimeEdit_start)
         self.horizontalLayout.addLayout(self.verticalLayout)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
         self.verticalLayout_2.setObjectName("verticalLayout_2")
-        self.label_2 = QtWidgets.QLabel(self.verticalLayoutWidget_3)
-        self.label_2.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignHCenter)
-        self.label_2.setObjectName("label_2")
-        self.verticalLayout_2.addWidget(self.label_2)
-        self.doubleSpinBox_end = QtWidgets.QDoubleSpinBox(self.verticalLayoutWidget_3)
-        self.doubleSpinBox_end.setMaximum(99999.99)
-        self.doubleSpinBox_end.setObjectName("doubleSpinBox_end")
-        self.verticalLayout_2.addWidget(self.doubleSpinBox_end)
+        self.label_to = QtWidgets.QLabel(self.verticalLayoutWidget_3)
+        self.label_to.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignHCenter)
+        self.label_to.setObjectName("label_to")
+        self.verticalLayout_2.addWidget(self.label_to)
+        self.dateTimeEdit_end = QtWidgets.QDateTimeEdit(self.verticalLayoutWidget_3)
+        self.dateTimeEdit_end.setCurrentSection(QtWidgets.QDateTimeEdit.MonthSection)
+        self.dateTimeEdit_end.setObjectName("dateTimeEdit_end")
+        self.verticalLayout_2.addWidget(self.dateTimeEdit_end)
         self.horizontalLayout.addLayout(self.verticalLayout_2)
         self.verticalLayout_3.addLayout(self.horizontalLayout)
 
@@ -73,6 +75,7 @@ class Ui_LabelSpecs(object):
         _translate = QtCore.QCoreApplication.translate
         LabelSpecs.setWindowTitle(_translate("LabelSpecs", "Dialog"))
         self.label_3.setText(_translate("LabelSpecs", "Label"))
-        self.label.setText(_translate("LabelSpecs", "From (s)"))
-        self.label_2.setText(_translate("LabelSpecs", "To (s)"))
-
+        self.label_from.setText(_translate("LabelSpecs", "From"))
+        self.dateTimeEdit_start.setDisplayFormat(_translate("LabelSpecs", "MMM-dd HH:mm:ss.zzz"))
+        self.label_to.setText(_translate("LabelSpecs", "To"))
+        self.dateTimeEdit_end.setDisplayFormat(_translate("LabelSpecs", "MMM-dd HH:mm:ss.zzz"))

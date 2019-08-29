@@ -10,7 +10,7 @@ import pytz
 from pandas.plotting import register_matplotlib_converters
 from PyQt5 import QtCore
 from PyQt5 import QtGui
-from PyQt5.QtCore import QUrl, QDir, Qt
+from PyQt5.QtCore import QUrl, QDir, Qt, QDateTime
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QShortcut, QDialog
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
@@ -25,7 +25,7 @@ from datastorage.camerainfo import CameraManager
 from datastorage.deviceoffsets import OffsetManager
 from datastorage.labelstorage import LabelManager
 from datastorage.subjectmapping import SubjectManager
-from gui.designer_gui_3 import Ui_MainWindow
+from gui.designer_gui import Ui_MainWindow
 from gui.export_dialog import ExportDialog
 from gui.label_dialog import LabelSpecs
 from gui.label_settings_dialog import LabelSettingsDialog
@@ -35,10 +35,16 @@ from gui.settings_dialog import SettingsDialog
 from gui.subject_dialog import SubjectTable
 from machine_learning.classifier import Classifier, make_predictions
 
-
 LABEL_COL = 'Label'
 TIME_COL = 'Time'
 TIMESTAMP_COL = 'Timestamp'
+
+LABEL_START_TIME_INDEX = 0
+LABEL_END_TIME_INDEX = 1
+LABEL_LABEL_NAME_INDEX = 2
+
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+QDATETIME_FORMAT = 'yyyy-MM-dd HH:mm:ss.zzz'
 
 
 def add_time_strings(time1, time2):
@@ -62,19 +68,19 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         register_matplotlib_converters()
 
-        # Initialize the dictionary that is used to map a label type to a color.
+        # Initialize the dictionary that is used to map a label type to a color
         self.color_dict = dict()
 
-        # Initialize the dictionary that is used to map the name of a new formula to the formula itself (as a string).
+        # Initialize the dictionary that is used to map the name of a new formula to the formula itself (as a string)
         self.formula_dict = dict()
 
-        # Initialize the boolean that keeps track if the user is labeling with the right-mouse button.
+        # Initialize the boolean that keeps track if the user is labeling with the right-mouse button
         self.labeling = False
 
-        # Initialize the datetime object that keeps track of the start of a sensor data file.
+        # Initialize the datetime object that keeps track of the start of a sensor data file
         self.combidt = datetime(year=1970, month=1, day=1)
 
-        # Initialize the variable that keeps track of the current SensorData object.
+        # Initialize the variable that keeps track of the current SensorData object
         self.sensordata = None
 
         # Used for retrieving and storing labels
@@ -100,7 +106,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.lineEdit_function_regex.returnPressed.connect(self.new_plot)
         self.doubleSpinBox_video_offset.valueChanged.connect(self.change_offset)
         self.doubleSpinBox_speed.valueChanged.connect(self.change_speed)
-        # self.doubleSpinBox_plot_width.valueChanged.connect(self.change_plot_width)
+        self.doubleSpinBox_plot_width.valueChanged.connect(self.change_plot_width)
         self.comboBox_functions.activated.connect(self.change_plot)
         self.pushButton_add.clicked.connect(self.add_camera)
         # self.pushButton_camera_del.clicked.connect(self.delete_camera)
@@ -111,7 +117,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         # Initialize the libraries that are needed to plot the sensor data, and add them to the GUI.
         self.figure = matplotlib.pyplot.figure()
         self.canvas = FigureCanvasQTAgg(self.figure)
-        # self.canvas.setFixedHeight(200)
+        self.canvas.resize(self.canvas.width(), 200)
         self.verticalLayout_plot.addWidget(self.canvas)
         self.canvas.mpl_connect('button_press_event', self.onclick)
         self.canvas.mpl_connect('button_release_event', self.onrelease)
@@ -151,42 +157,64 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.ml_used_columns = []
         self.ml_classifier = Classifier(self.ml_classifier_engine)
 
-    def open_video(self):
-        """
-        A function that allows a user to open a video in the QMediaPlayer via the menu bar.
-        :return:
-        """
-        # Connect the QMediaPlayer to the right widget.
-        self.mediaPlayer.setVideoOutput(self.videoWidget_player)
+        self.video_path = ''
+        self.sensordata_path = ''
 
-        # Connect some events that QMediaPlayer generates to their appropriate helper functions.
-        self.mediaPlayer.positionChanged.connect(self.position_changed)
-        self.mediaPlayer.durationChanged.connect(self.duration_changed)
+        self.data = None
+        self.dataplot = None
 
-        # Connect the usage of the slider to its appropriate helper function.
-        self.horizontalSlider_time.sliderMoved.connect(self.set_position)
-        self.horizontalSlider_time.setEnabled(False)
+        # Open the last opened files
+        self.open_previous_video()
+        self.open_previous_sensordata()
 
-        # Check if last used path is known.
-        path = "" if self.settings.get_setting("last_videofile") is None else self.settings.get_setting("last_videofile")
+    def open_previous_video(self):
+        previous_video_path = self.settings.get_setting('last_videofile')
+
+        if previous_video_path is not None:
+            self.video_path = previous_video_path
+            self.open_video()
+
+    def prompt_video(self):
+        # Check if last used path is known
+        path = '' if self.settings.get_setting('last_videofile') is None else self.settings.get_setting(
+            "last_videofile")
         if not os.path.isfile(path):
             path = path.rsplit('/', 1)[0]
             if not os.path.isdir(path):
                 path = QDir.homePath()
 
-        # Get the user input from a dialog window.
-        self.video_filename, _ = QFileDialog.getOpenFileName(self, "Open Video", path)
+        # Get the user input from a dialog window
+        self.video_path, _ = QFileDialog.getOpenFileName(self, "Open Video", path)
 
-        # Save the path for next time.
-        if self.video_filename != '':
-            self.settings.set_setting("last_videofile", self.video_filename)
-            self.video_start_time_str = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename),
-                                                                  '%H:%M:%S')
-            self.video_start_dt = vm.parse_start_time_from_file(self.video_filename)
-            video_date = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_filename), '%d-%B-%Y')
+        self.open_video()
 
-            # Play the video in the QMediaPlayer and activate the associated widgets.
-            self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_filename)))
+    def open_video(self):
+        """
+        A function that allows a user to open a video in the QMediaPlayer via the menu bar.
+        :return:
+        """
+        # Connect the QMediaPlayer to the right widget
+        self.mediaPlayer.setVideoOutput(self.videoWidget_player)
+
+        # Connect some events that QMediaPlayer generates to their appropriate helper functions
+        self.mediaPlayer.positionChanged.connect(self.position_changed)
+        self.mediaPlayer.durationChanged.connect(self.duration_changed)
+
+        # Connect the usage of the slider to its appropriate helper function
+        self.horizontalSlider_time.sliderMoved.connect(self.set_position)
+        self.horizontalSlider_time.setEnabled(False)
+
+        if self.video_path != '':
+            # Save the path for next time
+            self.settings.set_setting('last_videofile', self.video_path)
+            self.video_start_time_str = vm.datetime_with_tz_to_string(
+                vm.parse_start_time_from_file(self.video_path),
+                '%H:%M:%S')
+            self.video_start_dt = vm.parse_start_time_from_file(self.video_path)
+            video_date = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_path), '%d-%B-%Y')
+
+            # Play the video in the QMediaPlayer and activate the associated widgets
+            self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_path)))
             self.mediaPlayer.play()
             self.pushButton_play.setEnabled(True)
             self.horizontalSlider_time.setEnabled(True)
@@ -194,30 +222,38 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.label_time.setText(self.video_start_time_str)
             self.play()
 
-    def open_sensordata(self):
-        """
-        A function that allows a user to open a CSV file in the plotting canvas via the menu bar.
-        :return:
-        """
-        # Check if last used path is known.
-        path = "" if self.settings.get_setting("last_datafile") is None else self.settings.get_setting("last_datafile")
+    def open_previous_sensordata(self):
+        previous_data_path = self.settings.get_setting("last_datafile")
+
+        if previous_data_path is not None:
+            self.sensordata_path = previous_data_path
+            self.open_sensordata()
+
+    def prompt_sensordata(self):
+        path = '' if self.settings.get_setting('last_datafile') is None else self.settings.get_setting("last_datafile")
         if not os.path.isfile(path):
             path = path.rsplit('/', 1)[0]
             if not os.path.isdir(path):
                 path = QDir.homePath()
 
         # Get the user input from a dialog window.
-        filename, _ = QFileDialog.getOpenFileName(self, "Open Sensor Data", path)
+        self.sensordata_path, _ = QFileDialog.getOpenFileName(self, "Open Sensor Data", path)
 
-        # Save the path for next time.
-        if filename != '':
-            self.settings.set_setting("last_datafile", filename)
+        self.open_sensordata()
+
+    def open_sensordata(self):
+        """
+        A function that allows a user to open a CSV file in the plotting canvas via the menu bar.
+        :return:
+        """
+        if self.sensordata_path != '':
+            self.settings.set_setting("last_datafile", self.sensordata_path)
 
             # Reset the dictionary that maps function names to functions.
             self.formula_dict = dict()
 
             # Retrieve the SensorData object that parses the sensor data file.
-            self.sensordata = sensor_data.SensorData(filename, self.settings.settings_dict)
+            self.sensordata = sensor_data.SensorData(self.sensordata_path, self.settings.settings_dict)
             self.sensor_id = self.sensordata.metadata['sn']
 
             # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary.
@@ -266,18 +302,16 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.canvas.draw()
 
             if self.comboBox_camera_ids.currentText():
-                self.doubleSpinBox_video_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
-                                                                            self.sensordata.metadata['sn'],
-                                                                            self.sensordata.metadata['date']))
+                self.doubleSpinBox_video_offset.setValue(
+                    self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
+                                                   self.sensordata.metadata['sn'],
+                                                   self.sensordata.metadata['date']))
 
             # Check if the sensor data file is already in the label database, if not add it.
-            if not self.label_storage.file_is_added(filename):
-                self.label_storage.add_file(filename, self.sensordata.metadata['sn'], self.combidt)
+            if not self.label_storage.file_is_added(self.sensordata_path):
+                self.label_storage.add_file(self.sensordata_path, self.sensordata.metadata['sn'], self.combidt)
 
             # Set the video time equal to the start of the sensor data
-            print('self.x_min_dt ' + str(self.x_min_dt))
-            print('self.video_start_dt ' + str(self.video_start_dt))
-
             self.video_begin_offset_td = self.x_min_dt - self.video_start_dt
             self.video_begin_offset_ms = self.video_begin_offset_td / timedelta(milliseconds=1)
 
@@ -393,14 +427,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         if not self.sensordata:
             QMessageBox.information(self, 'Warning', "You need to import sensordata first.", QMessageBox.Ok)
         else:
-            dialog = LabelSpecs(self.project_dialog.project_name, self.sensordata.metadata['sn'], self.label_storage,
-                                self.combidt.timestamp())
+            dialog = LabelSpecs(self.project_dialog.project_name, self.sensordata.metadata['sn'], self.label_storage)
             dialog.exec_()
             dialog.show()
+
             if dialog.is_accepted:
-                start = (datetime.fromtimestamp(dialog.label.start) - self.sensordata.metadata['datetime']).total_seconds()
-                end = (datetime.fromtimestamp(dialog.label.end) - self.sensordata.metadata['datetime']).total_seconds()
-                self.add_label_highlight(start, end, dialog.label.label)
+                self.add_label_highlight(dialog.label.start, dialog.label.end, dialog.label.label)
 
     def open_settings(self):
         """
@@ -449,6 +481,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the machine learning dialog window.
         :return:
         """
+        # TODO: Rewrite function such that 'start' and 'end' are datetimes instead of floats
         columns = [self.comboBox_functions.itemText(i) for i in range(self.comboBox_functions.count())]
         dialog = MachineLearningDialog(columns)
         dialog.exec()
@@ -580,18 +613,20 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.comboBox_camera_ids.setCurrentText(self.lineEdit_new_camera.text())
             self.lineEdit_new_camera.clear()
             if self.comboBox_camera_ids.currentText() and self.sensordata:
-                self.doubleSpinBox_video_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
-                                                                            self.sensordata.metadata['sn'],
-                                                                            self.sensordata.metadata['date']))
+                self.doubleSpinBox_video_offset.setValue(
+                    self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
+                                                   self.sensordata.metadata['sn'],
+                                                   self.sensordata.metadata['date']))
 
     def change_camera(self):
         """
         If the user chooses a different camera, this function retrieves the right offset with the sensordata.
         """
         if self.comboBox_camera_ids.currentText() and self.sensordata:
-            self.doubleSpinBox_video_offset.setValue(self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
-                                                                              self.sensordata.metadata['sn'],
-                                                                              self.sensordata.metadata['date']))
+            self.doubleSpinBox_video_offset.setValue(
+                self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
+                                               self.sensordata.metadata['sn'],
+                                               self.sensordata.metadata['date']))
 
     def change_offset(self):
         """
@@ -644,7 +679,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         try:
             if not self.lineEdit_function_name.text():
                 raise Exception
-            self.sensordata.add_column_from_func(self.lineEdit_function_name.text(), self.lineEdit_function_regex.text())
+            self.sensordata.add_column_from_func(self.lineEdit_function_name.text(),
+                                                 self.lineEdit_function_regex.text())
             self.data = self.sensordata.get_data()
             self.comboBox_functions.addItem(self.lineEdit_function_name.text())
             self.formula_dict[self.lineEdit_function_name.text()] = self.lineEdit_function_regex.text()
@@ -666,59 +702,78 @@ class GUI(QMainWindow, Ui_MainWindow):
     def onclick(self, event):
         """
         Handles the labeling by clicking on the graph.
+
         :param event: Specifies what event triggered this function.
         """
         if self.sensordata:
+            xdata_dt = num2date(event.xdata).replace(tzinfo=None)
+            xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
+            print(xdata_qdt)
+
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
-            # wait for the onrelease function.
+            # wait for the onrelease function
             if event.button == 1:
                 self.new_label = LabelSpecs(self.project_dialog.project_name, self.sensordata.metadata['sn'],
-                                            self.label_storage, self.combidt.timestamp())
-                self.new_label.doubleSpinBox_start.setValue(event.xdata)
-            # If the right mouse button is used, check if this is the first or second time.
+                                            self.label_storage)
+
+                self.new_label.dateTimeEdit_start.setDateTime(xdata_qdt)
+
+            # If the right mouse button is used, check if this is the first or second time
             elif event.button == 3:
                 if not self.labeling:
                     self.large_label = LabelSpecs(self.project_dialog.project_name, self.sensordata.metadata['sn'],
-                                                  self.label_storage, self.combidt.timestamp())
-                    self.large_label.doubleSpinBox_start.setValue(event.xdata)
+                                                  self.label_storage)
+                    self.large_label.dateTimeEdit_start.setDateTime(xdata_qdt)
                 # If it is the second time, check if the user wants to delete the label or if the label should start
-                # or end at the start or end of another label.
+                # or end at the start or end of another label
                 else:
                     deleting = False
-                    if event.xdata < self.large_label.doubleSpinBox_start.value():
-                        self.large_label.doubleSpinBox_end.setValue(self.large_label.doubleSpinBox_start.value())
-                        self.large_label.doubleSpinBox_start.setValue(event.xdata)
+
+                    if xdata_qdt < self.large_label.dateTimeEdit_start.dateTime():
+                        self.large_label.dateTimeEdit_end.setDateTime(self.large_label.dateTimeEdit_start.dateTime())
+                        self.large_label.dateTimeEdit_start.setDateTime(xdata_qdt)
                     else:
-                        self.large_label.doubleSpinBox_end.setValue(event.xdata)
-                    start = self.large_label.doubleSpinBox_start.value()
-                    end = self.large_label.doubleSpinBox_end.value()
-                    for label in self.label_storage.get_labels_date(self.sensordata.metadata['sn'], self.sensordata.metadata['datetime'].date()):
-                        label_start = (label[0] - self.sensordata.metadata['datetime']).total_seconds()
-                        label_end = (label[1] - self.sensordata.metadata['datetime']).total_seconds()
+                        self.large_label.dateTimeEdit_end.setDateTime(xdata_qdt)
+
+                    start = self.large_label.dateTimeEdit_start.dateTime().toPyDateTime()
+                    end = self.large_label.dateTimeEdit_end.dateTime().toPyDateTime()
+
+                    for label in self.label_storage.get_labels_date(self.sensordata.metadata['sn'],
+                                                                    self.sensordata.metadata['datetime'].date()):
+                        label_start = label[LABEL_START_TIME_INDEX]
+                        label_end = label[LABEL_END_TIME_INDEX]
+                        label_start_qdt = QDateTime.fromString(label_start.strftime(DATETIME_FORMAT)[:-3],
+                                                               QDATETIME_FORMAT)
+                        label_end_qdt = QDateTime.fromString(label_end.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
+
                         if label_start < start < label_end and label_start < end < label_end:
                             deleting = True
                             delete_label = label
                             break
                         elif label_start < start < label_end or label_start < end < label_end:
                             if label_start < start < label_end:
-                                self.large_label.doubleSpinBox_start.setValue(label_end)
+                                self.large_label.dateTimeEdit_start.setDateTime(label_end_qdt)
                             else:
-                                self.large_label.doubleSpinBox_end.setValue(label_start)
+                                self.large_label.dateTimeEdit_end.setDateTime(label_start_qdt)
+
                     if deleting:
                         reply = QMessageBox.question(self, 'Message', "Are you sure you want to delete this label?",
                                                      QMessageBox.Yes, QMessageBox.No)
                         if reply == QMessageBox.Yes:
-                            self.label_storage.delete_label(delete_label[0], self.sensordata.metadata['sn'])
-                            # remove label highlight and text from plot
-                            self.label_highlights[(delete_label[0] - self.combidt).total_seconds()][0].remove()
-                            self.label_highlights[(delete_label[0] - self.combidt).total_seconds()][1].remove()
+                            self.label_storage.delete_label(delete_label[LABEL_START_TIME_INDEX],
+                                                            self.sensordata.metadata['sn'])
+
+                            # Remove label highlight and text from plot
+                            self.label_highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
+                            self.label_highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
                     else:
                         self.large_label.exec_()
+
                     if self.large_label.is_accepted:
-                        new_label_start = (datetime.fromtimestamp(self.large_label.label.start) - self.combidt).total_seconds()
-                        new_label_end = (datetime.fromtimestamp(self.large_label.label.end) - self.combidt).total_seconds()
-                        self.add_label_highlight(new_label_start, new_label_end, self.large_label.label.label)
+                        self.add_label_highlight(self.large_label.label.start, self.large_label.label.end,
+                                                 self.large_label.label.label)
                         self.canvas.draw()
+
                 self.labeling = not self.labeling
 
     def onrelease(self, event):
@@ -727,47 +782,57 @@ class GUI(QMainWindow, Ui_MainWindow):
         :param event: Specifies the event that triggers this function.
         """
         if self.sensordata:
+            xdata_dt = num2date(event.xdata).replace(tzinfo=None)
+            xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
+
             # If the left mouse button is released, delete or label the right area, similar to the latter
             # part of onclick.
             if event.button == 1:
                 deleting = False
 
-                if event.xdata < self.new_label.doubleSpinBox_start.value():
-                    self.new_label.doubleSpinBox_end.setValue(self.new_label.doubleSpinBox_start.value())
-                    self.new_label.doubleSpinBox_start.setValue(event.xdata)
+                if xdata_qdt < self.new_label.dateTimeEdit_start.dateTime():
+                    # Switch the values of start and end
+                    self.new_label.dateTimeEdit_end.setDateTime(self.new_label.dateTimeEdit_start.dateTime())
+                    self.new_label.dateTimeEdit_start.setDateTime(xdata_qdt)
                 else:
-                    self.new_label.doubleSpinBox_end.setValue(event.xdata)
+                    self.new_label.dateTimeEdit_end.setDateTime(xdata_qdt)
 
-                start = self.new_label.doubleSpinBox_start.value()
-                end = self.new_label.doubleSpinBox_end.value()
+                start = self.new_label.dateTimeEdit_start.dateTime().toPyDateTime()
+                end = self.new_label.dateTimeEdit_end.dateTime().toPyDateTime()
 
-                for label in self.label_storage.get_labels_date(self.sensordata.metadata['sn'], self.sensordata.metadata['datetime'].date()):
-                    label_start = (label[0] - self.sensordata.metadata['datetime']).total_seconds()
-                    label_end = (label[1] - self.sensordata.metadata['datetime']).total_seconds()
+                for label in self.label_storage.get_labels_date(self.sensordata.metadata['sn'],
+                                                                self.sensordata.metadata['datetime'].date()):
+                    label_start = label[LABEL_START_TIME_INDEX]
+                    label_end = label[LABEL_END_TIME_INDEX]
+
+                    # If 'onclick' and 'onrelease' are both inside the label, then delete the label
                     if label_start < start < label_end and label_start < end < label_end:
                         deleting = True
                         delete_label = label
                         break
-                    elif label_start < start < label_end or label_start < end < label_end:
-                        if label_start < start < label_end:
-                            self.new_label.doubleSpinBox_start.setValue(label_end)
-                        else:
-                            self.new_label.doubleSpinBox_end.setValue(label_start)
+                    # Else if only 'onclick' is inside the label, then set the start value equal to the end of the label
+                    elif label_start < start < label_end:
+                        self.new_label.dateTimeEdit_start.setDateTime(label_end)
+                    # Else if only 'onrelease' is inside the label, then set the end value equal to the start of the
+                    # label
+                    elif label_start < end < label_end:
+                        self.new_label.dateTimeEdit_end.setDateTime(label_start)
+
                 if deleting:
                     reply = QMessageBox.question(self, 'Message', "Are you sure you want to delete this label?",
                                                  QMessageBox.Yes, QMessageBox.No)
                     if reply == QMessageBox.Yes:
-                        self.label_storage.delete_label(delete_label[0], self.sensordata.metadata['sn'])
-                        # remove label highlight and text from plot
-                        self.label_highlights[(delete_label[0] - self.combidt).total_seconds()][0].remove()
-                        self.label_highlights[(delete_label[0] - self.combidt).total_seconds()][1].remove()
+                        self.label_storage.delete_label(delete_label[LABEL_START_TIME_INDEX],
+                                                        self.sensordata.metadata['sn'])
+                        # Remove label highlight and text from plot
+                        self.label_highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
+                        self.label_highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
                 else:
                     self.new_label.exec_()
 
                 if self.new_label.is_accepted:
-                    new_label_start = (datetime.fromtimestamp(self.new_label.label.start) - self.combidt).total_seconds()
-                    new_label_end = (datetime.fromtimestamp(self.new_label.label.end) - self.combidt).total_seconds()
-                    self.add_label_highlight(new_label_start, new_label_end, self.new_label.label.label)
+                    self.add_label_highlight(self.new_label.label.start, self.new_label.label.end,
+                                             self.new_label.label.label)
                     self.canvas.draw()
             elif event.button == 3:
                 pass
@@ -797,25 +862,32 @@ class GUI(QMainWindow, Ui_MainWindow):
         for label_type in self.label_storage.get_label_types():
             self.color_dict[label_type[0]] = label_type[1]
 
-        labels = self.label_storage.get_labels_date(self.sensordata.metadata['sn'], self.sensordata.metadata['datetime'].date())
+        labels = self.label_storage.get_labels_date(self.sensordata.metadata['sn'],
+                                                    self.sensordata.metadata['datetime'].date())
         self.label_highlights = {}
 
         for label in labels:
-            label_start = (label[0] - self.sensordata.metadata['datetime']).total_seconds()
-            label_end = (label[1] - self.sensordata.metadata['datetime']).total_seconds()
-            self.add_label_highlight(label_start, label_end, label[2])
+            label_start = label[LABEL_START_TIME_INDEX]
+            label_end = label[LABEL_END_TIME_INDEX]
+            self.add_label_highlight(label_start, label_end, label[LABEL_LABEL_NAME_INDEX])
 
         self.canvas.draw()
 
-    def add_label_highlight(self, label_start: float, label_end: float, label_type: str):
-        alpha = self.settings.get_setting("label_opacity") / 100
-        span = self.dataplot.axvspan(label_start, label_end, facecolor=self.color_dict[label_type], alpha=alpha)
-        text = self.dataplot.text((label_start + label_end) / 2, self.ymax * 0.75, label_type, horizontalalignment='center')
+    def add_label_highlight(self, label_start: datetime, label_end: datetime, label_type: str):
+        label_start_num = date2num(label_start)
+        label_end_num = date2num(label_end)
+        alpha = self.settings.get_setting('label_opacity') / 100
+        span = self.dataplot.axvspan(label_start_num, label_end_num, facecolor=self.color_dict[label_type], alpha=alpha)
+        text = self.dataplot.text((label_start_num + label_end_num) / 2, self.ymax * 0.75, label_type,
+                                  horizontalalignment='center')
+
         self.label_highlights[label_start] = (span, text)
 
     def add_suggestion_highlight(self, start: float, end: float, label: str):
-        span = self.dataplot.axvspan(start, end, facecolor="gold", alpha=0.4)
-        text = self.dataplot.text((start + end) / 2, self.ymax * 0.5, "Suggested label:\n" + label, horizontalalignment='center')
+        span = self.dataplot.axvspan(start, end, facecolor='gold', alpha=0.4)
+        text = self.dataplot.text((start + end) / 2, self.ymax * 0.5, "Suggested label:\n" + label,
+                                  horizontalalignment='center')
+
         self.canvas.draw()
         return span, text
 
