@@ -96,8 +96,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_pause.activated.connect(self.play)
         self.shortcut_plus_10s.activated.connect(self.video_plus_10s)
         self.shortcut_minus_10s.activated.connect(self.video_minus_10s)
-        self.actionOpen_Video.triggered.connect(self.open_video)
-        self.actionOpen_Sensor_Data.triggered.connect(self.open_sensordata)
+        self.actionOpen_Video.triggered.connect(self.prompt_video)
+        self.actionOpen_Sensor_Data.triggered.connect(self.prompt_sensordata)
         self.pushButton_label.clicked.connect(self.open_label)
         self.actionImport_Settings.triggered.connect(self.open_settings)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings)
@@ -162,6 +162,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.data = None
         self.dataplot = None
+        self.x_min_dt = None
 
         # Open the last opened files
         self.open_previous_video()
@@ -207,9 +208,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.video_path != '':
             # Save the path for next time
             self.settings.set_setting('last_videofile', self.video_path)
-            self.video_start_time_str = vm.datetime_with_tz_to_string(
-                vm.parse_start_time_from_file(self.video_path),
-                '%H:%M:%S')
+            self.video_start_time_str = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_path),
+                                                                      '%H:%M:%S')
             self.video_start_dt = vm.parse_start_time_from_file(self.video_path)
             video_date = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_path), '%d-%B-%Y')
 
@@ -221,6 +221,8 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.label_date.setText(video_date)
             self.label_time.setText(self.video_start_time_str)
             self.play()
+
+            self.sync_video_and_sensordata()
 
     def open_previous_sensordata(self):
         previous_data_path = self.settings.get_setting("last_datafile")
@@ -311,7 +313,13 @@ class GUI(QMainWindow, Ui_MainWindow):
             if not self.label_storage.file_is_added(self.sensordata_path):
                 self.label_storage.add_file(self.sensordata_path, self.sensordata.metadata['sn'], self.combidt)
 
-            # Set the video time equal to the start of the sensor data
+            self.sync_video_and_sensordata()
+
+    def sync_video_and_sensordata(self):
+        """
+        Set the video time equal to the start of the sensor data.
+        """
+        if self.video_start_dt is not None and self.x_min_dt is not None:
             self.video_begin_offset_td = self.x_min_dt - self.video_start_dt
             self.video_begin_offset_ms = self.video_begin_offset_td / timedelta(milliseconds=1)
 
@@ -462,19 +470,23 @@ class GUI(QMainWindow, Ui_MainWindow):
 
     def open_export(self):
         """
-        Opens the export dialog window, and if a subject and a file location and name are chosen, exports the data accordingly.
+        Opens the export dialog window, and if a subject and a file location and name are chosen, exports the data
+        accordingly.
         """
         export = ExportDialog()
         export.comboBox.addItems(self.subject_mapping.get_subjects())
         export.exec_()
         export.show()
+
         if export.is_accepted and export.comboBox.currentText():
             filename, _ = QFileDialog.getSaveFileName(self, "Save File", QDir.homePath())
-            try:
-                export_data.export(self.subject_mapping.get_dataframes_subject(export.comboBox.currentText()), "Label",
+
+            # try:
+            export_data.export(self.subject_mapping.get_dataframes_subject(export.comboBox.currentText()), "Label",
                                    "Timestamp", filename, [])
-            except Exception as e:
-                QMessageBox.warning(self, 'Warning', str(e), QMessageBox.Cancel)
+            # except Exception as e:
+            #     print(e)
+            #     QMessageBox.warning(self, 'Warning', str(e), QMessageBox.Cancel)
 
     def open_machine_learning(self):
         """
