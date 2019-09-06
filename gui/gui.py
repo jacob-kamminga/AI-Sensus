@@ -481,12 +481,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         if export.is_accepted and export.comboBox.currentText():
             filename, _ = QFileDialog.getSaveFileName(self, "Save File", QDir.homePath())
 
-            # try:
-            export_data.export(self.subject_mapping.get_dataframes_subject(export.comboBox.currentText()), "Label",
+            try:
+                export_data.export(self.subject_mapping.get_dataframes_subject(export.comboBox.currentText()), "Label",
                                    "Timestamp", filename, [])
-            # except Exception as e:
-            #     print(e)
-            #     QMessageBox.warning(self, 'Warning', str(e), QMessageBox.Cancel)
+            except Exception as e:
+                print(e)
+                QMessageBox.warning(self, 'Warning', str(e), QMessageBox.Cancel)
 
     def open_machine_learning(self):
         """

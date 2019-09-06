@@ -18,6 +18,8 @@ sql_get_table = "SELECT Name, Sensor, Start_date, End_date{} FROM subject_map"
 sql_get_subject_data = "SELECT Sensor, Start_date, End_date FROM subject_map WHERE Name = ?"
 sql_get_subjects = "SELECT Name FROM subject_map"
 
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+
 
 class SubjectManager:
 
@@ -189,16 +191,18 @@ class SubjectManager:
         paths = lm.get_file_paths(subject_data[0], subject_data[1], subject_data[2])  # get datafile paths for subject
         data_frames = []
         settings_dict = Settings(self.project_name).settings_dict
+
         for path in paths:
             if os.path.isfile(path):
-                # for each file, load a DataFrame and add the labels to it
+                # For each file, load a DataFrame and add the labels to it
                 sd = SensorData(path, settings_dict)
                 time_col_name = sd.metadata['names'][0]  # making the assumption that the time column is always the first
                 sd.add_timestamp_column(time_col_name, "Timestamp")
-                end_datetime = datetime.fromisoformat(str(sd.get_data()['Timestamp'].iloc[-1]))
+                end_datetime = datetime.strptime(str(sd.get_data()['Timestamp'].iloc[-1]), DATETIME_FORMAT)
                 labels = lm.get_labels_between_dates(subject_data[0], sd.metadata['datetime'], end_datetime)
                 sd.add_labels(labels, "Label", "Timestamp")
                 data_frames.append(sd.get_data())
+
         return data_frames
 
     def get_table(self):
