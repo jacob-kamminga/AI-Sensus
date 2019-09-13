@@ -19,33 +19,36 @@ def export(data: [], label_col: str, timestamp_col: str, file_path: str, comment
     :param comment: The style used to denote comments (defaults to ';')
     :return:
     """
-    # Initialise result list
-    res = []
+    # # Initialise result list
+    # res = []
+    #
+    # # Get list of columns to be windowed over
+    # collist = data[0].columns.tolist()
+    # collist.remove(label_col)
+    # collist.remove(timestamp_col)
 
-    # Get list of columns to be windowed over
-    collist = data[0].columns.tolist()
-    collist.remove(label_col)
-    collist.remove(timestamp_col)
+    # # Window over data per DataFrame
+    # for df in data:
+    #     new_df = w.windowing_fast(df, collist, label_col, timestamp_col)
+    #     res.append(new_df)
 
-    # Window over data per DataFrame
-    for df in data:
-        new_df = w.windowing_fast(df, collist, label_col, timestamp_col)
-        res.append(new_df)
+    # # Turn list into one DataFrame
+    # df = pd.concat(res)
 
-    # Turn list into one DataFrame
-    df = pd.concat(res)
+    df = pd.concat(data)
 
     # Remove file if it exists
     if os.path.exists(file_path):
         os.remove(file_path)
 
     # Write comments to a file and use that as start file for 'to_csv'
-    f = open(file_path, 'a')
+    f = open(file_path, 'w', newline='')
+
     for c in comments:
         f.write(comment + c + '\n')
 
     # Write DataFrame to the file
-    df.to_csv(f)
+    df.to_csv(f, index=False)
 
     # Close the file
     f.close()

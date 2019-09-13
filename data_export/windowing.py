@@ -27,6 +27,7 @@ def split_df(df, col):
     last = df.index.tolist()[-1]
 
     result = []
+
     for i in range(len(idx) - 1):
         # Slice original data frame from changed value until the next
         new_df = df.loc[idx[i]:idx[i + 1] - 1]
