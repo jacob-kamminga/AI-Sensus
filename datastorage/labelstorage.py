@@ -3,26 +3,26 @@ import csv
 from datetime import datetime, date
 from typing import List, Tuple
 
-sql_add_label_type = "INSERT INTO labelType(Name, Color, Description) VALUES (?,?,?)"
-sql_get_label_types = "SELECT * FROM labelType"
-sql_del_label_type = "DELETE FROM labelType WHERE Name = ?"
-sql_del_label_data_all = "DELETE FROM labelData WHERE Label_name = ?"
-sql_del_label_data = "DELETE FROM labelData WHERE Start_time = ? AND Sensor_id = ?"
-sql_add_label = "INSERT INTO labelData(Start_time, End_time, Label_name, Sensor_id) VALUES (?,?,?,?)"
-sql_upd_name_type = "UPDATE labelType SET Name = ? WHERE Name = ?"
-sql_upd_name_data = "UPDATE labelData SET Label_name = ? WHERE Label_name = ?"
-sql_upd_color = "UPDATE labelType SET Color = ? WHERE Name = ?"
-sql_upd_desc = "UPDATE labelType SET Description = ? WHERE Name = ?"
-sql_change_label = "UPDATE labelData SET Label_name = ? WHERE Start_time = ? AND Sensor_id = ?"
-sql_get_labels = "SELECT Start_time, End_time, Label_name FROM labelData WHERE Sensor_id = ? ORDER BY Start_time ASC"
-sql_get_all_labels = "SELECT * FROM labelData ORDER BY Start_time ASC"
-sql_get_labels_date = "SELECT Start_time, End_time, Label_name FROM labelData WHERE date(Start_time) = ? AND " \
+SQL_ADD_LABEL_TYPE = "INSERT INTO labelType(Name, Color, Description) VALUES (?,?,?)"
+SQL_GET_LABEL_TYPES = "SELECT * FROM labelType"
+SQL_DEL_LABEL_TYPE = "DELETE FROM labelType WHERE Name = ?"
+SQL_DEL_LABEL_DATA_ALL = "DELETE FROM labelData WHERE Label_name = ?"
+SQL_DEL_LABEL_DATA = "DELETE FROM labelData WHERE Start_time = ? AND Sensor_id = ?"
+SQL_ADD_LABEL = "INSERT INTO labelData(Start_time, End_time, Label_name, Sensor_id) VALUES (?,?,?,?)"
+SQL_UPD_NAME_TYPE = "UPDATE labelType SET Name = ? WHERE Name = ?"
+SQL_UPD_NAME_DATA = "UPDATE labelData SET Label_name = ? WHERE Label_name = ?"
+SQL_UPD_COLOR = "UPDATE labelType SET Color = ? WHERE Name = ?"
+SQL_UPD_DESC = "UPDATE labelType SET Description = ? WHERE Name = ?"
+SQL_CHANGE_LABEL = "UPDATE labelData SET Label_name = ? WHERE Start_time = ? AND Sensor_id = ?"
+SQL_GET_LABELS = "SELECT Start_time, End_time, Label_name FROM labelData WHERE Sensor_id = ? ORDER BY Start_time ASC"
+SQL_GET_ALL_LABELS = "SELECT * FROM labelData ORDER BY Start_time ASC"
+SQL_GET_LABELS_DATE = "SELECT Start_time, End_time, Label_name FROM labelData WHERE date(Start_time) = ? AND " \
                       "Sensor_id = ? ORDER BY Start_time ASC"
-sql_get_labels_between_dates = "SELECT Start_time, End_time, Label_name FROM labelData WHERE (Start_time " \
+SQL_GET_LABELS_BETWEEN_DATES = "SELECT Start_time, End_time, Label_name FROM labelData WHERE (Start_time " \
                                "BETWEEN ? AND ?) AND Sensor_id = ? ORDER BY Start_time ASC"
-sql_get_sensor_ids = "SELECT DISTINCT Sensor_id FROM fileMapping"
-sql_add_file = "INSERT INTO fileMapping(Filepath, Sensor_id, Filedate) VALUES (?,?,?)"
-sql_get_file_names = "SELECT Filepath FROM fileMapping WHERE Sensor_id = ? AND (Filedate BETWEEN ? AND ?)"
+SQL_GET_SENSOR_IDS = "SELECT DISTINCT Sensor_id FROM fileMapping"
+SQL_ADD_FILE = "INSERT INTO fileMapping(Filepath, Sensor_id, Filedate) VALUES (?,?,?)"
+SQL_GET_FILE_NAMES = "SELECT Filepath FROM fileMapping WHERE Sensor_id = ? AND (Filedate BETWEEN ? AND ?)"
 
 
 class LabelManager:
@@ -55,7 +55,7 @@ class LabelManager:
         :return: boolean indication if the label type was added successfully
         """
         try:
-            self._cur.execute(sql_add_label_type, (name, color, desc))
+            self._cur.execute(SQL_ADD_LABEL_TYPE, (name, color, desc))
             self._conn.commit()
             return True
         except sqlite3.Error as e:
@@ -67,8 +67,8 @@ class LabelManager:
 
         :param name: The name of the label type
         """
-        self._cur.execute(sql_del_label_data_all, [name])
-        self._cur.execute(sql_del_label_type, [name])
+        self._cur.execute(SQL_DEL_LABEL_DATA_ALL, [name])
+        self._cur.execute(SQL_DEL_LABEL_TYPE, [name])
         self._conn.commit()
 
     def add_label(self, start_time: datetime, end_time: datetime, name: str, sensor: str) -> bool:
@@ -82,7 +82,7 @@ class LabelManager:
         :return: boolean indication if the label was added successfully
         """
         try:
-            self._cur.execute(sql_add_label, (start_time, end_time, name, sensor))
+            self._cur.execute(SQL_ADD_LABEL, (start_time, end_time, name, sensor))
             self._conn.commit()
             return True
         except sqlite3.Error as e:
@@ -95,7 +95,7 @@ class LabelManager:
         :param start_time: The time at which the label starts
         :param sens_id: The sensor ID for which the label is made
         """
-        self._cur.execute(sql_del_label_data, (start_time, sens_id))
+        self._cur.execute(SQL_DEL_LABEL_DATA, (start_time, sens_id))
         self._conn.commit()
 
     def update_label_name(self, old_name: str, new_name: str) -> None:
@@ -106,8 +106,8 @@ class LabelManager:
         :param old_name: The name of the label type that has to be changed
         :param new_name: The name that the label type should get
         """
-        self._cur.execute(sql_upd_name_data, (new_name, old_name))
-        self._cur.execute(sql_upd_name_type, (new_name, old_name))
+        self._cur.execute(SQL_UPD_NAME_DATA, (new_name, old_name))
+        self._cur.execute(SQL_UPD_NAME_TYPE, (new_name, old_name))
         self._conn.commit()
 
     def update_label_color(self, label_name: str, color: str) -> None:
@@ -117,7 +117,7 @@ class LabelManager:
         :param label_name: The name of the label type
         :param color: The new color that the label type should get
         """
-        self._cur.execute(sql_upd_color, (color, label_name))
+        self._cur.execute(SQL_UPD_COLOR, (color, label_name))
         self._conn.commit()
 
     def update_label_description(self, label_name: str, desc: str) -> None:
@@ -127,7 +127,7 @@ class LabelManager:
         :param label_name: The name of the label type
         :param desc: The new description that the label type should get
         """
-        self._cur.execute(sql_upd_desc, (desc, label_name))
+        self._cur.execute(SQL_UPD_DESC, (desc, label_name))
         self._conn.commit()
 
     def change_label(self, start_time: datetime, label_name: str, sens_id: str) -> None:
@@ -138,7 +138,7 @@ class LabelManager:
         :param label_name: The name of the label type into which the label should be changed
         :param sens_id: The sensor ID belonging to this label
         """
-        self._cur.execute(sql_change_label, (label_name, start_time, sens_id))
+        self._cur.execute(SQL_CHANGE_LABEL, (label_name, start_time, sens_id))
         self._conn.commit()
 
     def get_label_types(self) -> List[Tuple[str, str, str]]:
@@ -147,7 +147,7 @@ class LabelManager:
 
         :return: List of tuples (label name, label color, label description) of all label types
         """
-        self._cur.execute(sql_get_label_types)
+        self._cur.execute(SQL_GET_LABEL_TYPES)
         return self._cur.fetchall()
 
     def get_all_labels(self, sensor_id: str) -> List[Tuple[datetime, datetime, str]]:
@@ -157,7 +157,7 @@ class LabelManager:
         :param sensor_id: The sensor ID of the sensor for which the labels need to be returned
         :return: List of tuples (start_time, end_time, label_name) of all labels belonging to the sensor
         """
-        self._cur.execute(sql_get_labels, [sensor_id])
+        self._cur.execute(SQL_GET_LABELS, [sensor_id])
         return self._cur.fetchall()
 
     def file_is_added(self, filename: str) -> bool:
@@ -178,7 +178,7 @@ class LabelManager:
         :param sensor_id: sensor id
         :param date: date of the data-file
         """
-        self._cur.execute(sql_add_file, (filename, sensor_id, date))
+        self._cur.execute(SQL_ADD_FILE, (filename, sensor_id, date))
         self._conn.commit()
 
     def get_file_paths(self, sensor_id: str, start_date: datetime, end_date: datetime) -> List[str]:
@@ -190,7 +190,7 @@ class LabelManager:
         :param end_date: end date
         :return: list of file paths
         """
-        self._cur.execute(sql_get_file_names, (sensor_id, start_date, end_date))
+        self._cur.execute(SQL_GET_FILE_NAMES, (sensor_id, start_date, end_date))
         return [x[0] for x in self._cur.fetchall()]
 
     def get_labels_date(self, sensor_id: str, date: date) -> List[Tuple[datetime, datetime, str]]:
@@ -201,7 +201,7 @@ class LabelManager:
         :param date: The date for which the labels should be returned
         :return: List of tuples (start_time, end_time, label_name)
         """
-        self._cur.execute(sql_get_labels_date, (date, sensor_id))
+        self._cur.execute(SQL_GET_LABELS_DATE, (date, sensor_id))
         return self._cur.fetchall()
 
     def get_labels_between_dates(self, sensor_id: str, start_date: datetime, end_date: datetime) \
@@ -214,7 +214,7 @@ class LabelManager:
         :param end_date: The second date of the interval
         :return: List of tuples (start_time, end_time, label_name)
         """
-        self._cur.execute(sql_get_labels_between_dates, (start_date, end_date, sensor_id))
+        self._cur.execute(SQL_GET_LABELS_BETWEEN_DATES, (start_date, end_date, sensor_id))
         return self._cur.fetchall()
 
     def get_sensor_ids(self) -> List[str]:
@@ -223,7 +223,7 @@ class LabelManager:
 
         :return: list of sensor ids
         """
-        self._cur.execute(sql_get_sensor_ids)
+        self._cur.execute(SQL_GET_SENSOR_IDS)
         return [x[0] for x in self._cur.fetchall()]
 
     # TODO: update export location?

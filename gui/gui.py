@@ -172,8 +172,9 @@ class GUI(QMainWindow, Ui_MainWindow):
         previous_video_path = self.settings.get_setting('last_videofile')
 
         if previous_video_path is not None:
-            self.video_path = previous_video_path
-            self.open_video()
+            if os.path.isfile(previous_video_path):
+                self.video_path = previous_video_path
+                self.open_video()
 
     def prompt_video(self):
         # Check if last used path is known
@@ -228,8 +229,9 @@ class GUI(QMainWindow, Ui_MainWindow):
         previous_data_path = self.settings.get_setting("last_datafile")
 
         if previous_data_path is not None:
-            self.sensordata_path = previous_data_path
-            self.open_sensordata()
+            if os.path.isfile(previous_data_path):
+                self.sensordata_path = previous_data_path
+                self.open_sensordata()
 
     def prompt_sensordata(self):
         path = '' if self.settings.get_setting('last_datafile') is None else self.settings.get_setting("last_datafile")

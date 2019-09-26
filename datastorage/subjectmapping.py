@@ -6,17 +6,19 @@ from typing import Any, List, Tuple
 from data_import.sensor_data import SensorData
 import pandas as pd
 
-sql_add_subject = "INSERT INTO subject_map (Name) VALUES (?)"
-sql_update_subject = "UPDATE subject_map SET Name = ? WHERE Name = ?"
-sql_delete_subject = "DELETE FROM subject_map WHERE Name = ?"
-sql_update_sensor = "UPDATE subject_map SET Sensor = ? WHERE Name = ?"
-sql_update_start_date = "UPDATE subject_map SET Start_date = ? WHERE Name = ?"
-sql_update_end_date = "UPDATE subject_map SET End_date = ? WHERE Name = ?"
-sql_add_column = "ALTER TABLE subject_map ADD COLUMN {} TEXT"
-sql_update_user_column = "UPDATE subject_map SET {} = ? WHERE Name = ?"
-sql_get_table = "SELECT Name, Sensor, Start_date, End_date{} FROM subject_map"
-sql_get_subject_data = "SELECT Sensor, Start_date, End_date FROM subject_map WHERE Name = ?"
-sql_get_subjects = "SELECT Name FROM subject_map"
+SQL_CREATE_TABLE = "CREATE TABLE subject_map (Name TEXT PRIMARY KEY, " \
+                   "Sensor TEXT, Start_date TIMESTAMP, End_date TIMESTAMP)"
+SQL_ADD_SUBJECT = "INSERT INTO subject_map (Name) VALUES (?)"
+SQL_UPDATE_SUBJECT = "UPDATE subject_map SET Name = ? WHERE Name = ?"
+SQL_DELETE_SUBJECT = "DELETE FROM subject_map WHERE Name = ?"
+SQL_UPDATE_SENSOR = "UPDATE subject_map SET Sensor = ? WHERE Name = ?"
+SQL_UPDATE_START_DATE = "UPDATE subject_map SET Start_date = ? WHERE Name = ?"
+SQL_UPDATE_END_DATE = "UPDATE subject_map SET End_date = ? WHERE Name = ?"
+SQL_ADD_COLUMN = "ALTER TABLE subject_map ADD COLUMN {} TEXT"
+SQL_UPDATE_USER_COLUMN = "UPDATE subject_map SET {} = ? WHERE Name = ?"
+SQL_GET_TABLE = "SELECT Name, Sensor, Start_date, End_date{} FROM subject_map"
+SQL_GET_SUBJECT_DATA = "SELECT Sensor, Start_date, End_date FROM subject_map WHERE Name = ?"
+SQL_GET_SUBJECTS = "SELECT Name FROM subject_map"
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
@@ -35,8 +37,7 @@ class SubjectManager:
 
     def create_table(self) -> None:
         """Method for creating the necessary subject mapping table."""
-        self._cur.execute("CREATE TABLE subject_map (Name TEXT PRIMARY KEY, "
-                          "Sensor TEXT, Start_date TIMESTAMP, End_date TIMESTAMP)")
+        self._cur.execute(SQL_CREATE_TABLE)
         self._conn.commit()
 
     def add_subject(self, name: str) -> None:
@@ -45,7 +46,7 @@ class SubjectManager:
 
         :param name: The name of the new subject
         """
-        self._cur.execute(sql_add_subject, [name])
+        self._cur.execute(SQL_ADD_SUBJECT, [name])
         self._conn.commit()
 
     def update_subject(self, name_old: str, name_new: str) -> None:
@@ -55,7 +56,7 @@ class SubjectManager:
         :param name_old: name that should be changed
         :param name_new: name that it should be changed to
         """
-        self._cur.execute(sql_update_subject, (name_new, name_old))
+        self._cur.execute(SQL_UPDATE_SUBJECT, (name_new, name_old))
         self._conn.commit()
 
     def delete_subject(self, name: str) -> None:
@@ -64,7 +65,7 @@ class SubjectManager:
 
         :param name: name of the subject to remove
         """
-        self._cur.execute(sql_delete_subject, [name])
+        self._cur.execute(SQL_DELETE_SUBJECT, [name])
         self._conn.commit()
 
     def update_sensor(self, name: str, sens_id: str) -> None:
@@ -74,7 +75,7 @@ class SubjectManager:
         :param name: The name of the subject to map this sensor to
         :param sens_id: The sensor ID of the sensor
         """
-        self._cur.execute(sql_update_sensor, (sens_id, name))
+        self._cur.execute(SQL_UPDATE_SENSOR, (sens_id, name))
         self._conn.commit()
 
     def update_start_date(self, name: str, date: datetime) -> None:
@@ -84,7 +85,7 @@ class SubjectManager:
         :param name: The name of the subject
         :param date: The start date
         """
-        self._cur.execute(sql_update_start_date, (date, name))
+        self._cur.execute(SQL_UPDATE_START_DATE, (date, name))
         self._conn.commit()
 
     def update_end_date(self, name: str, date: datetime) -> None:
@@ -94,7 +95,7 @@ class SubjectManager:
         :param name: The name of the subject
         :param date: The end date
         """
-        self._cur.execute(sql_update_end_date, (date, name))
+        self._cur.execute(SQL_UPDATE_END_DATE, (date, name))
         self._conn.commit()
 
     def add_column(self, name: str) -> bool:
@@ -110,7 +111,7 @@ class SubjectManager:
         new_col_nr = self.settings.get_setting("next_col")
         new_col_name = "c" + str(new_col_nr)
         col_map[name] = new_col_name
-        self._cur.execute(sql_add_column.format(new_col_name))  # add column to database with name "c" + the next number
+        self._cur.execute(SQL_ADD_COLUMN.format(new_col_name))  # add column to database with name "c" + the next number
         self._conn.commit()
         self.settings.set_setting("subj_map", col_map)
         self.settings.set_setting("next_col", new_col_nr + 1)
@@ -139,7 +140,7 @@ class SubjectManager:
         """
         col_map = self.settings.get_setting("subj_map")
         if col_name in col_map.keys():  # only try to update if column is known
-            self._cur.execute(sql_update_user_column.format(col_map[col_name]), (new_value, subj_name))
+            self._cur.execute(SQL_UPDATE_USER_COLUMN.format(col_map[col_name]), (new_value, subj_name))
             self._conn.commit()
             return True
         else:
@@ -168,7 +169,7 @@ class SubjectManager:
 
         :return: list of subject names
         """
-        self._cur.execute(sql_get_subjects)
+        self._cur.execute(SQL_GET_SUBJECTS)
         return [x[0] for x in self._cur.fetchall()]
 
     def get_dataframes_subject(self, subject_name: str) -> List[pd.DataFrame]:
@@ -180,7 +181,7 @@ class SubjectManager:
         """
         from datastorage.labelstorage import LabelManager
         from datastorage.settings import Settings
-        self._cur.execute(sql_get_subject_data, [subject_name])  # get the stored information for this subject
+        self._cur.execute(SQL_GET_SUBJECT_DATA, [subject_name])  # get the stored information for this subject
         subject_data = self._cur.fetchall()
 
         if len(subject_data) == 0 or subject_data[0][0] is None:  # if subject doesn't exist or sensor hasn't been set,
@@ -217,5 +218,5 @@ class SubjectManager:
         select_string = ""
         for col in cols_to_select:
             select_string += ", " + col
-        self._cur.execute(sql_get_table.format(select_string))
+        self._cur.execute(SQL_GET_TABLE.format(select_string))
         return col_names, self._cur.fetchall()

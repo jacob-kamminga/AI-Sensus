@@ -291,7 +291,7 @@ class Ui_MainWindow(object):
         self.actionOpen_Video.setText(_translate("MainWindow", "Open Video"))
         self.actionOpen_Sensor_Data.setText(_translate("MainWindow", "Open Sensor Data"))
         self.actionExport_Sensor_Data.setText(_translate("MainWindow", "Export Sensor Data"))
-        self.actionImport_Settings.setText(_translate("MainWindow", "Import Settings"))
+        self.actionImport_Settings.setText(_translate("MainWindow", "Edit Project Settings"))
         self.actionLabel_Settings.setText(_translate("MainWindow", "Label Settings"))
         self.actionSubject_Mapping.setText(_translate("MainWindow", "Subject Mapping"))
         self.actionMachine_Learning.setText(_translate("MainWindow", "Machine Learning"))

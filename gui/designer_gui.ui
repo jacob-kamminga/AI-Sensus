@@ -434,7 +434,7 @@
   </action>
   <action name="actionImport_Settings">
    <property name="text">
-    <string>Import Settings</string>
+    <string>Edit Project Settings</string>
    </property>
   </action>
   <action name="actionLabel_Settings">
