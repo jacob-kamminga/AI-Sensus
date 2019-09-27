@@ -107,6 +107,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox_video_offset.valueChanged.connect(self.change_offset)
         self.doubleSpinBox_speed.valueChanged.connect(self.change_speed)
         self.doubleSpinBox_plot_width.valueChanged.connect(self.change_plot_width)
+        self.doubleSpinBox_plot_height.valueChanged.connect(self.change_plot_height)
         self.comboBox_functions.activated.connect(self.change_plot)
         self.pushButton_add.clicked.connect(self.add_camera)
         # self.pushButton_camera_del.clicked.connect(self.delete_camera)
@@ -139,6 +140,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         # Load the stored width that the data-plot should have
         self.plot_width = self.settings.get_setting("plot_width")
         self.doubleSpinBox_plot_width.setValue(self.plot_width)
+
+        self.plot_height = self.settings.get_setting("plot_height")
+
+        if self.plot_height is not None:
+            self.doubleSpinBox_plot_height.setValue(self.plot_height)
 
         # Initialize the classes that retrieve information from the database.
         self.camera_manager = CameraManager()
@@ -240,7 +246,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             if not os.path.isdir(path):
                 path = QDir.homePath()
 
-        # Get the user input from a dialog window.
+        # Get the user input from a dialog window
         self.sensordata_path, _ = QFileDialog.getOpenFileName(self, "Open Sensor Data", path)
 
         self.open_sensordata()
@@ -253,15 +259,16 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.sensordata_path != '':
             self.settings.set_setting("last_datafile", self.sensordata_path)
 
-            # Reset the dictionary that maps function names to functions.
+            # Reset the dictionary that maps function names to functions
             self.formula_dict = dict()
 
-            # Retrieve the SensorData object that parses the sensor data file.
+            # Retrieve the SensorData object that parses the sensor data file
             self.sensordata = sensor_data.SensorData(self.sensordata_path, self.settings.settings_dict)
             self.sensor_id = self.sensordata.metadata['sn']
 
-            # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary.
+            # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary
             stored_formulas = self.settings.get_setting("formulas")
+
             for formula_name in stored_formulas:
                 try:
                     self.sensordata.add_column_from_func(formula_name, stored_formulas[formula_name])
@@ -269,11 +276,11 @@ class GUI(QMainWindow, Ui_MainWindow):
                 except Exception as e:
                     print(e)
 
-            # Retrieve the DataFrame with all the raw sensor data.
+            # Retrieve the DataFrame with all the raw sensor data
             self.data = self.sensordata.get_data()
 
             # Add every column in the DataFrame to the possible Data Series that can be plotted, except for time,
-            # and plot the first one.
+            # and plot the first one
             self.comboBox_functions.clear()
 
             for column in self.data.columns:
@@ -282,27 +289,34 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.comboBox_functions.removeItem(0)
             self.current_plot = self.comboBox_functions.currentText()
 
-            # Save the starting time of the sensordata in a DateTime object.
+            # Save the starting time of the sensordata in a DateTime object
             self.combidt = self.sensordata.metadata['datetime']
 
-            # Reset the figure and add a new subplot to it.
+            # Reset the figure and add a new subplot to it
             self.figure.clear()
             self.dataplot = self.figure.add_subplot(1, 1, 1)
 
-            # Determine the length of the y-axis and plot the graph with the specified width.
-            self.ymin = self.data[self.current_plot].min()
-            self.ymax = self.data[self.current_plot].max()
+            # Determine the length of the y-axis and plot the graph with the specified width
+            self.y_min = self.data[self.current_plot].min()
+            self.y_max = self.data[self.current_plot].max()
 
             self.draw_graph()
+
             x_window_start = self.x_min - (self.plot_width / 2)
             x_window_end = self.x_min + (self.plot_width / 2)
-            self.dataplot.axis([x_window_start, x_window_end, self.ymin, self.ymax])
 
-            # Start the timer that makes the graph scroll smoothly.
+            if self.settings.get_setting("plot_height") is None:
+                self.plot_height = self.y_max - self.y_min
+                self.settings.set_setting("plot_height", self.plot_height)
+
+            # Set the axis of the data plot
+            self.dataplot.axis([x_window_start, x_window_end, self.y_min, self.y_min + self.plot_height])
+
+            # Start the timer that makes the graph scroll smoothly
             self.timer.timeout.connect(self.update_plot_axis)
             self.timer.start(25)
 
-            # Draw the graph, set the value of the offset spinbox in the GUI to the correct value.
+            # Draw the graph, set the value of the offset spinbox in the GUI to the correct value
             self.canvas.draw()
 
             if self.comboBox_camera_ids.currentText():
@@ -311,7 +325,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                                                    self.sensordata.metadata['sn'],
                                                    self.sensordata.metadata['date']))
 
-            # Check if the sensor data file is already in the label database, if not add it.
+            # Check if the sensor data file is already in the label database, if not add it
             if not self.label_storage.file_is_added(self.sensordata_path):
                 self.label_storage.add_file(self.sensordata_path, self.sensordata.metadata['sn'], self.combidt)
 
@@ -379,6 +393,10 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.sensordata:
             self.update_plot_axis()
 
+    def change_plot_height(self, value):
+        self.settings.set_setting("plot_height", value)
+        self.plot_height = value
+
     def update_plot_axis(self, position=-1.0):
         """
         Every time the timer calls this function, the axis of the graph is updated.
@@ -397,6 +415,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         x_max = date2num(new_position_dt + plot_width_delta - video_offset_delta - video_begin_offset_delta)
 
         self.dataplot.set_xlim(x_min, x_max)
+        self.dataplot.set_ylim(self.y_min, self.y_min + self.plot_height)
         self.vertical_line.set_xdata((x_min + x_max) / 2)
         self.canvas.draw()
 
@@ -682,8 +701,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         else:
             self.label_current_formula.clear()
 
-        self.ymin = self.data[self.current_plot].min()
-        self.ymax = self.data[self.current_plot].max()
+        self.y_min = self.data[self.current_plot].min()
+        self.y_max = self.data[self.current_plot].max()
         self.draw_graph()
 
     def new_plot(self):
@@ -868,7 +887,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.x_min = date2num(self.data['clock_time'].min())
         self.x_max = date2num(self.data['clock_time'].max())
 
-        self.dataplot.axis([self.x_min, self.x_max, self.ymin, self.ymax])
+        self.dataplot.axis([self.x_min, self.x_max, self.y_min, self.y_max])
         self.dataplot.plot(self.data['clock_time'], self.data[self.current_plot], ',-', linewidth=1, color='black')
         self.vertical_line = self.dataplot.axvline(x=0)
         self.vertical_line.set_color('red')
@@ -892,14 +911,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         label_end_num = date2num(label_end)
         alpha = self.settings.get_setting('label_opacity') / 100
         span = self.dataplot.axvspan(label_start_num, label_end_num, facecolor=self.color_dict[label_type], alpha=alpha)
-        text = self.dataplot.text((label_start_num + label_end_num) / 2, self.ymax * 0.75, label_type,
+        text = self.dataplot.text((label_start_num + label_end_num) / 2, self.y_max * 0.75, label_type,
                                   horizontalalignment='center')
 
         self.label_highlights[label_start] = (span, text)
 
     def add_suggestion_highlight(self, start: float, end: float, label: str):
         span = self.dataplot.axvspan(start, end, facecolor='gold', alpha=0.4)
-        text = self.dataplot.text((start + end) / 2, self.ymax * 0.5, "Suggested label:\n" + label,
+        text = self.dataplot.text((start + end) / 2, self.y_max * 0.5, "Suggested label:\n" + label,
                                   horizontalalignment='center')
 
         self.canvas.draw()
