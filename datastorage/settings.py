@@ -38,6 +38,7 @@ class Settings:
             self.set_setting("formulas", {})  # user-made formulas. mapping from function name to regular expression
             self.set_setting("label_opacity", 50)  # opacity of the label highlights
             self.set_setting("plot_width", 20)  # the width of the data plot in seconds
+            self.set_setting("plot_height_factor", 1.0)
         else:
             self.load()
 

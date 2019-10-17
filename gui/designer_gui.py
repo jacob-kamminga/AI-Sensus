@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(693, 715)
+        MainWindow.resize(693, 735)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
@@ -212,7 +212,8 @@ class Ui_MainWindow(object):
         self.label_y_plot_height.setObjectName("label_y_plot_height")
         self.horizontalLayout.addWidget(self.label_y_plot_height)
         self.doubleSpinBox_plot_height = QtWidgets.QDoubleSpinBox(self.layoutWidget2)
-        self.doubleSpinBox_plot_height.setMaximum(999999999.0)
+        self.doubleSpinBox_plot_height.setSuffix("")
+        self.doubleSpinBox_plot_height.setMaximum(1000.0)
         self.doubleSpinBox_plot_height.setObjectName("doubleSpinBox_plot_height")
         self.horizontalLayout.addWidget(self.doubleSpinBox_plot_height)
         self.verticalLayout_settings.addLayout(self.horizontalLayout)
@@ -304,7 +305,7 @@ class Ui_MainWindow(object):
         self.label_video_offset.setText(_translate("MainWindow", "Video offset (s)"))
         self.label_speed.setText(_translate("MainWindow", "Speed"))
         self.label_plot_width.setText(_translate("MainWindow", "Plot width (s)"))
-        self.label_y_plot_height.setText(_translate("MainWindow", "Plot height"))
+        self.label_y_plot_height.setText(_translate("MainWindow", "Plot height factor"))
         self.label_function_name.setText(_translate("MainWindow", "Name"))
         self.label_function_regex.setText(_translate("MainWindow", "Regular expression"))
         self.pushButton_label.setText(_translate("MainWindow", "Label"))

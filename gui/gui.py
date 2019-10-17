@@ -115,7 +115,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionExport_Sensor_Data.triggered.connect(self.open_export)
         self.actionMachine_Learning.triggered.connect(self.open_machine_learning)
 
-        # Initialize the libraries that are needed to plot the sensor data, and add them to the GUI.
+        # Initialize the libraries that are needed to plot the sensor data, and add them to the GUI
         self.figure = matplotlib.pyplot.figure()
         self.canvas = FigureCanvasQTAgg(self.figure)
         self.canvas.resize(self.canvas.width(), 200)
@@ -123,14 +123,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.canvas.mpl_connect('button_press_event', self.onclick)
         self.canvas.mpl_connect('button_release_event', self.onrelease)
 
-        # Initialize a timer that makes sure that the sensor data plays smoothly.
+        # Initialize a timer that makes sure that the sensor data plays smoothly
         self.timer = QtCore.QTimer(self)
 
         # Variable that stores start and stop time of a loop that the video-player should play
         self.loop = None
 
         # Before showing the full GUI, a dialog window needs to be prompted where the user can choose between an
-        # existing project and a new project, in which case the settings need to be specified.
+        # existing project and a new project, in which case the settings need to be specified
         self.project_dialog = NewProject()
         self.project_dialog.exec_()
 
@@ -141,19 +141,17 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.plot_width = self.settings.get_setting("plot_width")
         self.doubleSpinBox_plot_width.setValue(self.plot_width)
 
-        self.plot_height = self.settings.get_setting("plot_height")
+        self.plot_height_factor = self.settings.get_setting("plot_height_factor")
+        self.doubleSpinBox_plot_height.setValue(self.plot_height_factor)
 
-        if self.plot_height is not None:
-            self.doubleSpinBox_plot_height.setValue(self.plot_height)
-
-        # Initialize the classes that retrieve information from the database.
+        # Initialize the classes that retrieve information from the database
         self.camera_manager = CameraManager()
         self.offset_manager = OffsetManager()
         self.label_storage = LabelManager(self.project_dialog.project_name)
         self.label_data = LabelData(self.label_storage)
         self.subject_mapping = SubjectManager(self.project_dialog.project_name)
 
-        # Add the known camera's to the camera combo box in the GUI.
+        # Add the known cameras to the camera combo box in the GUI
         for camera in self.camera_manager.get_all_cameras():
             self.comboBox_camera_ids.addItem(camera)
 
@@ -305,12 +303,12 @@ class GUI(QMainWindow, Ui_MainWindow):
             x_window_start = self.x_min - (self.plot_width / 2)
             x_window_end = self.x_min + (self.plot_width / 2)
 
-            if self.settings.get_setting("plot_height") is None:
-                self.plot_height = self.y_max - self.y_min
-                self.settings.set_setting("plot_height", self.plot_height)
+            if self.settings.get_setting("plot_height_factor") is None:
+                self.plot_height_factor = 1.0
+                self.settings.set_setting("plot_height_factor", self.plot_height_factor)
 
             # Set the axis of the data plot
-            self.dataplot.axis([x_window_start, x_window_end, self.y_min, self.y_min + self.plot_height])
+            self.dataplot.axis([x_window_start, x_window_end, self.y_min, self.plot_height_factor * self.y_max])
 
             # Start the timer that makes the graph scroll smoothly
             self.timer.timeout.connect(self.update_plot_axis)
@@ -394,8 +392,8 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.update_plot_axis()
 
     def change_plot_height(self, value):
-        self.settings.set_setting("plot_height", value)
-        self.plot_height = value
+        self.settings.set_setting("plot_height_factor", value)
+        self.plot_height_factor = value
 
     def update_plot_axis(self, position=-1.0):
         """
@@ -415,7 +413,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         x_max = date2num(new_position_dt + plot_width_delta - video_offset_delta - video_begin_offset_delta)
 
         self.dataplot.set_xlim(x_min, x_max)
-        self.dataplot.set_ylim(self.y_min, self.y_min + self.plot_height)
+        self.dataplot.set_ylim(self.y_min, self.plot_height_factor * self.y_max)
         self.vertical_line.set_xdata((x_min + x_max) / 2)
         self.canvas.draw()
 

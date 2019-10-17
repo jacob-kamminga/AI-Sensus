@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>693</width>
-    <height>715</height>
+    <height>735</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -351,14 +351,17 @@
           <item>
            <widget class="QLabel" name="label_y_plot_height">
             <property name="text">
-             <string>Plot height</string>
+             <string>Plot height factor</string>
             </property>
            </widget>
           </item>
           <item>
            <widget class="QDoubleSpinBox" name="doubleSpinBox_plot_height">
+            <property name="suffix">
+             <string/>
+            </property>
             <property name="maximum">
-             <double>999999999.000000000000000</double>
+             <double>1000.000000000000000</double>
             </property>
            </widget>
           </item>
