@@ -47,16 +47,33 @@ DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 QDATETIME_FORMAT = 'yyyy-MM-dd HH:mm:ss.zzz'
 
 
-def add_time_strings(time1, time2):
+def add_hms_strings(time1, time2):
     """
-    Helper function that takes the strings of two times in the HH:MM:SS format, and returns a string with of the
-    result of addition of the two times.
+    Takes the strings of two times in the HH:MM:SS format, and returns a string of the sum of the two times.
+
     :param time1: The string of the first time of the addition.
     :param time2: The string of the second time of the addition.
     :return: The result of the addition of the two times, again as a string in the HH:MM:SS format.
     """
-    return timedelta(hours=int(time1[0:2]), minutes=int(time1[3:5]), seconds=int(time1[6:8])) + timedelta(hours=int(
-        time2[0:2]), minutes=int(time2[3:5]), seconds=int(time2[6:8]))
+    return str(timedelta(hours=int(time1[0:2]), minutes=int(time1[3:5]), seconds=int(time1[6:8])) + timedelta(hours=int(
+        time2[0:2]), minutes=int(time2[3:5]), seconds=int(time2[6:8])))
+
+
+def ms_to_hms(duration):
+    """
+    Translates a certain amount of milliseconds to a readable HH:MM:SS string.
+
+    :param duration: The number of milliseconds that corresponds to the position of the video.
+    :return: A readable string that corresponds to duration in the format HH:MM:SS.
+    """
+    seconds = (duration // 1000) % 60
+    seconds_str = "0" + str(seconds) if seconds < 10 else str(seconds)
+    minutes = (duration // (1000 * 60)) % 60
+    minutes_str = "0" + str(minutes) if minutes < 10 else str(minutes)
+    hours = duration // (1000 * 60 * 60)
+    hours_str = "0" + str(hours) if hours < 10 else str(hours)
+
+    return hours_str + ":" + minutes_str + ":" + seconds_str
 
 
 class GUI(QMainWindow, Ui_MainWindow):
@@ -164,9 +181,13 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.video_path = ''
         self.sensordata_path = ''
 
+        self.video_begin_dt = None
+        self.video_begin_hms = None
+
         self.data = None
         self.dataplot = None
         self.x_min_dt = None
+        self.timezone = pytz.utc  # TODO: Ask for timezone setting when opening video (specified for camera)
 
         # Open the last opened files
         self.open_previous_video()
@@ -213,10 +234,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.video_path != '':
             # Save the path for next time
             self.settings.set_setting('last_videofile', self.video_path)
-            self.video_start_time_str = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_path),
-                                                                      '%H:%M:%S')
-            self.video_start_dt = vm.parse_start_time_from_file(self.video_path)
-            video_date = vm.datetime_with_tz_to_string(vm.parse_start_time_from_file(self.video_path), '%d-%B-%Y')
+
+            # Store the video start time
+            self.video_begin_dt = vm.parse_video_begin_time(self.video_path, self.timezone)
+            self.video_begin_hms = self.video_begin_dt.strftime('%H:%M:%S')
+            video_date = vm.datetime_with_tz_to_string(vm.parse_video_begin_time(self.video_path), '%d-%B-%Y')
 
             # Play the video in the QMediaPlayer and activate the associated widgets
             self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_path)))
@@ -224,7 +246,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.pushButton_play.setEnabled(True)
             self.horizontalSlider_time.setEnabled(True)
             self.label_date.setText(video_date)
-            self.label_time.setText(self.video_start_time_str)
+            self.label_time.setText(self.video_begin_hms)
             self.play()
 
             self.sync_video_and_sensordata()
@@ -333,8 +355,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Set the video time equal to the start of the sensor data.
         """
-        if self.video_start_dt is not None and self.x_min_dt is not None:
-            self.video_begin_offset_td = self.x_min_dt - self.video_start_dt
+        if self.video_begin_dt is not None and self.x_min_dt is not None:
+            self.video_begin_offset_td = self.x_min_dt - self.video_begin_dt
             self.video_begin_offset_ms = self.video_begin_offset_td / timedelta(milliseconds=1)
 
             self.mediaPlayer.setPosition(self.video_begin_offset_ms)
@@ -381,8 +403,9 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.mediaPlayer.setPosition(position)
 
         self.horizontalSlider_time.setValue(position)
-        self.label_duration.setText(self.ms_to_time(position))
-        self.label_time.setText(str(add_time_strings(self.ms_to_time(position), self.video_start_time_str)))
+        self.label_duration.setText(ms_to_hms(position))
+        current_video_time = add_hms_strings(self.video_begin_hms, ms_to_hms(position))
+        self.label_time.setText(current_video_time)
 
     def change_plot_width(self, value):
         self.settings.set_setting("plot_width", value)
@@ -432,21 +455,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         self.horizontalSlider_time.setRange(0, duration)
 
-    def ms_to_time(self, duration):
-        """
-        Translates a certain amount of milliseconds to a readable HH:MM:SS string.
-        :param duration: The number of milliseconds that corresponds to the position of the video.
-        :return: A readable string that corresponds to duration in the format HH:MM:SS.
-        """
-        seconds = (duration // 1000) % 60
-        seconds_str = "0" + str(seconds) if seconds < 10 else str(seconds)
-        minutes = (duration // (1000 * 60)) % 60
-        minutes_str = "0" + str(minutes) if minutes < 10 else str(minutes)
-        hours = duration // (1000 * 60 * 60)
-        hours_str = "0" + str(hours) if hours < 10 else str(hours)
-
-        return hours_str + ":" + minutes_str + ":" + seconds_str
-
     def open_label(self):
         """
         Opens the label dialog window.
@@ -468,6 +476,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         settings = SettingsDialog(self.settings)
         settings.exec_()
         settings.show()
+
+    # def open_camera_settings(self):
+    #     """
+    #     Opens the camera settings dialog window.
+    #     """
+    #     camera_settings = CameraSettingsDialog
 
     def open_label_settings(self):
         """
@@ -604,8 +618,8 @@ class GUI(QMainWindow, Ui_MainWindow):
                 msg.setText("The classifier suggests the following label:")
                 msg.setInformativeText("Label: {}\nLabel start: {}\nLabel end: {}\n\n"
                                        "Do you want to accept this suggestion?"
-                                       .format(label, self.ms_to_time(int(start * 1000)),
-                                               self.ms_to_time(int(end * 1000))))
+                                       .format(label, self.ms_to_hms(int(start * 1000)),
+                                               self.ms_to_hms(int(end * 1000))))
                 msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                 stop_button = msg.addButton("Stop suggestions", QMessageBox.ActionRole)
                 response = msg.exec_()

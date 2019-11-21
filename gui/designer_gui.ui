@@ -455,6 +455,7 @@
     <addaction name="actionOpen_Sensor_Data"/>
     <addaction name="actionExport_Sensor_Data"/>
     <addaction name="actionImport_Settings"/>
+    <addaction name="actionCamera_Settings"/>
     <addaction name="actionLabel_Settings"/>
     <addaction name="actionSubject_Mapping"/>
     <addaction name="actionMachine_Learning"/>
@@ -501,6 +502,11 @@
   <action name="actionExit">
    <property name="text">
     <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionCamera_Settings">
+   <property name="text">
+    <string>Camera Settings</string>
    </property>
   </action>
  </widget>

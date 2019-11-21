@@ -278,10 +278,13 @@ class Ui_MainWindow(object):
         self.actionMachine_Learning.setObjectName("actionMachine_Learning")
         self.actionExit = QtWidgets.QAction(MainWindow)
         self.actionExit.setObjectName("actionExit")
+        self.actionCamera_Settings = QtWidgets.QAction(MainWindow)
+        self.actionCamera_Settings.setObjectName("actionCamera_Settings")
         self.menuFile.addAction(self.actionOpen_Video)
         self.menuFile.addAction(self.actionOpen_Sensor_Data)
         self.menuFile.addAction(self.actionExport_Sensor_Data)
         self.menuFile.addAction(self.actionImport_Settings)
+        self.menuFile.addAction(self.actionCamera_Settings)
         self.menuFile.addAction(self.actionLabel_Settings)
         self.menuFile.addAction(self.actionSubject_Mapping)
         self.menuFile.addAction(self.actionMachine_Learning)
@@ -318,5 +321,6 @@ class Ui_MainWindow(object):
         self.actionSubject_Mapping.setText(_translate("MainWindow", "Subject Mapping"))
         self.actionMachine_Learning.setText(_translate("MainWindow", "Machine Learning"))
         self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.actionCamera_Settings.setText(_translate("MainWindow", "Camera Settings"))
 from PyQt5.QtMultimedia import QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
