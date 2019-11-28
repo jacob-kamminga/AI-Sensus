@@ -25,6 +25,7 @@ from datastorage.camerainfo import CameraManager
 from datastorage.deviceoffsets import OffsetManager
 from datastorage.labelstorage import LabelManager
 from datastorage.subjectmapping import SubjectManager
+from gui.camera_settings_dialog import CameraSettingsDialog
 from gui.designer_gui import Ui_MainWindow
 from gui.export_dialog import ExportDialog
 from gui.label_dialog import LabelSpecs
@@ -117,6 +118,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionOpen_Sensor_Data.triggered.connect(self.prompt_sensordata)
         self.pushButton_label.clicked.connect(self.open_label)
         self.actionImport_Settings.triggered.connect(self.open_settings)
+        self.actionCamera_Settings.triggered.connect(self.open_camera_settings)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings)
         self.comboBox_camera_ids.currentTextChanged.connect(self.change_camera)
         self.lineEdit_new_camera.returnPressed.connect(self.add_camera)
@@ -170,7 +172,8 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         # Add the known cameras to the camera combo box in the GUI
         for camera in self.camera_manager.get_all_cameras():
-            self.comboBox_camera_ids.addItem(camera)
+            name = camera[0]
+            self.comboBox_camera_ids.addItem(name)
 
         # Machine learning fields
         self.ml_dataframe = None
@@ -477,11 +480,13 @@ class GUI(QMainWindow, Ui_MainWindow):
         settings.exec_()
         settings.show()
 
-    # def open_camera_settings(self):
-    #     """
-    #     Opens the camera settings dialog window.
-    #     """
-    #     camera_settings = CameraSettingsDialog
+    def open_camera_settings(self):
+        """
+        Opens the camera settings dialog window.
+        """
+        camera_settings = CameraSettingsDialog(self.camera_manager)
+        camera_settings.exec_()
+        camera_settings.show()
 
     def open_label_settings(self):
         """
@@ -490,6 +495,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         label_settings = LabelSettingsDialog(self.label_storage, self.settings)
         label_settings.exec_()
         label_settings.show()
+
+        # Upon window close
         if label_settings.settings_changed:
             self.draw_graph()
 
