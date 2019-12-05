@@ -13,8 +13,8 @@ def new_project(project_name: str) -> None:
     :param project_name: The name of the new project
     """
     if not os.path.exists('projects/' + project_name):
-        from datastorage.labelstorage import LabelManager
-        from datastorage.subjectmapping import SubjectManager
+        from data_storage.label_storage import LabelManager
+        from data_storage.subject_mapping import SubjectManager
         os.mkdir('projects/' + project_name)
         Settings(project_name, True)
         LabelManager(project_name).create_tables()

@@ -2,8 +2,8 @@ import unittest
 import os
 from datetime import datetime
 
-from datastorage.subjectmapping import SubjectManager
-from datastorage.settings import Settings
+from data_storage.subject_mapping import SubjectManager
+from data_storage.settings import Settings
 
 
 class TestSubjects(unittest.TestCase):
@@ -31,11 +31,11 @@ class TestSubjects(unittest.TestCase):
         date = datetime.now()
         self.s.add_subject('subject')
         self.s.update_sensor('subject', 'sensor1')
-        self.assertEqual('sensor1', self.s._cur.execute('SELECT Sensor FROM subject_map').fetchone()[0])
+        self.assertEqual('sensor1', self.s._cur.execute('SELECT sensor FROM subject_map').fetchone()[0])
         self.s.update_start_date('subject', date)
-        self.assertEqual(date, self.s._cur.execute('SELECT Start_date FROM subject_map').fetchone()[0])
+        self.assertEqual(date, self.s._cur.execute('SELECT start_date FROM subject_map').fetchone()[0])
         self.s.update_end_date('subject', date)
-        self.assertEqual(date, self.s._cur.execute('SELECT End_date FROM subject_map').fetchone()[0])
+        self.assertEqual(date, self.s._cur.execute('SELECT end_date FROM subject_map').fetchone()[0])
 
     def test_user_columns(self):
         self.s.add_subject('subject')

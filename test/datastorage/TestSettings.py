@@ -1,6 +1,6 @@
 import shutil
 import unittest
-from datastorage.settings import *
+from data_storage.settings import *
 import os.path
 
 

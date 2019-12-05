@@ -1,5 +1,5 @@
 from gui.new_dialog import NewProject
-from datastorage import settings
+from data_storage import settings
 
 
 class SettingsDialog(NewProject):

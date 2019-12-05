@@ -21,10 +21,10 @@ import video_metadata as vm
 from data_export import export_data, windowing as wd
 from data_import import sensor_data
 from data_import.label_data import LabelData
-from datastorage.camerainfo import CameraManager
-from datastorage.deviceoffsets import OffsetManager
-from datastorage.labelstorage import LabelManager
-from datastorage.subjectmapping import SubjectManager
+from data_storage.camera_info import CameraManager
+from data_storage.device_offsets import OffsetManager
+from data_storage.label_storage import LabelManager
+from data_storage.subject_mapping import SubjectManager
 from gui.camera_settings_dialog import CameraSettingsDialog
 from gui.designer_gui import Ui_MainWindow
 from gui.export_dialog import ExportDialog
@@ -164,8 +164,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox_plot_height.setValue(self.plot_height_factor)
 
         # Initialize the classes that retrieve information from the database
-        self.camera_manager = CameraManager()
-        self.offset_manager = OffsetManager()
+        self.camera_manager = CameraManager(self.project_dialog.project_name)
+        self.offset_manager = OffsetManager(self.project_dialog.project_name)
         self.label_storage = LabelManager(self.project_dialog.project_name)
         self.label_data = LabelData(self.label_storage)
         self.subject_mapping = SubjectManager(self.project_dialog.project_name)

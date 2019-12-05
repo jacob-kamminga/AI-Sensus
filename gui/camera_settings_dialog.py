@@ -1,7 +1,7 @@
 import pytz
 from PyQt5 import QtWidgets
 
-from datastorage.camerainfo import CameraManager
+from data_storage.camera_info import CameraManager
 from gui.designer_camera_settings import Ui_Dialog
 
 

@@ -3,17 +3,18 @@ from typing import List, Tuple
 
 import pytz
 
-SQL_CREATE_TABLE = "CREATE TABLE cameras (Name TEXT PRIMARY KEY, Timezone VARCHAR(50))"
+SQL_CREATE_TABLE = "CREATE TABLE cameras (name TEXT PRIMARY KEY, timezone TEXT)"
 SQL_ADD_CAMERA = "INSERT INTO cameras VALUES (?, ?)"
-SQL_DELETE_CAMERA = "DELETE FROM cameras WHERE Name = ?"
-SQL_GET_ALL_CAMERAS = "SELECT Name, Timezone FROM cameras"
-SQL_UPDATE_TIMEZONE = "UPDATE cameras SET Timezone = ? WHERE Name = ?"
+SQL_DELETE_CAMERA = "DELETE FROM cameras WHERE name = ?"
+SQL_GET_ALL_CAMERAS = "SELECT name, timezone FROM cameras"
+SQL_UPDATE_TIMEZONE = "UPDATE cameras SET timezone = ? WHERE name = ?"
 
 
 class CameraManager:
 
-    def __init__(self):
-        self._conn = sqlite3.connect('data.db')
+    def __init__(self, project_name: str):
+        self._conn = sqlite3.connect('projects/' + project_name + '/project_data.db',
+                                     detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
         self._cur = self._conn.cursor()
 
     def create_table(self) -> None:

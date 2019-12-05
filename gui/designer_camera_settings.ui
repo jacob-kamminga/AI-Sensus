@@ -121,7 +121,7 @@
      <widget class="QListWidget" name="listWidget_timezones"/>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="pushButton_save_timezone">
       <property name="enabled">
        <bool>false</bool>
       </property>
@@ -132,19 +132,6 @@
        <bool>false</bool>
       </property>
       <property name="flat">
-       <bool>false</bool>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QDialogButtonBox" name="buttonBox">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="standardButtons">
-       <set>QDialogButtonBox::Close</set>
-      </property>
-      <property name="centerButtons">
        <bool>false</bool>
       </property>
      </widget>

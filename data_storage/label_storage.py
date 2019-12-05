@@ -3,26 +3,26 @@ import csv
 from datetime import datetime, date
 from typing import List, Tuple
 
-SQL_ADD_LABEL_TYPE = "INSERT INTO labelType(Name, Color, Description) VALUES (?,?,?)"
-SQL_GET_LABEL_TYPES = "SELECT * FROM labelType"
-SQL_DEL_LABEL_TYPE = "DELETE FROM labelType WHERE Name = ?"
-SQL_DEL_LABEL_DATA_ALL = "DELETE FROM labelData WHERE Label_name = ?"
-SQL_DEL_LABEL_DATA = "DELETE FROM labelData WHERE Start_time = ? AND Sensor_id = ?"
-SQL_ADD_LABEL = "INSERT INTO labelData(Start_time, End_time, Label_name, Sensor_id) VALUES (?,?,?,?)"
-SQL_UPD_NAME_TYPE = "UPDATE labelType SET Name = ? WHERE Name = ?"
-SQL_UPD_NAME_DATA = "UPDATE labelData SET Label_name = ? WHERE Label_name = ?"
-SQL_UPD_COLOR = "UPDATE labelType SET Color = ? WHERE Name = ?"
-SQL_UPD_DESC = "UPDATE labelType SET Description = ? WHERE Name = ?"
-SQL_CHANGE_LABEL = "UPDATE labelData SET Label_name = ? WHERE Start_time = ? AND Sensor_id = ?"
-SQL_GET_LABELS = "SELECT Start_time, End_time, Label_name FROM labelData WHERE Sensor_id = ? ORDER BY Start_time ASC"
-SQL_GET_ALL_LABELS = "SELECT * FROM labelData ORDER BY Start_time ASC"
-SQL_GET_LABELS_DATE = "SELECT Start_time, End_time, Label_name FROM labelData WHERE date(Start_time) = ? AND " \
-                      "Sensor_id = ? ORDER BY Start_time ASC"
-SQL_GET_LABELS_BETWEEN_DATES = "SELECT Start_time, End_time, Label_name FROM labelData WHERE (Start_time " \
-                               "BETWEEN ? AND ?) AND Sensor_id = ? ORDER BY Start_time ASC"
-SQL_GET_SENSOR_IDS = "SELECT DISTINCT Sensor_id FROM fileMapping"
-SQL_ADD_FILE = "INSERT INTO fileMapping(Filepath, Sensor_id, Filedate) VALUES (?,?,?)"
-SQL_GET_FILE_NAMES = "SELECT Filepath FROM fileMapping WHERE Sensor_id = ? AND (Filedate BETWEEN ? AND ?)"
+SQL_ADD_LABEL_TYPE = "INSERT INTO label_type(name, color, description) VALUES (?,?,?)"
+SQL_GET_LABEL_TYPES = "SELECT * FROM label_type"
+SQL_DEL_LABEL_TYPE = "DELETE FROM label_type WHERE name = ?"
+SQL_DEL_LABEL_DATA_ALL = "DELETE FROM label_data WHERE label_name = ?"
+SQL_DEL_LABEL_DATA = "DELETE FROM label_data WHERE start_time = ? AND sensor_id = ?"
+SQL_ADD_LABEL = "INSERT INTO label_data(start_time, end_time, label_name, sensor_id) VALUES (?,?,?,?)"
+SQL_UPD_NAME_TYPE = "UPDATE label_type SET name = ? WHERE name = ?"
+SQL_UPD_NAME_DATA = "UPDATE label_data SET label_name = ? WHERE label_name = ?"
+SQL_UPD_COLOR = "UPDATE label_type SET color = ? WHERE name = ?"
+SQL_UPD_DESC = "UPDATE label_type SET description = ? WHERE name = ?"
+SQL_CHANGE_LABEL = "UPDATE label_data SET label_name = ? WHERE start_time = ? AND sensor_id = ?"
+SQL_GET_LABELS = "SELECT start_time, end_time, label_name FROM label_data WHERE sensor_id = ? ORDER BY start_time ASC"
+SQL_GET_ALL_LABELS = "SELECT * FROM label_data ORDER BY start_time ASC"
+SQL_GET_LABELS_DATE = "SELECT start_time, end_time, label_name FROM label_data WHERE date(start_time) = ? AND " \
+                      "sensor_id = ? ORDER BY start_time ASC"
+SQL_GET_LABELS_BETWEEN_DATES = "SELECT start_time, end_time, label_name FROM label_data WHERE (start_time " \
+                               "BETWEEN ? AND ?) AND sensor_id = ? ORDER BY start_time ASC"
+SQL_GET_SENSOR_IDS = "SELECT DISTINCT sensor_id FROM file_mapping"
+SQL_ADD_FILE = "INSERT INTO file_mapping(file_path, sensor_id, file_date) VALUES (?,?,?)"
+SQL_GET_FILE_NAMES = "SELECT file_path FROM file_mapping WHERE sensor_id = ? AND (file_date BETWEEN ? AND ?)"
 
 
 class LabelManager:
@@ -39,10 +39,10 @@ class LabelManager:
     def create_tables(self) -> None:
         """Method for creating the necessary label tables in the database."""
         c = self._conn.cursor()
-        c.execute("CREATE TABLE labelType (Name TEXT PRIMARY KEY, Color TEXT, Description TEXT)")
-        c.execute("CREATE TABLE labelData (Start_time TIMESTAMP, End_time TIMESTAMP, Label_name TEXT, Sensor_id TEXT, "
-                  "PRIMARY KEY(Start_time, Sensor_id), FOREIGN KEY (Label_name) REFERENCES labelType(Name))")
-        c.execute("CREATE TABLE fileMapping (Filepath TEXT PRIMARY KEY, Sensor_id TEXT, Filedate TIMESTAMP)")
+        c.execute("CREATE TABLE label_type (name TEXT PRIMARY KEY, color TEXT, description TEXT)")
+        c.execute("CREATE TABLE label_data (start_time TIMESTAMP, end_time TIMESTAMP, label_name TEXT, sensor_id TEXT, "
+                  "PRIMARY KEY(start_time, sensor_id), FOREIGN KEY (label_name) REFERENCES label_type(name))")
+        c.execute("CREATE TABLE file_mapping (file_path TEXT PRIMARY KEY, sensor_id TEXT, file_date TIMESTAMP)")
         self._conn.commit()
 
     def add_label_type(self, name: str, color: str, desc: str) -> bool:
@@ -167,7 +167,7 @@ class LabelManager:
         :param filename: file path
         :return: boolean indicating if the file is already added or not
         """
-        self._cur.execute("SELECT 1 FROM fileMapping WHERE Filepath = ?", [filename])
+        self._cur.execute("SELECT 1 FROM file_mapping WHERE file_path = ?", [filename])
         return len(self._cur.fetchall()) == 1
 
     def add_file(self, filename: str, sensor_id: str, date: datetime) -> None:

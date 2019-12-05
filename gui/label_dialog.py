@@ -2,7 +2,7 @@ from datetime import datetime
 
 from PyQt5 import QtWidgets
 
-from datastorage.labelstorage import LabelManager
+from data_storage.label_storage import LabelManager
 from gui.designer_labelspecs import Ui_LabelSpecs
 
 

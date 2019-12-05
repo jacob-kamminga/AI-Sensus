@@ -1,24 +1,24 @@
 import os.path
 import sqlite3
-from datastorage import settings
+from data_storage import settings
 from datetime import datetime
 from typing import Any, List, Tuple
 from data_import.sensor_data import SensorData
 import pandas as pd
 
-SQL_CREATE_TABLE = "CREATE TABLE subject_map (Name TEXT PRIMARY KEY, " \
-                   "Sensor TEXT, Start_date TIMESTAMP, End_date TIMESTAMP)"
-SQL_ADD_SUBJECT = "INSERT INTO subject_map (Name) VALUES (?)"
-SQL_UPDATE_SUBJECT = "UPDATE subject_map SET Name = ? WHERE Name = ?"
-SQL_DELETE_SUBJECT = "DELETE FROM subject_map WHERE Name = ?"
-SQL_UPDATE_SENSOR = "UPDATE subject_map SET Sensor = ? WHERE Name = ?"
-SQL_UPDATE_START_DATE = "UPDATE subject_map SET Start_date = ? WHERE Name = ?"
-SQL_UPDATE_END_DATE = "UPDATE subject_map SET End_date = ? WHERE Name = ?"
+SQL_CREATE_TABLE = "CREATE TABLE subject_map (name TEXT PRIMARY KEY, " \
+                   "sensor TEXT, start_date TIMESTAMP, end_date TIMESTAMP)"
+SQL_ADD_SUBJECT = "INSERT INTO subject_map (name) VALUES (?)"
+SQL_UPDATE_SUBJECT = "UPDATE subject_map SET name = ? WHERE name = ?"
+SQL_DELETE_SUBJECT = "DELETE FROM subject_map WHERE name = ?"
+SQL_UPDATE_SENSOR = "UPDATE subject_map SET sensor = ? WHERE name = ?"
+SQL_UPDATE_START_DATE = "UPDATE subject_map SET start_date = ? WHERE name = ?"
+SQL_UPDATE_END_DATE = "UPDATE subject_map SET end_date = ? WHERE name = ?"
 SQL_ADD_COLUMN = "ALTER TABLE subject_map ADD COLUMN {} TEXT"
-SQL_UPDATE_USER_COLUMN = "UPDATE subject_map SET {} = ? WHERE Name = ?"
-SQL_GET_TABLE = "SELECT Name, Sensor, Start_date, End_date{} FROM subject_map"
-SQL_GET_SUBJECT_DATA = "SELECT Sensor, Start_date, End_date FROM subject_map WHERE Name = ?"
-SQL_GET_SUBJECTS = "SELECT Name FROM subject_map"
+SQL_UPDATE_USER_COLUMN = "UPDATE subject_map SET {} = ? WHERE name = ?"
+SQL_GET_TABLE = "SELECT name, sensor, start_date, end_date{} FROM subject_map"
+SQL_GET_SUBJECT_DATA = "SELECT sensor, start_date, end_date FROM subject_map WHERE name = ?"
+SQL_GET_SUBJECTS = "SELECT name FROM subject_map"
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
@@ -179,8 +179,8 @@ class SubjectManager:
         :param subject_name: subject name
         :return: list of pandas DataFrames
         """
-        from datastorage.labelstorage import LabelManager
-        from datastorage.settings import Settings
+        from data_storage.label_storage import LabelManager
+        from data_storage.settings import Settings
         self._cur.execute(SQL_GET_SUBJECT_DATA, [subject_name])  # get the stored information for this subject
         subject_data = self._cur.fetchall()
 

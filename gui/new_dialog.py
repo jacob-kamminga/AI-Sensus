@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 
 from gui.designer_new import Ui_NewProject
-from datastorage import settings
+from data_storage import settings
 
 
 def exit_project():

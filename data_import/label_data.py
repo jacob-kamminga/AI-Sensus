@@ -1,6 +1,6 @@
 import csv
 
-from datastorage.labelstorage import LabelManager
+from data_storage.label_storage import LabelManager
 from datetime import datetime
 
 
@@ -13,7 +13,7 @@ class LabelData:
     STOP_TIME_INDEX = 1
     LABEL_INDEX = 2
 
-    def __init__(self, label_manager: LabelManager, sensor_id: str=None):
+    def __init__(self, label_manager: LabelManager, sensor_id: str = None):
         """
         This class can be used to retrieve and add labels from/to the database.
 

@@ -1,5 +1,5 @@
 import unittest
-from datastorage.labelstorage import *
+from data_storage.label_storage import *
 
 
 class TestLabels(unittest.TestCase):
@@ -10,9 +10,9 @@ class TestLabels(unittest.TestCase):
         self.l.create_tables()
 
     def tearDown(self):
-        self.l._cur.execute('DROP TABLE labelType')
-        self.l._cur.execute('DROP TABLE labelData')
-        self.l._cur.execute('DROP TABLE fileMapping')
+        self.l._cur.execute('DROP TABLE label_type')
+        self.l._cur.execute('DROP TABLE label_data')
+        self.l._cur.execute('DROP TABLE file_mapping')
 
     def test_add_del_label_type(self):
         self.l.add_label_type('label1', "red", 'This is a test label')     # add new label type with name 'label1'
@@ -20,9 +20,9 @@ class TestLabels(unittest.TestCase):
         self.l.add_label(datetime.now(), datetime.now(), 'label1', 'sensor1')  # create a label with the new type
         self.l.delete_label_type('label1')
         self.assertEqual(0, len(
-            self.l._cur.execute('SELECT * FROM labelType').fetchall()))  # label type should not be in the table
+            self.l._cur.execute('SELECT * FROM label_type').fetchall()))  # label type should not be in the table
         self.assertEqual(0, len(
-            self.l._cur.execute('SELECT * FROM labelData').fetchall()))  # label should not be in the table
+            self.l._cur.execute('SELECT * FROM label_data').fetchall()))  # label should not be in the table
 
     def test_add_del_label(self):
         label_time = datetime.now()
@@ -39,22 +39,22 @@ class TestLabels(unittest.TestCase):
         label_time = datetime.now()
         self.l.add_label_type('label1', "red", 'This is a test label')   # add new label type with name 'label1'
         self.l.add_label(label_time, label_time, 'label1', 'sensor1')  # create a label with the new type
-        self.assertEqual('label1', self.l._cur.execute('SELECT Name FROM labelType')
+        self.assertEqual('label1', self.l._cur.execute('SELECT name FROM label_type')
                          .fetchone()[0])  # label type name should be 'label1'
-        self.assertEqual("red", self.l._cur.execute('SELECT Color FROM labelType')
+        self.assertEqual("red", self.l._cur.execute('SELECT color FROM label_type')
                          .fetchone()[0])  # label type color should be "red"
-        self.assertEqual('This is a test label', self.l._cur.execute('SELECT Description FROM labelType')
+        self.assertEqual('This is a test label', self.l._cur.execute('SELECT description FROM label_type')
                          .fetchone()[0])  # label type description should be 'This is a test label'
         self.l.update_label_color('label1', "blue")
-        self.assertEqual("blue", self.l._cur.execute('SELECT Color FROM labelType')
+        self.assertEqual("blue", self.l._cur.execute('SELECT color FROM label_type')
                          .fetchone()[0])  # label type color should now be "blue"
         self.l.update_label_description('label1', 'This is a changed description')
-        self.assertEqual('This is a changed description', self.l._cur.execute('SELECT Description FROM labelType')
+        self.assertEqual('This is a changed description', self.l._cur.execute('SELECT description FROM label_type')
                          .fetchone()[0])  # label type description should now be 'This is a changed description'
         self.l.update_label_name('label1', 'label2')
-        self.assertEqual('label2', self.l._cur.execute('SELECT Name FROM labelType')
+        self.assertEqual('label2', self.l._cur.execute('SELECT name FROM label_type')
                          .fetchone()[0])  # label type name should now be 'label2'
-        self.assertEqual('label2', self.l._cur.execute('SELECT Label_name FROM labelData')
+        self.assertEqual('label2', self.l._cur.execute('SELECT label_name FROM label_data')
                          .fetchone()[0])  # label created with the label type should also be named 'label2' now
 
     def test_file_mapping(self):
