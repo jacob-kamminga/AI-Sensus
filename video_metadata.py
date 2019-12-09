@@ -53,7 +53,7 @@ def parse_video_duration(file_path):
     return float(ffprobe_output)
 
 
-def parse_video_begin_time(file_path, timezone=pytz.utc):
+def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     """
     Parses the start time of video files.
 

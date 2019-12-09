@@ -48,7 +48,7 @@ DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 QDATETIME_FORMAT = 'yyyy-MM-dd HH:mm:ss.zzz'
 
 
-def add_hms_strings(time1, time2):
+def get_hms_sum(time1, time2):
     """
     Takes the strings of two times in the HH:MM:SS format, and returns a string of the sum of the two times.
 
@@ -103,6 +103,18 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         # Used for retrieving and storing labels
         self.sensor_id = None
+
+        # General useful fields
+        self.video_path = ''
+        self.sensordata_path = ''
+
+        self.video_utc_dt = None
+        self.video_position = None
+
+        self.data = None
+        self.dataplot = None
+        self.x_min_dt = None
+        self.timezone = pytz.utc  # TODO: Ask for timezone setting when opening video (specified for camera)
 
         # create video key shortcuts
         self.shortcut_plus_10s = QShortcut(Qt.Key_Right, self)
@@ -181,17 +193,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.ml_used_columns = []
         self.ml_classifier = Classifier(self.ml_classifier_engine)
 
-        self.video_path = ''
-        self.sensordata_path = ''
-
-        self.video_begin_dt = None
-        self.video_begin_hms = None
-
-        self.data = None
-        self.dataplot = None
-        self.x_min_dt = None
-        self.timezone = pytz.utc  # TODO: Ask for timezone setting when opening video (specified for camera)
-
         # Open the last opened files
         self.open_previous_video()
         self.open_previous_sensordata()
@@ -239,20 +240,36 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.settings.set_setting('last_videofile', self.video_path)
 
             # Store the video start time
-            self.video_begin_dt = vm.parse_video_begin_time(self.video_path, self.timezone)
-            self.video_begin_hms = self.video_begin_dt.strftime('%H:%M:%S')
-            video_date = vm.datetime_with_tz_to_string(vm.parse_video_begin_time(self.video_path), '%d-%B-%Y')
+            self.video_utc_dt = vm.parse_video_begin_time(self.video_path, self.timezone)
 
             # Play the video in the QMediaPlayer and activate the associated widgets
             self.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.video_path)))
             self.mediaPlayer.play()
             self.pushButton_play.setEnabled(True)
             self.horizontalSlider_time.setEnabled(True)
-            self.label_date.setText(video_date)
-            self.label_time.setText(self.video_begin_hms)
             self.play()
 
             self.sync_video_and_sensordata()
+
+    def set_timezone(self, timezone: pytz.timezone):
+        self.timezone = timezone
+
+        if self.video_path != '':
+            self.video_utc_dt = vm.parse_video_begin_time(self.video_path, self.timezone)
+            self.update_labels_video_dt()
+
+    def update_labels_video_dt(self):
+        video_hms = self.video_utc_dt.strftime('%H:%M:%S')
+        video_date = self.video_utc_dt.strftime('%d-%B-%Y')
+
+        if self.video_position is not None:
+            current_video_time = get_hms_sum(video_hms, ms_to_hms(self.video_position))
+            current_video_date = (self.video_utc_dt + timedelta(milliseconds=self.video_position)).strftime('%d-%B-%Y')
+            self.label_video_time.setText(current_video_time)
+            self.label_video_date.setText(current_video_date)
+        else:
+            self.label_video_time.setText(video_hms)
+            self.label_video_date.setText(video_date)
 
     def open_previous_sensordata(self):
         previous_data_path = self.settings.get_setting("last_datafile")
@@ -349,8 +366,9 @@ class GUI(QMainWindow, Ui_MainWindow):
                                                    self.sensordata.metadata['date']))
 
             # Check if the sensor data file is already in the label database, if not add it
-            if not self.label_storage.file_is_added(self.sensordata_path):
-                self.label_storage.add_file(self.sensordata_path, self.sensordata.metadata['sn'], self.combidt)
+            file_name = os.path.basename(self.sensordata_path)
+            if not self.label_storage.file_is_added(file_name):
+                self.label_storage.add_file(file_name, self.sensordata.metadata['sn'], self.combidt)
 
             self.sync_video_and_sensordata()
 
@@ -358,8 +376,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Set the video time equal to the start of the sensor data.
         """
-        if self.video_begin_dt is not None and self.x_min_dt is not None:
-            self.video_begin_offset_td = self.x_min_dt - self.video_begin_dt
+        if self.video_utc_dt is not None and self.x_min_dt is not None:
+            self.video_begin_offset_td = self.x_min_dt - self.video_utc_dt
             self.video_begin_offset_ms = self.video_begin_offset_td / timedelta(milliseconds=1)
 
             self.mediaPlayer.setPosition(self.video_begin_offset_ms)
@@ -402,13 +420,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         :param position: The position of the video.
         """
         if self.loop is not None and position >= self.loop[1]:
-            position = self.loop[0] if self.loop[0] >= 0 else 0
+            self.video_position = self.loop[0] if self.loop[0] >= 0 else 0
             self.mediaPlayer.setPosition(position)
+        else:
+            self.video_position = position
 
-        self.horizontalSlider_time.setValue(position)
-        self.label_duration.setText(ms_to_hms(position))
-        current_video_time = add_hms_strings(self.video_begin_hms, ms_to_hms(position))
-        self.label_time.setText(current_video_time)
+        self.horizontalSlider_time.setValue(self.video_position)
+        self.label_duration.setText(ms_to_hms(self.video_position))
+        self.update_labels_video_dt()
 
     def change_plot_width(self, value):
         self.settings.set_setting("plot_width", value)
@@ -672,13 +691,20 @@ class GUI(QMainWindow, Ui_MainWindow):
 
     def change_camera(self):
         """
-        If the user chooses a different camera, this function retrieves the right offset with the sensordata.
+        If the user chooses a different camera, this function retrieves the right offset and timezone.
         """
-        if self.comboBox_camera_ids.currentText() and self.sensordata:
-            self.doubleSpinBox_video_offset.setValue(
-                self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
-                                               self.sensordata.metadata['sn'],
-                                               self.sensordata.metadata['date']))
+        camera_name = self.comboBox_camera_ids.currentText()
+
+        if camera_name != '':
+            timezone = self.camera_manager.get_timezone(camera_name)
+
+            self.set_timezone(timezone)
+
+            if self.sensordata is not None:
+                self.doubleSpinBox_video_offset.setValue(
+                    self.offset_manager.get_offset(self.comboBox_camera_ids.currentText(),
+                                                   self.sensordata.metadata['sn'],
+                                                   self.sensordata.metadata['date']))
 
     def change_offset(self):
         """
@@ -760,7 +786,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.sensordata:
             xdata_dt = num2date(event.xdata).replace(tzinfo=None)
             xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
-            print(xdata_qdt)
 
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function

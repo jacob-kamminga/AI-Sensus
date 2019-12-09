@@ -189,7 +189,7 @@ class SubjectManager:
 
         subject_data = subject_data[0]
         lm = LabelManager(self.project_name)
-        paths = lm.get_file_paths(subject_data[0], subject_data[1], subject_data[2])  # get datafile paths for subject
+        paths = lm.get_file_names(subject_data[0], subject_data[1], subject_data[2])  # get datafile paths for subject
         data_frames = []
         settings_dict = Settings(self.project_name).settings_dict
 

@@ -3,11 +3,12 @@ from typing import List, Tuple
 
 import pytz
 
-SQL_CREATE_TABLE = "CREATE TABLE cameras (name TEXT PRIMARY KEY, timezone TEXT)"
-SQL_ADD_CAMERA = "INSERT INTO cameras VALUES (?, ?)"
-SQL_DELETE_CAMERA = "DELETE FROM cameras WHERE name = ?"
-SQL_GET_ALL_CAMERAS = "SELECT name, timezone FROM cameras"
-SQL_UPDATE_TIMEZONE = "UPDATE cameras SET timezone = ? WHERE name = ?"
+SQL_CREATE_TABLE = "CREATE TABLE camera (id INTEGER PRIMARY KEY, name TEXT, timezone TEXT)"
+SQL_ADD_CAMERA = "INSERT INTO camera(name, timezone) VALUES (?, ?)"
+SQL_DELETE_CAMERA = "DELETE FROM camera WHERE name = ?"
+SQL_GET_ALL_CAMERAS = "SELECT name, timezone FROM camera"
+SQL_GET_TIMEZONE = "SELECT timezone FROM camera WHERE name = ?"
+SQL_UPDATE_TIMEZONE = "UPDATE camera SET timezone = ? WHERE name = ?"
 
 
 class CameraManager:
@@ -22,23 +23,23 @@ class CameraManager:
         self._cur.execute(SQL_CREATE_TABLE)
         self._conn.commit()
 
-    def add_camera(self, name: str, timezone: str = 'UTC') -> None:
+    def add_camera(self, camera_name: str, timezone: str = 'UTC') -> None:
         """
         Adds a camera to the table.
 
-        :param name: The name of the new camera
+        :param camera_name: The name of the new camera
         :param timezone: The timezone that has been set on the camera
         """
-        self._cur.execute(SQL_ADD_CAMERA, [timezone, name])
+        self._cur.execute(SQL_ADD_CAMERA, (camera_name, timezone))
         self._conn.commit()
 
-    def delete_camera(self, name: str) -> None:
+    def delete_camera(self, camera_name: str) -> None:
         """
         Deletes a camera from the table.
 
-        :param name: The name of the camera
+        :param camera_name: The name of the camera
         """
-        self._cur.execute(SQL_DELETE_CAMERA, [name])
+        self._cur.execute(SQL_DELETE_CAMERA, (camera_name,))
         self._conn.commit()
 
     def get_all_cameras(self) -> List[Tuple[str, str]]:
@@ -50,12 +51,18 @@ class CameraManager:
         self._cur.execute(SQL_GET_ALL_CAMERAS)
         return self._cur.fetchall()
 
-    def update_timezone(self, name: str, timezone: str):
+    def get_timezone(self, camera_name: str) -> pytz.timezone:
+        self._cur.execute(SQL_GET_TIMEZONE, (camera_name,))
+        timezone_str = self._cur.fetchone()[0]
+
+        return pytz.timezone(timezone_str)
+
+    def update_timezone(self, camera_name: str, timezone: str):
         """
         Updates the timezone of a camera.
 
-        :param name: The name of the camera
+        :param camera_name: The name of the camera
         :param timezone: The timezone that has been set on the camera
         """
-        self._cur.execute(SQL_UPDATE_TIMEZONE, [timezone, name])
+        self._cur.execute(SQL_UPDATE_TIMEZONE, (timezone, camera_name))
         self._conn.commit()

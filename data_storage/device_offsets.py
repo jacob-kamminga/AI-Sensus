@@ -18,7 +18,7 @@ class OffsetManager:
     def create_table(self) -> None:
         """Method for creating the necessary offset table in the database."""
         self._cur.execute("CREATE TABLE offsets (camera TEXT, sensor TEXT, offset REAL, added TIMESTAMP,"
-                          "PRIMARY KEY (camera, sensor, added), FOREIGN KEY (camera) REFERENCES cameras(name))")
+                          "PRIMARY KEY (camera, sensor, added), FOREIGN KEY (camera) REFERENCES camera(name))")
         self._conn.commit()
 
     def get_offset(self, cam_id: str, sens_id: str, added: date) -> float:
