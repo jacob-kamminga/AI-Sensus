@@ -65,7 +65,7 @@ class Video:
 
         if self.file_path != '':
             # Save the path for next time
-            self.gui.settings.set_setting('last_videofile', self.file_path)
+            self.settings.set_setting('last_videofile', self.file_path)
 
             # Store the video start time
             self.datetime = video_metadata.parse_video_begin_time(self.file_path, self.timezone)

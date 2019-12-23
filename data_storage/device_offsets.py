@@ -2,10 +2,10 @@ import sqlite3
 from datetime import date
 from statistics import mean
 
-sql_queryDate = "SELECT offset FROM offsets WHERE camera = ? AND sensor = ? AND added = ?"
-sql_queryNoDate = "SELECT offset FROM offsets WHERE camera = ? AND sensor = ? ORDER BY added DESC"
-sql_insertOffset = "INSERT INTO offsets(camera, sensor, offset, added) VALUES (?, ?, ?, ?)"
-sql_updateOffset = "UPDATE offsets SET offset = ? WHERE camera = ? AND sensor = ? AND added = ?"
+sql_queryDate = "SELECT offset FROM offset WHERE camera = ? AND sensor = ? AND added = ?"
+sql_queryNoDate = "SELECT offset FROM offset WHERE camera = ? AND sensor = ? ORDER BY added DESC"
+sql_insertOffset = "INSERT INTO offset(camera, sensor, offset, added) VALUES (?, ?, ?, ?)"
+sql_updateOffset = "UPDATE offset SET offset = ? WHERE camera = ? AND sensor = ? AND added = ?"
 
 
 class OffsetManager:

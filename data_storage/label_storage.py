@@ -20,9 +20,9 @@ SQL_GET_LABELS_DATE = "SELECT start_time, end_time, label_name FROM label_data W
                       "sensor_id = ? ORDER BY start_time ASC"
 SQL_GET_LABELS_BETWEEN_DATES = "SELECT start_time, end_time, label_name FROM label_data WHERE (start_time " \
                                "BETWEEN ? AND ?) AND sensor_id = ? ORDER BY start_time ASC"
-SQL_GET_SENSOR_IDS = "SELECT DISTINCT sensor_id FROM sensor_map"
-SQL_ADD_FILE = "INSERT INTO sensor_map(file_name, sensor_id, file_date) VALUES (?,?,?)"
-SQL_GET_FILE_NAMES = "SELECT file_name FROM sensor_map WHERE sensor_id = ? AND (file_date BETWEEN ? AND ?)"
+SQL_GET_SENSOR_IDS = "SELECT DISTINCT sensor_id FROM sensor_data_file"
+SQL_ADD_FILE = "INSERT INTO sensor_data_file(file_name, sensor_id, datetime) VALUES (?,?,?)"
+SQL_GET_FILE_NAMES = "SELECT file_name FROM sensor_data_file WHERE sensor_id = ? AND (datetime BETWEEN ? AND ?)"
 
 
 class LabelManager:
@@ -42,7 +42,7 @@ class LabelManager:
         c.execute("CREATE TABLE label_type (name TEXT PRIMARY KEY, color TEXT, description TEXT)")
         c.execute("CREATE TABLE label_data (start_time TIMESTAMP, end_time TIMESTAMP, label_name TEXT, sensor_id TEXT, "
                   "PRIMARY KEY(start_time, sensor_id), FOREIGN KEY (label_name) REFERENCES label_type(name))")
-        c.execute("CREATE TABLE file_mapping (file_name TEXT PRIMARY KEY, sensor_id TEXT, file_date TIMESTAMP)")
+        c.execute("CREATE TABLE sensor_data_file (file_name TEXT PRIMARY KEY, sensor_id TEXT, datetime TIMESTAMP)")
         self._conn.commit()
 
     def add_label_type(self, name: str, color: str, desc: str) -> bool:
@@ -167,7 +167,7 @@ class LabelManager:
         :param file_name: The base name of the file
         :return: boolean indicating if the file is already added or not
         """
-        self._cur.execute("SELECT 1 FROM sensor_map WHERE file_name = ?", [file_name])
+        self._cur.execute("SELECT 1 FROM sensor_data_file WHERE file_name = ?", [file_name])
         return len(self._cur.fetchall()) == 1
 
     def add_file(self, filename: str, sensor_id: str, date: datetime) -> None:

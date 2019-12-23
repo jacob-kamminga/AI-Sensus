@@ -15,7 +15,7 @@ class TestSubjects(unittest.TestCase):
         self.s.create_table()
 
     def tearDown(self):
-        self.s._cur.execute('DROP TABLE subject_map')
+        self.s._cur.execute('DROP TABLE subject')
         os.remove('projects/test_project/settings.pkl')
 
     def test_add_subject(self):
@@ -31,11 +31,11 @@ class TestSubjects(unittest.TestCase):
         date = datetime.now()
         self.s.add_subject('subject')
         self.s.update_sensor('subject', 'sensor1')
-        self.assertEqual('sensor1', self.s._cur.execute('SELECT sensor FROM subject_map').fetchone()[0])
+        self.assertEqual('sensor1', self.s._cur.execute('SELECT sensor FROM subject').fetchone()[0])
         self.s.update_start_date('subject', date)
-        self.assertEqual(date, self.s._cur.execute('SELECT start_date FROM subject_map').fetchone()[0])
+        self.assertEqual(date, self.s._cur.execute('SELECT start_date FROM subject').fetchone()[0])
         self.s.update_end_date('subject', date)
-        self.assertEqual(date, self.s._cur.execute('SELECT end_date FROM subject_map').fetchone()[0])
+        self.assertEqual(date, self.s._cur.execute('SELECT end_date FROM subject').fetchone()[0])
 
     def test_user_columns(self):
         self.s.add_subject('subject')

@@ -12,7 +12,7 @@ class TestLabels(unittest.TestCase):
     def tearDown(self):
         self.l._cur.execute('DROP TABLE label_type')
         self.l._cur.execute('DROP TABLE label_data')
-        self.l._cur.execute('DROP TABLE sensor_map')
+        self.l._cur.execute('DROP TABLE sensor_data_file')
 
     def test_add_del_label_type(self):
         self.l.add_label_type('label1', "red", 'This is a test label')     # add new label type with name 'label1'
