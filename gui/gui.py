@@ -6,7 +6,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtCore import QDir, Qt
-from PyQt5.QtMultimedia import QMediaPlayer
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QShortcut, QDialog
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
@@ -63,8 +62,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_pause = QShortcut(Qt.Key_Space, self)
 
         # Connect all the buttons, spin boxes, combo boxes and line edits to their appropriate helper functions.
-        self.pushButton_play.clicked.connect(self.video.play)
-        self.shortcut_pause.activated.connect(self.video.play)
+        self.pushButton_play.clicked.connect(self.video.toggle_play)
+        self.shortcut_pause.activated.connect(self.video.toggle_play)
         self.shortcut_plus_10s.activated.connect(self.video.fast_forward_10s)
         self.shortcut_minus_10s.activated.connect(self.video.rewind_10s)
         self.actionOpen_Video.triggered.connect(self.video.prompt_video)
@@ -94,6 +93,17 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.verticalLayout_plot.addWidget(self.canvas)
         self.canvas.mpl_connect('button_press_event', self.plot.onclick)
         self.canvas.mpl_connect('button_release_event', self.plot.onrelease)
+
+        # Connect the QMediaPlayer to the right widget
+        self.mediaPlayer.setVideoOutput(self.videoWidget_player)
+
+        # Connect some events that QMediaPlayer generates to their appropriate helper functions
+        self.mediaPlayer.positionChanged.connect(self.video.position_changed)
+        self.mediaPlayer.durationChanged.connect(self.video.duration_changed)
+
+        # Connect the usage of the slider to its appropriate helper function
+        self.horizontalSlider_time.sliderMoved.connect(self.video.set_position)
+        self.horizontalSlider_time.setEnabled(False)
 
         # Initialize a timer that makes sure that the sensor data plays smoothly
         self.timer = QtCore.QTimer(self)
@@ -257,9 +267,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             # close the info window
             working_msg.close()
 
-            # start video if it is paused
-            if self.mediaPlayer.state() == QMediaPlayer.PausedState:
-                self.video.play()
+            self.video.play()
 
             for prediction in make_predictions(res):
                 label, start_dt, end_dt = prediction['label'], datetime.fromisoformat(prediction['begin']), \
@@ -314,8 +322,9 @@ class GUI(QMainWindow, Ui_MainWindow):
             else:
                 # no video was playing, restart the updating-timer
                 self.timer.start(25)
+
             self.plot.update_plot_axis(position=original_position / 1000)
-            self.video.play()
+            self.video.pause()
 
 
 def add_seconds_to_datetime(date_time: datetime, seconds: float):

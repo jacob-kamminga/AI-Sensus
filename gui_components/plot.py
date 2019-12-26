@@ -13,8 +13,8 @@ LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1
 LABEL_LABEL_NAME_INDEX = 2
 
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
-QDATETIME_FORMAT = 'yyyy-MM-dd HH:mm:ss.zzz'
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+QDATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss.zzz"
 
 
 class Plot:

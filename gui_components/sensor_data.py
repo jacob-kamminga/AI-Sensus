@@ -41,7 +41,8 @@ class SensorData:
                 self.open_sensor_data()
 
     def prompt_sensor_data(self):
-        path = '' if self.settings.get_setting('last_datafile') is None else self.settings.get_setting("last_datafile")
+        path = "" if self.settings.get_setting('last_datafile') is None else self.settings.get_setting("last_datafile")
+
         if not os.path.isfile(path):
             path = path.rsplit('/', 1)[0]
             if not os.path.isdir(path):

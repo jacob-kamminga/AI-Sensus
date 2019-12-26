@@ -23,6 +23,7 @@ class Video:
         self.camera = None
         self.timezone = pytz.utc  # TODO: Ask for timezone setting when opening video (specified for camera)
         self.offset = None
+        self.offset_ms = None
 
     def open_previous_file(self):
         previous_path = self.settings.get_setting('last_videofile')
@@ -33,12 +34,18 @@ class Video:
                 self.open_video()
 
     def prompt_video(self):
+        """
+        Allows a user to open a video in the QMediaPlayer via the menu bar.
+        :return:
+        """
         # Check if last used path is known
-        path = '' if self.settings.get_setting('last_videofile') is None \
-            else self.settings.get_setting('last_videofile')
+        path = self.settings.get_setting('last_videofile')
 
-        if not os.path.isfile(path):
+        if path is None:
+            path = ""
+        elif not os.path.isfile(path):
             path = path.rsplit('/', 1)[0]
+
             if not os.path.isdir(path):
                 path = QDir.homePath()
 
@@ -48,22 +55,7 @@ class Video:
         self.open_video()
 
     def open_video(self):
-        """
-        A function that allows a user to open a video in the QMediaPlayer via the menu bar.
-        :return:
-        """
-        # Connect the QMediaPlayer to the right widget
-        self.gui.mediaPlayer.setVideoOutput(self.gui.videoWidget_player)
-
-        # Connect some events that QMediaPlayer generates to their appropriate helper functions
-        self.gui.mediaPlayer.positionChanged.connect(self.position_changed)
-        self.gui.mediaPlayer.durationChanged.connect(self.duration_changed)
-
-        # Connect the usage of the slider to its appropriate helper function
-        self.gui.horizontalSlider_time.sliderMoved.connect(self.set_position)
-        self.gui.horizontalSlider_time.setEnabled(False)
-
-        if self.file_path != '':
+        if self.file_path is not None:
             # Save the path for next time
             self.settings.set_setting('last_videofile', self.file_path)
 
@@ -72,22 +64,21 @@ class Video:
 
             # Play the video in the QMediaPlayer and activate the associated widgets
             self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
-            self.gui.mediaPlayer.play()
             self.gui.pushButton_play.setEnabled(True)
             self.gui.horizontalSlider_time.setEnabled(True)
-            self.play()
 
+            self.pause()
             self.sync_with_sensor_data()
 
-        # TODO: open camera settings before opening video
+        # TODO: Open camera settings before opening video
 
     def update_labels_datetime(self):
-        video_hms = self.datetime.strftime('%H:%M:%S')
-        video_date = self.datetime.strftime('%d-%B-%Y')
+        video_hms = self.datetime.strftime("%H:%M:%S")
+        video_date = self.datetime.strftime("%d-%B-%Y")
 
         if self.position is not None:
             current_video_time = get_hms_sum(video_hms, ms_to_hms(self.position))
-            current_video_date = (self.datetime + timedelta(milliseconds=self.position)).strftime('%d-%B-%Y')
+            current_video_date = (self.datetime + timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
             self.gui.label_video_time.setText(current_video_time)
             self.gui.label_video_date.setText(current_video_date)
         else:
@@ -96,18 +87,23 @@ class Video:
 
     def sync_with_sensor_data(self):
         """
-        Set the video time equal to the start of the sensor data.
+        Synchronizes the start time of the video with the sensor data.
         """
         if self.datetime is not None and self.gui.plot.x_min_dt is not None:
             self.offset = self.gui.plot.x_min_dt - self.datetime
-            offset_ms = self.offset / timedelta(milliseconds=1)
+            self.offset_ms = self.offset / timedelta(milliseconds=1)
+            self.position = self.offset_ms
 
-            self.gui.mediaPlayer.setPosition(offset_ms)
+            self.gui.mediaPlayer.setPosition(self.position)
+            self.gui.horizontalSlider_time.setValue(int(self.position))
 
     def position_changed(self, new_position):
         """
+        Updates the slider upon a change in the video output.
+
         Every time QMediaPlayer generates the event that indicates that the video output has changed (which is
         continually if you play a video), this function updates the slider.
+
         :param new_position: The position of the video.
         """
         if self.gui.loop is not None and new_position >= self.gui.loop[1]:
@@ -122,31 +118,55 @@ class Video:
 
     def duration_changed(self, duration):
         """
+        Updates the range of the slider using the duration of the video.
+
         Every time the duration of the video in QMediaPlayer changes (which should be every time you open a new
         video), this function updates the range of the slider.
 
-        :param duration: The duration of the (new) video.
+        :param duration: The duration of the video.
         """
+        print("d: " + str(self.gui.mediaPlayer.duration()))
         self.gui.horizontalSlider_time.setRange(0, duration)
+        self.gui.horizontalSlider_time.setValue(self.position)
 
     # Media player controls
 
     def play(self):
         """
-        Makes sure the play button pauses or plays the video, and switches the pause/play icons.
+        Start playback of the video.
         """
         if self.gui.mediaPlayer.media().isNull():
             return
-        if self.gui.mediaPlayer.state() == QMediaPlayer.PlayingState:
-            icon = QtGui.QIcon()
-            self.gui.mediaPlayer.pause()
-            icon.addPixmap(QtGui.QPixmap("resources/1600.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-            self.gui.pushButton_play.setIcon(icon)
         else:
             icon = QtGui.QIcon()
-            self.gui.mediaPlayer.play()
             icon.addPixmap(QtGui.QPixmap("resources/pause-512.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
+            self.gui.mediaPlayer.play()
             self.gui.pushButton_play.setIcon(icon)
+
+    def pause(self):
+        """
+        Pause playback of the video.
+        """
+        if self.gui.mediaPlayer.media().isNull():
+            return
+        else:
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap("resources/1600.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
+            self.gui.mediaPlayer.pause()
+            self.gui.pushButton_play.setIcon(icon)
+
+    def toggle_play(self):
+        """
+        Toggle playback of the video.
+        """
+        if self.gui.mediaPlayer.media().isNull():
+            return
+        elif self.gui.mediaPlayer.state() == QMediaPlayer.PlayingState:
+            self.pause()
+        elif self.gui.mediaPlayer.state() == QMediaPlayer.PausedState:
+            self.play()
 
     def fast_forward_10s(self):
         """
@@ -171,6 +191,7 @@ class Video:
     def set_position(self, position):
         """
         Every time the user uses the slider, this function updates the QMediaPlayer position.
+
         :param position: The position as indicated by the slider.
         """
         self.gui.mediaPlayer.setPosition(position)
