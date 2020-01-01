@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import QMessageBox
+import pytz
 
-from data_storage.camera_info import CameraManager
-from data_storage.device_offsets import OffsetManager
+from database.camera import CameraManager
+from database.offset import OffsetManager
 
 
 class Camera:
@@ -13,71 +13,65 @@ class Camera:
         self.camera_manager = CameraManager(self.gui.project_dialog.project_name)
         self.offset_manager = OffsetManager(self.gui.project_dialog.project_name)
 
-        # Add the known cameras to the camera combo box in the GUI
-        for camera in self.camera_manager.get_all_cameras():
-            name = camera[0]
-            self.gui.comboBox_camera_ids.addItem(name)
+        self.camera_id = None
+        self.camera_name = None
+        self.timezone = None
 
-    def add_camera(self):
-        """
-        Adds a camera to the database and to the combobox in the GUI.
-        """
-        if self.gui.lineEdit_new_camera.text() \
-                and self.gui.lineEdit_new_camera.text() not in self.camera_manager.get_all_cameras():
-            self.camera_manager.add_camera(self.gui.lineEdit_new_camera.text())
-            self.gui.comboBox_camera_ids.addItem(self.gui.lineEdit_new_camera.text())
-            self.gui.comboBox_camera_ids.setCurrentText(self.gui.lineEdit_new_camera.text())
-            self.gui.lineEdit_new_camera.clear()
-            if self.gui.comboBox_camera_ids.currentText() and self.gui.sensor_data.data:
-                self.gui.doubleSpinBox_video_offset.setValue(
-                    self.offset_manager.get_offset(self.gui.comboBox_camera_ids.currentText(),
-                                                   self.gui.sensor_data.data.metadata['sn'],
-                                                   self.gui.sensor_data.data.metadata['date']))
+    def change_camera(self, camera_id: int):
+        # Update camera name in main GUI
+        self.camera_id = camera_id
+        self.camera_name = self.camera_manager.get_camera_name(self.camera_id)
+        self.gui.label_camera_name_value.setText(self.camera_name)
 
-    def change_camera(self):
-        """
-        If the user chooses a different camera, this function retrieves the right offset and timezone.
-        """
-        camera_name = self.gui.comboBox_camera_ids.currentText()
+        # Update timezone and datetime labels
+        timezone = self.camera_manager.get_timezone(self.camera_id)
+        self.update_timezone(timezone)
 
-        if camera_name != '':
-            timezone = self.camera_manager.get_timezone(camera_name)
+        # Update offset between camera and sensor data
+        if self.gui.sensor_data.sensor_id is not None:
+            offset = self.offset_manager.get_offset(self.camera_id,
+                                                    self.gui.sensor_data.sensor_id,
+                                                    self.gui.sensor_data.datetime)
 
-            self.gui.video.set_timezone(timezone)
+            self.gui.doubleSpinBox_video_offset.setValue(offset)
 
-            if self.gui.sensor_data.data is not None:
-                self.gui.doubleSpinBox_video_offset.setValue(
-                    self.offset_manager.get_offset(self.gui.comboBox_camera_ids.currentText(),
-                                                   self.gui.sensor_data.data.metadata['sn'],
-                                                   self.gui.sensor_data.data.metadata['date']))
+    def change_offset(self, offset: float):
+        """
+        Updates the offset in the database.
+        """
+        date = self.gui.sensor_data.datetime.date()
 
-    def change_offset(self):
-        """
-        If the user changes the offset, this function sends it to the database.
-        """
-        if self.gui.comboBox_camera_ids.currentText() and self.gui.sensor_data.data:
-            self.offset_manager.set_offset(self.gui.comboBox_camera_ids.currentText(),
-                                           self.gui.sensor_data.data.metadata['sn'],
-                                           self.gui.doubleSpinBox_video_offset.value(),
-                                           self.gui.sensor_data.data.metadata['date'])
+        if self.gui.sensor_data.sensor_id is not None:
+            self.offset_manager.set_offset(self.camera_id,
+                                           self.gui.sensor_data.sensor_id,
+                                           offset,
+                                           date)
 
-    def delete_camera(self):
-        """
-        Deletes the current camera.
-        """
-        if self.gui.comboBox_camera_ids.currentText():
-            reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete the current camera?",
-                                         QMessageBox.Yes, QMessageBox.No)
-            if reply == QMessageBox.Yes:
-                self.camera_manager.delete_camera(self.gui.comboBox_camera_ids.currentText())
-                self.gui.comboBox_camera_ids.clear()
-                for camera in self.camera_manager.get_all_cameras():
-                    self.gui.comboBox_camera_ids.addItem(camera)
-                self.gui.doubleSpinBox_video_offset.clear()
-                if self.gui.comboBox_camera_ids.currentText() and self.gui.sensor_data.data:
-                    self.gui.doubleSpinBox_video_offset.setValue(
-                        self.offset_manager.get_offset(self.gui.comboBox_camera_ids.currentText(),
-                                                       self.gui.sensor_data.data.metadata['sn'],
-                                                       self.gui.sensor_data.data.metadata['date']))
-                else:
-                    self.gui.doubleSpinBox_video_offset.setValue(0)
+    def update_timezone(self, timezone: pytz.timezone):
+        self.timezone = timezone
+        self.gui.video.update_datetime()
+
+    # def delete_camera(self):
+    #     """
+    #     Deletes the current camera.
+    #     """
+    #     if self.gui.comboBox_camera_ids.currentText():
+    #         reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete the current camera?",
+    #                                      QMessageBox.Yes, QMessageBox.No)
+    #         if reply == QMessageBox.Yes:
+    #             self.camera_manager.delete_camera(self.gui.comboBox_camera_ids.currentText())
+    #             self.gui.comboBox_camera_ids.clear()
+    #
+    #             for camera in self.camera_manager.get_all_cameras():
+    #                 self.gui.comboBox_camera_ids.addItem(camera)
+    #
+    #             self.gui.doubleSpinBox_video_offset.clear()
+    #
+    #             if self.gui.comboBox_camera_ids.currentText() and self.gui.sensor_data.data:
+    #                 self.gui.doubleSpinBox_video_offset.setValue(
+    #                     self.offset_manager.get_offset(self.gui.comboBox_camera_ids.currentText(),
+    #                                                    self.gui.sensor_data.data.metadata['sn'],
+    #                                                    self.gui.sensor_data.data.metadata['date'])
+    #                 )
+    #             else:
+    #                 self.gui.doubleSpinBox_video_offset.setValue(0)

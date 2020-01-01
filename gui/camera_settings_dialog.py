@@ -1,8 +1,12 @@
 import pytz
 from PyQt5 import QtWidgets
 
-from data_storage.camera_info import CameraManager
+from database.camera import CameraManager
 from gui.designer_camera_settings import Ui_Dialog
+
+CAMERA_ID_INDEX = 0
+CAMERA_NAME_INDEX = 1
+CAMERA_TIMEZONE_INDEX = 2
 
 
 class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
@@ -12,13 +16,15 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.setupUi(self)
         self.camera_manager = camera_manager
 
+        self.selected_camera_id = None
+
         # Fill camera dictionary and add camera names to combobox
         self.camera_dict = dict()
         cameras = self.camera_manager.get_all_cameras()
 
         for camera in cameras:
-            name = camera[0]
-            timezone = camera[1]
+            name = camera[CAMERA_NAME_INDEX]
+            timezone = camera[CAMERA_TIMEZONE_INDEX]
 
             self.camera_dict[name] = timezone
             self.comboBox_camera.addItem(name)
@@ -27,7 +33,7 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.listWidget_timezones.addItems(pytz.common_timezones)
 
         # Select the timezone of the current camera
-        timezone_index = pytz.common_timezones.index(cameras[0][1])
+        timezone_index = pytz.common_timezones.index(cameras[0][CAMERA_TIMEZONE_INDEX])
         self.listWidget_timezones.setCurrentRow(timezone_index)
 
         # Connect UI elements
@@ -36,6 +42,7 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.listWidget_timezones.selectionModel().selectionChanged.connect(self.enable_timezone_pushbutton)
         self.pushButton_save_timezone.clicked.connect(self.save_timezone)
         self.pushButton_new_camera.clicked.connect(self.add_camera)
+        self.pushButton_use_camera.clicked.connect(self.use_camera)
 
     def load_timezones(self, text: str):
         if self.camera_dict and self.comboBox_camera.count():
@@ -64,9 +71,9 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def add_camera(self):
         new_camera = self.lineEdit_new_camera.text()
-        current_cameras = [camera[0] for camera in self.camera_manager.get_all_cameras()]
+        current_cameras = [camera[CAMERA_NAME_INDEX] for camera in self.camera_manager.get_all_cameras()]
 
-        if new_camera != '' and new_camera not in current_cameras:
+        if new_camera != "" and new_camera not in current_cameras:
             self.camera_manager.add_camera(new_camera)
             self.comboBox_camera.addItem(new_camera)
             self.comboBox_camera.setCurrentText(new_camera)
@@ -80,3 +87,8 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def disable_timezone_pushbutton(self):
         self.pushButton_save_timezone.setEnabled(False)
+
+    def use_camera(self):
+        selected_camera_name = self.comboBox_camera.currentText()
+        self.selected_camera_id = self.camera_manager.get_camera_id(selected_camera_name)
+        self.close()

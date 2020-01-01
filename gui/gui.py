@@ -12,7 +12,7 @@ from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
 from data_export import export_data, windowing as wd
-from data_storage.subject_mapping import SubjectManager
+from database.subject import SubjectManager
 from gui.camera_settings_dialog import CameraSettingsDialog
 from gui.designer_gui import Ui_MainWindow
 from gui.export_dialog import ExportDialog
@@ -66,22 +66,18 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_pause.activated.connect(self.video.toggle_play)
         self.shortcut_plus_10s.activated.connect(self.video.fast_forward_10s)
         self.shortcut_minus_10s.activated.connect(self.video.rewind_10s)
-        self.actionOpen_Video.triggered.connect(self.video.prompt_video)
-        self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data.prompt_sensor_data)
+        self.actionOpen_Video.triggered.connect(self.video.prompt_file)
+        self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data.prompt_file)
         self.pushButton_label.clicked.connect(self.open_label)
         self.actionImport_Settings.triggered.connect(self.open_settings)
         self.actionCamera_Settings.triggered.connect(self.open_camera_settings)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings)
-        self.comboBox_camera_ids.currentTextChanged.connect(self.camera.change_camera)
-        self.lineEdit_new_camera.returnPressed.connect(self.camera.add_camera)
         self.lineEdit_function_regex.returnPressed.connect(self.plot.new_plot)
         self.doubleSpinBox_video_offset.valueChanged.connect(self.camera.change_offset)
         self.doubleSpinBox_speed.valueChanged.connect(self.video.change_speed)
         self.doubleSpinBox_plot_width.valueChanged.connect(self.plot.change_plot_width)
         self.doubleSpinBox_plot_height.valueChanged.connect(self.plot.change_plot_height)
         self.comboBox_functions.activated.connect(self.plot.change_plot)
-        self.pushButton_add.clicked.connect(self.camera.add_camera)
-        # self.pushButton_camera_del.clicked.connect(self.camera.delete_camera)
         self.actionSubject_Mapping.triggered.connect(self.open_subject_mapping)
         self.actionExport_Sensor_Data.triggered.connect(self.open_export)
         self.actionMachine_Learning.triggered.connect(self.open_machine_learning)
@@ -133,7 +129,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the label dialog window.
         """
         if not self.sensor_data.data:
-            QMessageBox.information(self, 'Warning', "You need to import sensordata first.", QMessageBox.Ok)
+            QMessageBox.information(self, "Warning", "You need to import sensor data first.", QMessageBox.Ok)
         else:
             dialog = LabelSpecs(self.project_dialog.project_name,
                                 self.sensor_data.data.metadata['sn'],
@@ -156,9 +152,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Opens the camera settings dialog window.
         """
-        camera_settings = CameraSettingsDialog(self.camera.camera_manager)
+        camera_settings = CameraSettingsDialog(self.video.camera_manager)
         camera_settings.exec_()
         camera_settings.show()
+
+        if camera_settings.selected_camera_id is not None:
+            self.camera.change_camera(camera_settings.selected_camera_id)
 
     def open_label_settings(self):
         """

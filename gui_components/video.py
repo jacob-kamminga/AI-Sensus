@@ -1,13 +1,15 @@
+import ntpath
 import os
 from datetime import timedelta
 
-import pytz
 from PyQt5 import QtGui
 from PyQt5.QtCore import QUrl, QDir
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWidgets import QFileDialog
 
 import video_metadata
+from database.camera import CameraManager
+from database.video import VideoManager
 from utils import get_hms_sum, ms_to_hms
 
 
@@ -18,10 +20,12 @@ class Video:
         self.settings = gui.settings
         self.file_path = None
 
+        self.video_manager = VideoManager(self.gui.project_dialog.project_name)
+        self.camera_manager = CameraManager(self.gui.project_dialog.project_name)
+
         self.datetime = None
         self.position = None
-        self.camera = None
-        self.timezone = pytz.utc  # TODO: Ask for timezone setting when opening video (specified for camera)
+        self.timezone = None
         self.offset = None
         self.offset_ms = None
 
@@ -31,12 +35,11 @@ class Video:
         if previous_path is not None:
             if os.path.isfile(previous_path):
                 self.file_path = previous_path
-                self.open_video()
+                self.open_file()
 
-    def prompt_video(self):
+    def prompt_file(self):
         """
-        Allows a user to open a video in the QMediaPlayer via the menu bar.
-        :return:
+        Opens a file dialog that lets the user select a file.
         """
         # Check if last used path is known
         path = self.settings.get_setting('last_videofile')
@@ -52,15 +55,27 @@ class Video:
         # Get the user input from a dialog window
         self.file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Video", path)
 
-        self.open_video()
+        self.open_file()
 
-    def open_video(self):
-        if self.file_path is not None:
+    def open_file(self):
+        """
+        Opens the file specified by self.file_path and sets the video.
+        """
+        if self.file_path is not None and os.path.isfile(self.file_path):
             # Save the path for next time
             self.settings.set_setting('last_videofile', self.file_path)
 
-            # Store the video start time
-            self.datetime = video_metadata.parse_video_begin_time(self.file_path, self.timezone)
+            # Check if a camera has already been set for this video
+            file_base_name = ntpath.basename(self.file_path)
+            camera_id = self.video_manager.get_camera(file_base_name)
+
+            # Camera has not been set yet
+            if camera_id == -1:
+                self.gui.open_camera_settings()
+            else:
+                self.gui.camera.change_camera(camera_id)
+
+            self.update_datetime()
 
             # Play the video in the QMediaPlayer and activate the associated widgets
             self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
@@ -70,7 +85,9 @@ class Video:
             self.pause()
             self.sync_with_sensor_data()
 
-        # TODO: Open camera settings before opening video
+    def update_datetime(self):
+        self.datetime = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera.timezone)
+        self.update_labels_datetime()
 
     def update_labels_datetime(self):
         video_hms = self.datetime.strftime("%H:%M:%S")
@@ -79,11 +96,11 @@ class Video:
         if self.position is not None:
             current_video_time = get_hms_sum(video_hms, ms_to_hms(self.position))
             current_video_date = (self.datetime + timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
-            self.gui.label_video_time.setText(current_video_time)
-            self.gui.label_video_date.setText(current_video_date)
+            self.gui.label_video_time_value.setText(current_video_time)
+            self.gui.label_video_date_value.setText(current_video_date)
         else:
-            self.gui.label_video_time.setText(video_hms)
-            self.gui.label_video_date.setText(video_date)
+            self.gui.label_video_time_value.setText(video_hms)
+            self.gui.label_video_date_value.setText(video_date)
 
     def sync_with_sensor_data(self):
         """
@@ -125,7 +142,6 @@ class Video:
 
         :param duration: The duration of the video.
         """
-        print("d: " + str(self.gui.mediaPlayer.duration()))
         self.gui.horizontalSlider_time.setRange(0, duration)
         self.gui.horizontalSlider_time.setValue(self.position)
 
@@ -195,12 +211,3 @@ class Video:
         :param position: The position as indicated by the slider.
         """
         self.gui.mediaPlayer.setPosition(position)
-
-    # Camera
-
-    def set_timezone(self, timezone: pytz.timezone):
-        self.timezone = timezone
-
-        if self.file_path is not None:
-            self.datetime = video_metadata.parse_video_begin_time(self.file_path, self.timezone)
-            self.update_labels_datetime()

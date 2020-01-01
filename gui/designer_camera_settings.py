@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\Dennis\Documents\Work\labeling_app\project\gui\designer_camera_settings.ui'
+# Form implementation generated from reading ui file 'C:\Users\denni\Documents\LabelingApp\project_new\LabelingApp\gui\designer_camera_settings.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.0
 #
@@ -83,6 +83,9 @@ class Ui_Dialog(object):
         self.pushButton_save_timezone.setFlat(False)
         self.pushButton_save_timezone.setObjectName("pushButton_save_timezone")
         self.verticalLayout_2.addWidget(self.pushButton_save_timezone)
+        self.pushButton_use_camera = QtWidgets.QPushButton(self.layoutWidget)
+        self.pushButton_use_camera.setObjectName("pushButton_use_camera")
+        self.verticalLayout_2.addWidget(self.pushButton_use_camera)
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
@@ -95,3 +98,4 @@ class Ui_Dialog(object):
         self.pushButton_new_camera.setText(_translate("Dialog", "Add"))
         self.label_timezone.setText(_translate("Dialog", "Timezone"))
         self.pushButton_save_timezone.setText(_translate("Dialog", "Save timezone settings"))
+        self.pushButton_use_camera.setText(_translate("Dialog", "Use this camera"))

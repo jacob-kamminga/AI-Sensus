@@ -136,6 +136,13 @@
       </property>
      </widget>
     </item>
+    <item>
+     <widget class="QPushButton" name="pushButton_use_camera">
+      <property name="text">
+       <string>Use this camera</string>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>

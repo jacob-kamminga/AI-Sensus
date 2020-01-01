@@ -2,8 +2,8 @@ import unittest
 import os
 from datetime import datetime
 
-from data_storage.subject_mapping import SubjectManager
-from data_storage.settings import Settings
+from database.subject import SubjectManager
+from database.settings import Settings
 
 
 class TestSubjects(unittest.TestCase):

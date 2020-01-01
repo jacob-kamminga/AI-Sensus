@@ -1,9 +1,11 @@
+import ntpath
 import os
 
 from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QFileDialog
 
 from data_import import sensor_data
+from database.offset import OffsetManager
 
 
 class SensorData:
@@ -12,25 +14,20 @@ class SensorData:
     """
 
     def __init__(self, gui):
-        """"
-        Attributes:
-            gui: The GUI instance
-            settings: The Settings instance
-            file_path: The file path of the sensor data
-            data: The SensorData instance
-            df: The pandas DataFrame
-
-        :param gui: The GUI instance
-        :param settings: The Settings instance
-        """
         self.gui = gui
         self.settings = gui.settings
         self.file_path = None
 
+        self.offset_manager = OffsetManager(self.gui.project_dialog.project_name)
+
         self.sensor_id = None
+        """ The ID of the sensor. """
         self.data = None
+        """ The data_import.SensorData object. """
         self.df = None
+        """ The pandas DataFrame. """
         self.datetime = None
+        """ The datetime of the sensor data. """
 
     def open_previous_file(self):
         previous_path = self.settings.get_setting('last_datafile')
@@ -38,27 +35,32 @@ class SensorData:
         if previous_path is not None:
             if os.path.isfile(previous_path):
                 self.file_path = previous_path
-                self.open_sensor_data()
+                self.open_file()
 
-    def prompt_sensor_data(self):
-        path = "" if self.settings.get_setting('last_datafile') is None else self.settings.get_setting("last_datafile")
+    def prompt_file(self):
+        """
+        Opens a file dialog that lets the user select a file.
+        """
+        path = self.settings.get_setting('last_datafile')
 
-        if not os.path.isfile(path):
+        if path is None:
+            path = ""
+        elif not os.path.isfile(path):
             path = path.rsplit('/', 1)[0]
+
             if not os.path.isdir(path):
                 path = QDir.homePath()
 
         # Get the user input from a dialog window
-        self.file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Sensor Data", path)
+        self.file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Sensor Data", path, filter="csv (*.csv)")
 
-        self.open_sensor_data()
+        self.open_file()
 
-    def open_sensor_data(self):
+    def open_file(self):
         """
-        A function that allows a user to open a CSV file in the plotting canvas via the menu bar.
-        :return:
+        Opens the file specified by self.file_path and sets the sensor data.
         """
-        if self.file_path is not None:
+        if self.file_path is not None and os.path.isfile(self.file_path):
             self.settings.set_setting('last_datafile', self.file_path)
 
             # Reset the dictionary that maps function names to functions
@@ -124,14 +126,21 @@ class SensorData:
             # Draw the graph, set the value of the offset spinbox in the GUI to the correct value
             self.gui.canvas.draw()
 
-            if self.gui.comboBox_camera_ids.currentText():
+            camera_name = self.gui.label_camera_name_value.text()
+
+            if camera_name != "":
+                camera_id = self.gui.video.camera_manager.get_camera_id(camera_name)
                 self.gui.doubleSpinBox_video_offset.setValue(
-                    self.gui.camera.offset_manager.get_offset(self.gui.comboBox_camera_ids.currentText(),
-                                                              self.data.metadata['sn'],
-                                                              self.data.metadata['date']))
+                    self.offset_manager.get_offset(
+                        camera_id,
+                        self.data.metadata['sn'],
+                        self.data.metadata['date']
+                    )
+                )
 
             # Check if the sensor data file is already in the label database, if not add it
-            file_name = os.path.basename(self.file_path)
+            file_name = ntpath.basename(self.file_path)
+
             if not self.gui.plot.label_storage.file_is_added(file_name):
                 self.gui.plot.label_storage.add_file(file_name, self.data.metadata['sn'], self.datetime)
 

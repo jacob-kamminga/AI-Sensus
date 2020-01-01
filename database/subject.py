@@ -1,8 +1,8 @@
 import os.path
 import sqlite3
-from data_storage import settings
+from database import settings
 from datetime import datetime
-from typing import Any, List, Tuple
+from typing import Any, List
 from data_import.sensor_data import SensorData
 import pandas as pd
 
@@ -179,8 +179,8 @@ class SubjectManager:
         :param subject_name: subject name
         :return: list of pandas DataFrames
         """
-        from data_storage.label_storage import LabelManager
-        from data_storage.settings import Settings
+        from database.label import LabelManager
+        from database.settings import Settings
         self._cur.execute(SQL_GET_SUBJECT_DATA, [subject_name])  # get the stored information for this subject
         subject_data = self._cur.fetchall()
 

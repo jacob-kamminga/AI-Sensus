@@ -1,8 +1,8 @@
 from PyQt5 import QtWidgets
 
 from gui.designer_labelsettings import Ui_Dialog
-from data_storage.label_storage import LabelManager
-from data_storage.settings import Settings
+from database.label import LabelManager
+from database.settings import Settings
 
 
 class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
