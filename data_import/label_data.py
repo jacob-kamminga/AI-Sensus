@@ -13,7 +13,7 @@ class LabelData:
     STOP_TIME_INDEX = 1
     LABEL_INDEX = 2
 
-    def __init__(self, label_manager: LabelManager, sensor_id: str = None):
+    def __init__(self, label_manager: LabelManager, sensor_id: int = None):
         """
         This class can be used to retrieve and add labels from/to the database.
 
@@ -42,7 +42,7 @@ class LabelData:
     def get_sensor_id(self):
         return self._sensor_id
 
-    def set_sensor_id(self, sensor_id: str):
+    def set_sensor_id(self, sensor_id: int):
         if self._sensor_id:
             raise Exception('self._sensor_id has already been set')
 
@@ -63,24 +63,24 @@ class LabelData:
         self._data = self.get_from_db()
 
 
-if __name__ == '__main__':
-    labels_file = open('data/20180515_09-58_CCDC301661B33D7_labels.csv')
-    project_name = 'test_project'
-    sensor_id = 'CCDC301661B33D7'
-
-    lbm = LabelManager(project_name)
-    lbd = LabelData(lbm, sensor_id)
-
-    # Set up label file reader
-    labels = csv.reader(labels_file)
-    next(labels)
-    labels = sorted(labels, key=lambda row: row[0])
-
-    res = []
-
-    # Add a stop time to the rows
-    for i in range(len(labels) - 1):
-        res.append([datetime.strptime(labels[i][0], "%Y%m%d %H:%M:%S.%f"), datetime.strptime(labels[i + 1][0], "%Y%m%d %H:%M:%S.%f"), labels[i][1]])
-
-    lbd.add_data(res)
-    print(lbd.get_data())
+# if __name__ == '__main__':
+#     labels_file = open('data/20180515_09-58_CCDC301661B33D7_labels.csv')
+#     project_name = 'test_project'
+#     sensor_id = 'CCDC301661B33D7'
+#
+#     lbm = LabelManager(project_name)
+#     lbd = LabelData(lbm, sensor_id)
+#
+#     # Set up label file reader
+#     labels = csv.reader(labels_file)
+#     next(labels)
+#     labels = sorted(labels, key=lambda row: row[0])
+#
+#     res = []
+#
+#     # Add a stop time to the rows
+#     for i in range(len(labels) - 1):
+#         res.append([datetime.strptime(labels[i][0], "%Y%m%d %H:%M:%S.%f"), datetime.strptime(labels[i + 1][0], "%Y%m%d %H:%M:%S.%f"), labels[i][1]])
+#
+#     lbd.add_data(res)
+#     print(lbd.get_data())

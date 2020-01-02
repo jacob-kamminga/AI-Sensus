@@ -148,8 +148,8 @@ class Plot:
         for label_type in self.label_storage.get_label_types():
             self.colors[label_type[0]] = label_type[1]
 
-        labels = self.label_storage.get_labels_date(self.sensor_data.data.metadata['sn'],
-                                                    self.sensor_data.data.metadata['datetime'].date())
+        labels = self.label_storage.get_labels_date(self.sensor_data.sensor_id,
+                                                    self.sensor_data.datetime.date())
         self.highlights = {}
 
         for label in labels:
@@ -216,9 +216,8 @@ class Plot:
                     start = self.large_label.dateTimeEdit_start.dateTime().toPyDateTime()
                     end = self.large_label.dateTimeEdit_end.dateTime().toPyDateTime()
 
-                    for label in self.label_storage.get_labels_date(self.sensor_data.data.metadata['sn'],
-                                                                    self.sensor_data.data.metadata[
-                                                                        'datetime'].date()):
+                    for label in self.label_storage.get_labels_date(self.sensor_data.sensor_id,
+                                                                    self.sensor_data.datetime.date()):
                         label_start = label[LABEL_START_TIME_INDEX]
                         label_end = label[LABEL_END_TIME_INDEX]
                         label_start_qdt = QDateTime.fromString(label_start.strftime(DATETIME_FORMAT)[:-3],
@@ -240,7 +239,7 @@ class Plot:
                                                      QMessageBox.Yes, QMessageBox.No)
                         if reply == QMessageBox.Yes:
                             self.label_storage.delete_label(delete_label[LABEL_START_TIME_INDEX],
-                                                            self.sensor_data.data.metadata['sn'])
+                                                            self.sensor_data.sensor_id)
 
                             # Remove label highlight and text from plot
                             self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
@@ -279,8 +278,8 @@ class Plot:
                 start = self.new_label.dateTimeEdit_start.dateTime().toPyDateTime()
                 end = self.new_label.dateTimeEdit_end.dateTime().toPyDateTime()
 
-                for label in self.label_storage.get_labels_date(self.sensor_data.data.metadata['sn'],
-                                                                self.sensor_data.data.metadata['datetime'].date()):
+                for label in self.label_storage.get_labels_date(self.sensor_data.sensor_id,
+                                                                self.sensor_data.datetime.date()):
                     label_start = label[LABEL_START_TIME_INDEX]
                     label_end = label[LABEL_END_TIME_INDEX]
 
@@ -302,7 +301,7 @@ class Plot:
                                                  QMessageBox.Yes, QMessageBox.No)
                     if reply == QMessageBox.Yes:
                         self.label_storage.delete_label(delete_label[LABEL_START_TIME_INDEX],
-                                                        self.sensor_data.data.metadata['sn'])
+                                                        self.sensor_data.sensor_id)
                         # Remove label highlight and text from plot
                         self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
                         self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()

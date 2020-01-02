@@ -77,6 +77,12 @@ class Video:
 
             self.update_datetime()
 
+            # Save file mapping to database if not exists
+            id_ = self.video_manager.get_video_id(file_base_name)
+            # File mapping does not exist
+            if id_ == -1:
+                self.video_manager.insert_video(file_base_name, self.gui.camera.camera_id)
+
             # Play the video in the QMediaPlayer and activate the associated widgets
             self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
             self.gui.pushButton_play.setEnabled(True)

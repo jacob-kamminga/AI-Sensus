@@ -250,8 +250,8 @@ class GUI(QMainWindow, Ui_MainWindow):
             # run the classifier
             self.ml_dataframe = self.sensor_data.data.__copy__()
             self.ml_dataframe.add_timestamp_column(TIME_COL, TIMESTAMP_COL)
-            labels = self.plot.label_storage.get_labels_date(self.sensor_data.data.metadata['sn'],
-                                                             self.sensor_data.data.metadata['datetime'].date())
+            labels = self.plot.label_storage.get_labels_date(self.sensor_data.sensor_id,
+                                                             self.sensor_data.datetime.date())
             self.ml_dataframe.add_labels(labels, LABEL_COL, TIMESTAMP_COL)
             raw_data = self.ml_dataframe.get_data()
 

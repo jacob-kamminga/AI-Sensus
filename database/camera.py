@@ -15,11 +15,11 @@ SQL_CREATE_TABLE = "create table camera \
 create unique index cameras_name_uindex \
   on camera (name);"
 
-SQL_REPLACE_CAMERA = "REPLACE INTO camera(name, timezone) VALUES (?, ?)"
 SQL_DELETE_CAMERA = "DELETE FROM camera WHERE id = ?"
-SQL_SELECT_CAMERA_NAME = "SELECT name FROM camera WHERE id = ?"
-SQL_SELECT_CAMERA_ID = "SELECT id FROM camera WHERE name = ?"
+SQL_INSERT_CAMERA = "INSERT INTO camera(name, timezone) VALUES (?, ?)"
 SQL_SELECT_ALL_CAMERAS = "SELECT id, name, timezone FROM camera"
+SQL_SELECT_CAMERA_ID = "SELECT id FROM camera WHERE name = ?"
+SQL_SELECT_CAMERA_NAME = "SELECT name FROM camera WHERE id = ?"
 SQL_SELECT_TIMEZONE = "SELECT timezone FROM camera WHERE id = ?"
 SQL_UPDATE_TIMEZONE = "UPDATE camera SET timezone = ? WHERE id = ?"
 
@@ -43,7 +43,7 @@ class CameraManager:
         :param camera_name: The name of the new camera
         :param timezone: The timezone that has been set on the camera
         """
-        self._cur.execute(SQL_REPLACE_CAMERA, (camera_name, timezone))
+        self._cur.execute(SQL_INSERT_CAMERA, (camera_name, timezone))
         self._conn.commit()
 
     def delete_camera(self, camera_id: int) -> None:

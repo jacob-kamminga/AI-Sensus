@@ -5,7 +5,9 @@ from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QFileDialog
 
 from data_import import sensor_data
+from database.label import LabelManager
 from database.offset import OffsetManager
+from database.sensor import SensorManager
 
 
 class SensorData:
@@ -18,7 +20,9 @@ class SensorData:
         self.settings = gui.settings
         self.file_path = None
 
+        self.sensor_manager = SensorManager(self.gui.project_dialog.project_name)
         self.offset_manager = OffsetManager(self.gui.project_dialog.project_name)
+        self.label_manager = LabelManager(self.gui.project_dialog.project_name)
 
         self.sensor_id = None
         """ The ID of the sensor. """
@@ -68,10 +72,14 @@ class SensorData:
 
             # Retrieve the SensorData object that parses the sensor data file
             self.data = sensor_data.SensorData(self.file_path, self.settings.settings_dict)
-            self.sensor_id = self.data.metadata['sn']
+            sensor_name = self.data.metadata['sn']
+            self.sensor_id = self.sensor_manager.get_id(sensor_name)
+
+            if self.sensor_id == -1:
+                self.sensor_id = self.sensor_manager.insert_sensor(sensor_name)
 
             # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary
-            stored_formulas = self.settings.get_setting("formulas")
+            stored_formulas = self.settings.get_setting('formulas')
 
             for formula_name in stored_formulas:
                 try:
@@ -133,8 +141,8 @@ class SensorData:
                 self.gui.doubleSpinBox_video_offset.setValue(
                     self.offset_manager.get_offset(
                         camera_id,
-                        self.data.metadata['sn'],
-                        self.data.metadata['date']
+                        self.sensor_id,
+                        self.datetime
                     )
                 )
 
@@ -142,6 +150,6 @@ class SensorData:
             file_name = ntpath.basename(self.file_path)
 
             if not self.gui.plot.label_storage.file_is_added(file_name):
-                self.gui.plot.label_storage.add_file(file_name, self.data.metadata['sn'], self.datetime)
+                self.gui.plot.label_storage.add_file(file_name, self.sensor_id, self.datetime)
 
             self.gui.video.sync_with_sensor_data()

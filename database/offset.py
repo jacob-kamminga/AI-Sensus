@@ -3,16 +3,16 @@ from datetime import date
 
 SQL_CREATE_TABLE = "create table offset \
 ( \
-  camera_id INTEGER     not null, \
-  sensor_id VARCHAR(50) not null, \
-  offset    DOUBLE      not null, \
-  added     DATE        not null, \
+  camera_id INTEGER not null, \
+  sensor_id INTEGER not null, \
+  offset    DOUBLE  not null, \
+  added     DATE    not null, \
   constraint offset_pk \
     unique (camera_id, sensor_id) \
 );"
-SQL_QUERY_DATE = "SELECT offset FROM offset WHERE camera_id = ? AND sensor_id = ? AND added = ?"
-SQL_QUERY_NO_DATE = "SELECT offset FROM offset WHERE camera_id = ? AND sensor_id = ? ORDER BY added DESC"
-SQL_REPLACE_OFFSET = "REPLACE INTO offset(camera_id, sensor_id, offset, added) VALUES (?, ?, ?, ?)"
+SQL_INSERT_OFFSET = "INSERT INTO offset(camera_id, sensor_id, offset, added) VALUES (?, ?, ?, ?)"
+SQL_SELECT_OFFSET_DATE = "SELECT offset FROM offset WHERE camera_id = ? AND sensor_id = ? AND added = ?"
+SQL_SELECT_OFFSET_NO_DATE = "SELECT offset FROM offset WHERE camera_id = ? AND sensor_id = ? ORDER BY added DESC"
 SQL_UPDATE_OFFSET = "UPDATE offset SET offset = ? WHERE camera_id = ? AND sensor_id = ? AND added = ?"
 
 
@@ -40,7 +40,7 @@ class OffsetManager:
         :return: float: The offset between camera and sensor
         """
         c = self._cur
-        c.execute(SQL_QUERY_DATE, (camera_id, sensor_id, added))
+        c.execute(SQL_SELECT_OFFSET_DATE, (camera_id, sensor_id, added))
         results = [x[0] for x in c.fetchall()]
 
         # If there is a known offset, return it
@@ -48,7 +48,7 @@ class OffsetManager:
             return results[0]
 
         # Otherwise check again without date and return the most recent offset, or 0 if no offset is known at all
-        c.execute(SQL_QUERY_NO_DATE, (camera_id, sensor_id))
+        c.execute(SQL_SELECT_OFFSET_NO_DATE, (camera_id, sensor_id))
         results = [x[0] for x in c.fetchall()]
 
         if len(results) == 0:

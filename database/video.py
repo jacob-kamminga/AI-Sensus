@@ -17,10 +17,14 @@ SQL_CREATE_TABLE = "create table video \
 create unique index video_file_file_name_uindex \
   on video (file_name);"
 
-SQL_REPLACE_VIDEO = "REPLACE INTO video(file_name, camera_id) VALUES (?, ?)"
 SQL_DELETE_VIDEO = "DELETE FROM video WHERE file_name = ?"
+
+SQL_INSERT_VIDEO = "INSERT INTO video(file_name, camera_id) VALUES (?, ?)"
+
 SQL_SELECT_ALL_VIDEOS = "SELECT file_name, datetime, camera_id FROM video"
 SQL_SELECT_CAMERA = "SELECT camera_id FROM video WHERE video.file_name = ?"
+SQL_SELECT_ID = "SELECT id FROM video WHERE file_name = ?"
+
 SQL_UPDATE_CAMERA = "UPDATE video SET camera_id = ? WHERE file_name = ?"
 SQL_UPDATE_DATETIME = "UPDATE video SET datetime = ? WHERE id = ?"
 
@@ -37,14 +41,23 @@ class VideoManager:
         self._cur.execute(SQL_CREATE_TABLE)
         self._conn.commit()
 
-    def replace_video(self, file_name: str, camera_id: int) -> None:
+    def get_video_id(self, file_name: str) -> int:
+        self._cur.execute(SQL_SELECT_ID, (file_name,))
+        id_ = self._cur.fetchone()[0]
+
+        if id_ is None:
+            return -1
+        else:
+            return id_
+
+    def insert_video(self, file_name: str, camera_id: int) -> None:
         """
         Adds a video to the table.
 
         :param file_name: The name of the new camera
         :param camera_id: The ID of the camera that the video was recorded on
         """
-        self._cur.execute(SQL_REPLACE_VIDEO, (file_name, camera_id))
+        self._cur.execute(SQL_INSERT_VIDEO, (file_name, camera_id))
         self._conn.commit()
 
     def delete_video(self, file_name: str) -> None:
