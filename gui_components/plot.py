@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QMessageBox
 from matplotlib.dates import date2num, num2date
 
 from data_import.label_data import LabelData
-from database.label import LabelManager
+from database.db_label import LabelManager
 from gui.label_dialog import LabelSpecs
 
 LABEL_START_TIME_INDEX = 0

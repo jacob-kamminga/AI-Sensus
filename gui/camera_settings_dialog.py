@@ -1,7 +1,7 @@
 import pytz
 from PyQt5 import QtWidgets
 
-from database.camera import CameraManager
+from database.db_camera import CameraManager
 from gui.designer_camera_settings import Ui_Dialog
 
 CAMERA_ID_INDEX = 0

@@ -5,9 +5,9 @@ from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QFileDialog
 
 from data_import import sensor_data
-from database.label import LabelManager
-from database.offset import OffsetManager
-from database.sensor import SensorManager
+from database.db_label import LabelManager
+from database.db_offset import OffsetManager
+from database.db_sensor import SensorManager
 
 
 class SensorData:

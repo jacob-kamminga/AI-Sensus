@@ -13,8 +13,8 @@ def new_project(project_name: str) -> None:
     :param project_name: The name of the new project
     """
     if not os.path.exists('projects/' + project_name):
-        from database.label import LabelManager
-        from database.subject import SubjectManager
+        from database.db_label import LabelManager
+        from database.db_subject import SubjectManager
         os.mkdir('projects/' + project_name)
         Settings(project_name, True)
         LabelManager(project_name).create_tables()

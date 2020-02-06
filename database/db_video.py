@@ -43,12 +43,12 @@ class VideoManager:
 
     def get_video_id(self, file_name: str) -> int:
         self._cur.execute(SQL_SELECT_ID, (file_name,))
-        id_ = self._cur.fetchone()[0]
+        id_ = self._cur.fetchone()
 
         if id_ is None:
             return -1
         else:
-            return id_
+            return id_[0]
 
     def insert_video(self, file_name: str, camera_id: int) -> None:
         """

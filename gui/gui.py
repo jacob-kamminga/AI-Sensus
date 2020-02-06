@@ -12,7 +12,7 @@ from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
 from data_export import export_data, windowing as wd
-from database.subject import SubjectManager
+from database.db_subject import SubjectManager
 from gui.camera_settings_dialog import CameraSettingsDialog
 from gui.designer_gui import Ui_MainWindow
 from gui.export_dialog import ExportDialog

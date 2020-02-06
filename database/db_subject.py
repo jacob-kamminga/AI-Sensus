@@ -8,17 +8,17 @@ import pandas as pd
 
 SQL_CREATE_TABLE = "CREATE TABLE subject_map (name TEXT PRIMARY KEY, " \
                    "sensor TEXT, start_date TIMESTAMP, end_date TIMESTAMP)"
-SQL_ADD_SUBJECT = "INSERT INTO subject (name) VALUES (?)"
-SQL_UPDATE_SUBJECT = "UPDATE subject SET name = ? WHERE name = ?"
-SQL_DELETE_SUBJECT = "DELETE FROM subject WHERE name = ?"
-SQL_UPDATE_SENSOR = "UPDATE subject SET sensor = ? WHERE name = ?"
-SQL_UPDATE_START_DATE = "UPDATE subject SET start_date = ? WHERE name = ?"
-SQL_UPDATE_END_DATE = "UPDATE subject SET end_date = ? WHERE name = ?"
-SQL_ADD_COLUMN = "ALTER TABLE subject ADD COLUMN {} TEXT"
-SQL_UPDATE_USER_COLUMN = "UPDATE subject SET {} = ? WHERE name = ?"
+SQL_ADD_SUBJECT = "INSERT INTO subject_sensor_map (name) VALUES (?)"
+SQL_UPDATE_SUBJECT = "UPDATE subject_sensor_map SET name = ? WHERE name = ?"
+SQL_DELETE_SUBJECT = "DELETE FROM subject_sensor_map WHERE name = ?"
+SQL_UPDATE_SENSOR = "UPDATE subject_sensor_map SET sensor = ? WHERE name = ?"
+SQL_UPDATE_START_DATE = "UPDATE subject_sensor_map SET start_date = ? WHERE name = ?"
+SQL_UPDATE_END_DATE = "UPDATE subject_sensor_map SET end_date = ? WHERE name = ?"
+SQL_ADD_COLUMN = "ALTER TABLE subject_sensor_map ADD COLUMN {} TEXT"
+SQL_UPDATE_USER_COLUMN = "UPDATE subject_sensor_map SET {} = ? WHERE name = ?"
 SQL_GET_TABLE = "SELECT name, sensor, start_date, end_date{} FROM subject_map"
-SQL_GET_SUBJECT_DATA = "SELECT sensor, start_date, end_date FROM subject WHERE name = ?"
-SQL_GET_SUBJECTS = "SELECT name FROM subject"
+SQL_GET_SUBJECT_DATA = "SELECT sensor, start_date, end_date FROM subject_sensor_map WHERE name = ?"
+SQL_GET_SUBJECTS = "SELECT name FROM subject_sensor_map"
 
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
@@ -179,7 +179,7 @@ class SubjectManager:
         :param subject_name: subject name
         :return: list of pandas DataFrames
         """
-        from database.label import LabelManager
+        from database.db_label import LabelManager
         from database.settings import Settings
         self._cur.execute(SQL_GET_SUBJECT_DATA, [subject_name])  # get the stored information for this subject
         subject_data = self._cur.fetchall()

@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 
 from gui.designer_labelsettings import Ui_Dialog
-from database.label import LabelManager
+from database.db_label import LabelManager
 from database.settings import Settings
 
 

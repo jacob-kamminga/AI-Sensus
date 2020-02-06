@@ -5,8 +5,8 @@ from PyQt5.QtCore import QDate, QStringListModel, QDateTime
 from PyQt5.QtWidgets import QInputDialog, QLineEdit, QTableWidgetItem, QMessageBox, QDateEdit, QComboBox, QDateTimeEdit
 
 from gui.designer_subject_table import Ui_Subject_table
-from database.subject import SubjectManager
-from database.label import LabelManager
+from database.db_subject import SubjectManager
+from database.db_label import LabelManager
 
 
 class SubjectTable(QtWidgets.QDialog, Ui_Subject_table):

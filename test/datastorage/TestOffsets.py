@@ -1,5 +1,5 @@
 import unittest
-from database.offset import *
+from database.db_offset import *
 
 
 class TestOffsets(unittest.TestCase):

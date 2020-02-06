@@ -8,8 +8,8 @@ from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWidgets import QFileDialog
 
 import video_metadata
-from database.camera import CameraManager
-from database.video import VideoManager
+from database.db_camera import CameraManager
+from database.db_video import VideoManager
 from utils import get_hms_sum, ms_to_hms
 
 

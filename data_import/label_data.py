@@ -1,6 +1,6 @@
 import csv
 
-from database.label import LabelManager
+from database.db_label import LabelManager
 from datetime import datetime
 
 

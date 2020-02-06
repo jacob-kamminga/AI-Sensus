@@ -1,7 +1,7 @@
 import pytz
 
-from database.camera import CameraManager
-from database.offset import OffsetManager
+from database.db_camera import CameraManager
+from database.db_offset import OffsetManager
 
 
 class Camera:

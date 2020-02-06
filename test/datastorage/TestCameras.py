@@ -1,5 +1,5 @@
 import unittest
-from database.camera import *
+from database.db_camera import *
 
 
 class TestCameras(unittest.TestCase):

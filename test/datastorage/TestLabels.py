@@ -1,5 +1,5 @@
 import unittest
-from database.label import *
+from database.db_label import *
 
 
 class TestLabels(unittest.TestCase):
