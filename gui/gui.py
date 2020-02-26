@@ -12,16 +12,17 @@ from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
 from data_export import export_data, windowing as wd
-from database.db_subject import SubjectManager
-from gui.camera_settings_dialog import CameraSettingsDialog
+from database.db_subject_sensor_map import SubjectSensorMapManager
+from gui.dialog_camera_settings import CameraSettingsDialog
 from gui.designer_gui import Ui_MainWindow
-from gui.export_dialog import ExportDialog
-from gui.label_dialog import LabelSpecs
-from gui.label_settings_dialog import LabelSettingsDialog
-from gui.machine_learning_dialog import MachineLearningDialog
-from gui.new_dialog import NewProject
-from gui.settings_dialog import SettingsDialog
-from gui.subject_dialog import SubjectTable
+from gui.dialog_export import ExportDialog
+from gui.dialog_label import LabelSpecs
+from gui.dialog_label_settings import LabelSettingsDialog
+from gui.dialog_machine_learning import MachineLearningDialog
+from gui.dialog_new import NewProject
+from gui.dialog_settings import SettingsDialog
+from gui.dialog_subject_old import SubjectTable
+from gui.dialog_subject import SubjectDialog
 from gui_components.camera import Camera
 from gui_components.plot import Plot
 from gui_components.sensor_data import SensorData
@@ -78,7 +79,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox_plot_width.valueChanged.connect(self.plot.change_plot_width)
         self.doubleSpinBox_plot_height.valueChanged.connect(self.plot.change_plot_height)
         self.comboBox_functions.activated.connect(self.plot.change_plot)
-        self.actionSubject_Mapping.triggered.connect(self.open_subject_mapping)
+        self.actionSubject_Mapping.triggered.connect(self.open_subject_settings)
         self.actionExport_Sensor_Data.triggered.connect(self.open_export)
         self.actionMachine_Learning.triggered.connect(self.open_machine_learning)
 
@@ -112,7 +113,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox_plot_height.setValue(self.plot.plot_height_factor)
 
         # Initialize the classes that retrieve information from the database
-        self.subject_mapping = SubjectManager(self.project_dialog.project_name)
+        self.subject_mapping = SubjectSensorMapManager(self.project_dialog.project_name)
 
         # Machine learning fields
         self.ml_dataframe = None
@@ -171,13 +172,13 @@ class GUI(QMainWindow, Ui_MainWindow):
         if label_settings.settings_changed:
             self.plot.draw_graph()
 
-    def open_subject_mapping(self):
+    def open_subject_settings(self):
         """
         Opens the subject mapping dialog window.
         """
-        subject_mapping = SubjectTable(self.project_dialog.project_name)
-        subject_mapping.exec_()
-        subject_mapping.show()
+        subject_settings = SubjectDialog(self.project_dialog.project_name)
+        subject_settings.exec_()
+        subject_settings.show()
 
     def open_export(self):
         """

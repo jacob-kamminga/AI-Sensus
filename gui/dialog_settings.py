@@ -1,4 +1,4 @@
-from gui.new_dialog import NewProject
+from gui.dialog_new import NewProject
 from database import settings
 
 

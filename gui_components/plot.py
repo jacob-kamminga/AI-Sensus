@@ -7,7 +7,7 @@ from matplotlib.dates import date2num, num2date
 
 from data_import.label_data import LabelData
 from database.db_label import LabelManager
-from gui.label_dialog import LabelSpecs
+from gui.dialog_label import LabelSpecs
 
 LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1

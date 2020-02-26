@@ -2,7 +2,7 @@ import unittest
 import os
 from datetime import datetime
 
-from database.db_subject import SubjectManager
+from database.db_subject_sensor_map import SubjectSensorMapManager
 from database.settings import Settings
 
 
@@ -11,7 +11,7 @@ class TestSubjects(unittest.TestCase):
 
     def setUp(self):
         Settings('test_project', True)
-        self.s = SubjectManager('test_project')
+        self.s = SubjectSensorMapManager('test_project')
         self.s.create_table()
 
     def tearDown(self):

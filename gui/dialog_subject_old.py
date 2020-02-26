@@ -5,7 +5,7 @@ from PyQt5.QtCore import QDate, QStringListModel, QDateTime
 from PyQt5.QtWidgets import QInputDialog, QLineEdit, QTableWidgetItem, QMessageBox, QDateEdit, QComboBox, QDateTimeEdit
 
 from gui.designer_subject_table import Ui_Subject_table
-from database.db_subject import SubjectManager
+from database.db_subject_sensor_map import SubjectSensorMapManager
 from database.db_label import LabelManager
 
 
@@ -17,7 +17,7 @@ class SubjectTable(QtWidgets.QDialog, Ui_Subject_table):
         self.setupUi(self)
 
         self.project_name = project_name
-        self.subject_manager = SubjectManager(project_name)
+        self.subject_manager = SubjectSensorMapManager(project_name)
         self.col_names, self.table_data = self.subject_manager.get_table()  # get stored data from the database
         self.subject_names = [x[0] for x in self.table_data]
         self.sensorIDs = LabelManager(self.project_name).get_sensor_ids()  # get all used sensor ids for this project
