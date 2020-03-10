@@ -428,7 +428,7 @@
      <x>0</x>
      <y>0</y>
      <width>693</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -441,6 +441,7 @@
     <addaction name="actionImport_Settings"/>
     <addaction name="actionCamera_Settings"/>
     <addaction name="actionLabel_Settings"/>
+    <addaction name="actionSubjects"/>
     <addaction name="actionSubject_Mapping"/>
     <addaction name="actionMachine_Learning"/>
     <addaction name="actionExit"/>
@@ -491,6 +492,11 @@
   <action name="actionCamera_Settings">
    <property name="text">
     <string>Camera Settings</string>
+   </property>
+  </action>
+  <action name="actionSubjects">
+   <property name="text">
+    <string>Subjects</string>
    </property>
   </action>
  </widget>

@@ -6,18 +6,18 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>526</width>
-    <height>350</height>
+    <width>508</width>
+    <height>333</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Labeling App</string>
   </property>
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>170</x>
-     <y>310</y>
+     <x>140</x>
+     <y>290</y>
      <width>341</width>
      <height>32</height>
     </rect>
@@ -26,37 +26,14 @@
     <enum>Qt::Horizontal</enum>
    </property>
    <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_select_subject">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>20</y>
-     <width>101</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Select a subject:</string>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="comboBox">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>20</y>
-     <width>211</width>
-     <height>22</height>
-    </rect>
+    <set>QDialogButtonBox::Save</set>
    </property>
   </widget>
   <widget class="QLabel" name="label_name">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>70</y>
+     <y>50</y>
      <width>55</width>
      <height>16</height>
     </rect>
@@ -75,7 +52,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>100</y>
+     <y>80</y>
      <width>55</width>
      <height>16</height>
     </rect>
@@ -94,7 +71,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>130</y>
+     <y>110</y>
      <width>55</width>
      <height>16</height>
     </rect>
@@ -113,7 +90,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>160</y>
+     <y>140</y>
      <width>71</width>
      <height>16</height>
     </rect>
@@ -132,78 +109,116 @@
    <property name="geometry">
     <rect>
      <x>100</x>
-     <y>160</y>
-     <width>411</width>
-     <height>131</height>
+     <y>140</y>
+     <width>381</width>
+     <height>141</height>
     </rect>
    </property>
    <property name="readOnly">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_name">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>50</y>
+     <width>241</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_color">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>80</y>
+     <width>241</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_size">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>110</y>
+     <width>241</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>10</y>
+     <width>191</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Add a new subject</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_warning_duplicate_name">
+   <property name="enabled">
     <bool>true</bool>
    </property>
-  </widget>
-  <widget class="QLabel" name="label_name_val">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>70</y>
-     <width>55</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_color_val">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>100</y>
-     <width>55</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_size_val">
-   <property name="geometry">
-    <rect>
-     <x>100</x>
-     <y>130</y>
-     <width>55</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string/>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_add_subject">
-   <property name="geometry">
-    <rect>
-     <x>360</x>
-     <y>20</y>
-     <width>151</width>
-     <height>28</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Add new subject</string>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="pushButton_remove_subject">
    <property name="geometry">
     <rect>
      <x>360</x>
      <y>50</y>
-     <width>151</width>
-     <height>28</height>
+     <width>121</width>
+     <height>16</height>
     </rect>
    </property>
+   <property name="palette">
+    <palette>
+     <active>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>255</red>
+         <green>0</green>
+         <blue>0</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </active>
+     <inactive>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>255</red>
+         <green>0</green>
+         <blue>0</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </inactive>
+     <disabled>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>120</red>
+         <green>120</green>
+         <blue>120</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </disabled>
+    </palette>
+   </property>
    <property name="text">
-    <string>Remove current subject</string>
+    <string>Name already exists</string>
    </property>
   </widget>
  </widget>

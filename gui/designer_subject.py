@@ -10,12 +10,12 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 
-class Ui_Subject_Dialog(object):
+class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(642, 350)
+        Dialog.resize(526, 350)
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
-        self.buttonBox.setGeometry(QtCore.QRect(290, 310, 341, 32))
+        self.buttonBox.setGeometry(QtCore.QRect(170, 310, 341, 32))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName("buttonBox")
@@ -23,7 +23,7 @@ class Ui_Subject_Dialog(object):
         self.label_select_subject.setGeometry(QtCore.QRect(20, 20, 101, 16))
         self.label_select_subject.setObjectName("label_select_subject")
         self.comboBox = QtWidgets.QComboBox(Dialog)
-        self.comboBox.setGeometry(QtCore.QRect(130, 20, 191, 22))
+        self.comboBox.setGeometry(QtCore.QRect(130, 20, 211, 22))
         self.comboBox.setObjectName("comboBox")
         self.label_name = QtWidgets.QLabel(Dialog)
         self.label_name.setGeometry(QtCore.QRect(20, 70, 55, 16))
@@ -54,7 +54,7 @@ class Ui_Subject_Dialog(object):
         self.label_extra_info.setFont(font)
         self.label_extra_info.setObjectName("label_extra_info")
         self.plainTextEdit_extra_info = QtWidgets.QPlainTextEdit(Dialog)
-        self.plainTextEdit_extra_info.setGeometry(QtCore.QRect(100, 160, 531, 141))
+        self.plainTextEdit_extra_info.setGeometry(QtCore.QRect(100, 160, 411, 131))
         self.plainTextEdit_extra_info.setReadOnly(True)
         self.plainTextEdit_extra_info.setObjectName("plainTextEdit_extra_info")
         self.label_name_val = QtWidgets.QLabel(Dialog)
@@ -70,10 +70,10 @@ class Ui_Subject_Dialog(object):
         self.label_size_val.setText("")
         self.label_size_val.setObjectName("label_size_val")
         self.pushButton_add_subject = QtWidgets.QPushButton(Dialog)
-        self.pushButton_add_subject.setGeometry(QtCore.QRect(350, 20, 121, 28))
+        self.pushButton_add_subject.setGeometry(QtCore.QRect(360, 20, 151, 28))
         self.pushButton_add_subject.setObjectName("pushButton_add_subject")
         self.pushButton_remove_subject = QtWidgets.QPushButton(Dialog)
-        self.pushButton_remove_subject.setGeometry(QtCore.QRect(480, 20, 151, 28))
+        self.pushButton_remove_subject.setGeometry(QtCore.QRect(360, 50, 151, 28))
         self.pushButton_remove_subject.setObjectName("pushButton_remove_subject")
 
         self.retranslateUi(Dialog)
