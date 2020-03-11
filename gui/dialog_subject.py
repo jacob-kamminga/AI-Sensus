@@ -2,12 +2,12 @@ from PyQt5 import QtWidgets
 
 from database.db_subject import SubjectManager
 from gui.designer_subject import Ui_Dialog
-from gui.dialog_subject_new import NewSubjectDialog
+from gui.dialog_new_subject import NewSubjectDialog
 
-SUBJECT_NAME_INDEX = 0
-SUBJECT_COLOR_INDEX = 1
-SUBJECT_SIZE_INDEX = 2
-SUBJECT_EXTRA_INFO_INDEX = 3
+SUBJECT_NAME_INDEX = 1
+SUBJECT_COLOR_INDEX = 2
+SUBJECT_SIZE_INDEX = 3
+SUBJECT_EXTRA_INFO_INDEX = 4
 
 
 class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
@@ -20,7 +20,7 @@ class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         self.subjects = dict()
 
         # Fill the subjects dictionary
-        for subject in self.subject_manager.get_subjects():
+        for subject in self.subject_manager.get_all_subjects():
             name = subject[SUBJECT_NAME_INDEX]
             color = subject[SUBJECT_COLOR_INDEX]
             size = subject[SUBJECT_SIZE_INDEX]

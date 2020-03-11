@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 
 from database.db_subject import SubjectManager
-from gui.designer_subject_new import Ui_Dialog
+from gui.designer_new_subject import Ui_Dialog
 
 SUBJECT_NAME_INDEX = 0
 SUBJECT_COLOR_INDEX = 1

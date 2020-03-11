@@ -6,17 +6,30 @@ from typing import Any, List
 from data_import.sensor_data import SensorData
 import pandas as pd
 
-SQL_CREATE_TABLE = "CREATE TABLE subject_sensor_map (id INTEGER PRIMARY KEY, subject_id INTEGER, sensor_id INTEGER, " \
-                   "start_date TIMESTAMP, end_date TIMESTAMP)"
-SQL_ADD_MAPPING = "INSERT INTO subject_sensor_map (subject_id, sensor_id, start_date, end_date) VALUES (?, ?, ?, ?)"
-SQL_UPDATE_MAPPING = "UPDATE subject_sensor_map SET subject_id = ?, sensor_id = ?, start_date = ?, end_date = ? " \
-                     "WHERE id = ?"
-SQL_UPDATE_START_DATE = "UPDATE subject_sensor_map SET start_date = ? WHERE id = ?"
-SQL_UPDATE_END_DATE = "UPDATE subject_sensor_map SET end_date = ? WHERE id = ?"
-SQL_GET_SUBJECT_DATA = "SELECT sensor, start_date, end_date FROM subject_sensor_map WHERE name = ?"
-SQL_GET_SUBJECTS = "SELECT name FROM subject_sensor_map"
+SQL_CREATE_TABLE = "create table subject_sensor_map\
+(\
+    subject_id INTEGER,\
+    sensor_id  INTEGER   not null,\
+    start_date TIMESTAMP not null,\
+    end_date   TIMESTAMP not null,\
+    id         INTEGER\
+        constraint subject_sensor_map_pk\
+            primary key\
+);\
+\
+create unique index subject_sensor_map_subject_id_start_date_uindex\
+    on subject_sensor_map (subject_id, start_date);"
 
-DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
+SQL_DELETE_map = "DELETE FROM subject_sensor_map WHERE id = ?"
+SQL_INSERT_map = "INSERT INTO subject_sensor_map (subject_id, sensor_id, start_datetime, end_datetime) VALUES (?, ?, ?, ?)"
+
+SQL_SELECT_ALL_MAPS = "SELECT * FROM subject_sensor_map"
+SQL_UPDATE_map = "UPDATE subject_sensor_map SET subject_id = ?, sensor_id = ?, start_datetime = ?, end_datetime = ? " \
+                 "WHERE id = ?"
+SQL_UPDATE_START_DATE = "UPDATE subject_sensor_map SET start_datetime = ? WHERE id = ?"
+SQL_UPDATE_END_DATE = "UPDATE subject_sensor_map SET end_datetime = ? WHERE id = ?"
+
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 
 class SubjectSensorMapManager:
@@ -32,187 +45,61 @@ class SubjectSensorMapManager:
         self.settings = settings.Settings(project_name)
 
     def create_table(self) -> None:
-        """Method for creating the necessary subject mapping table."""
+        """Method for creating the necessary subject map table."""
         self._cur.execute(SQL_CREATE_TABLE)
         self._conn.commit()
 
-    def add_subject(self, name: str) -> None:
+    def add_map(self, subject_id: int, sensor_id: int, start_date: datetime, end_date: datetime) -> None:
         """
         Adds a new subject.
 
-        :param name: The name of the new subject
+        :param subject_id:
+        :param sensor_id:
+        :param start_date:
+        :param end_date:
         """
-        self._cur.execute(SQL_ADD_MAPPING, [name])
+        self._cur.execute(SQL_INSERT_map, (subject_id, sensor_id, start_date, end_date))
         self._conn.commit()
 
-    def update_subject(self, name_old: str, name_new: str) -> None:
+    def get_all_maps(self) -> List[str]:
+        self._cur.execute(SQL_SELECT_ALL_MAPS)
+        return self._cur.fetchall()
+
+    def delete_map(self, id: int) -> None:
+        """
+        Removes a subject from the table.
+
+        :param id: The ID of the map to delete
+        """
+        self._cur.execute(SQL_DELETE_map, (id,))
+        self._conn.commit()
+
+    def update_map(self, name_old: str, name_new: str) -> None:
         """
         Changes the name of a subject.
 
         :param name_old: name that should be changed
         :param name_new: name that it should be changed to
         """
-        self._cur.execute(SQL_UPDATE_MAPPING, (name_new, name_old))
+        self._cur.execute(SQL_UPDATE_map, (name_new, name_old))
         self._conn.commit()
 
-    def delete_subject(self, name: str) -> None:
+    def update_start_date(self, id: int, start_date: datetime) -> None:
         """
-        Removes a subject from the table.
+        Changes the start date for a map.
 
-        :param name: name of the subject to remove
+        :param id: The ID of the map
+        :param start_date: The start date
         """
-        self._cur.execute(SQL_DELETE_SUBJECT, [name])
+        self._cur.execute(SQL_UPDATE_START_DATE, (start_date, id))
         self._conn.commit()
 
-    def update_sensor(self, name: str, sens_id: str) -> None:
+    def update_end_date(self, id: int, end_date: datetime) -> None:
         """
-        Changes the sensor mapped to a subject.
+        Changes the end date for a map.
 
-        :param name: The name of the subject to map this sensor to
-        :param sens_id: The sensor ID of the sensor
+        :param id: The ID of the map
+        :param end_date: The end date
         """
-        self._cur.execute(SQL_UPDATE_SENSOR, (sens_id, name))
+        self._cur.execute(SQL_UPDATE_END_DATE, (end_date, id))
         self._conn.commit()
-
-    def update_start_date(self, name: str, date: datetime) -> None:
-        """
-        Changes the start date for a subject.
-
-        :param name: The name of the subject
-        :param date: The start date
-        """
-        self._cur.execute(SQL_UPDATE_START_DATE, (date, name))
-        self._conn.commit()
-
-    def update_end_date(self, name: str, date: datetime) -> None:
-        """
-        Changes the end date for a subject.
-
-        :param name: The name of the subject
-        :param date: The end date
-        """
-        self._cur.execute(SQL_UPDATE_END_DATE, (date, name))
-        self._conn.commit()
-
-    def add_column(self, name: str) -> bool:
-        """
-        Adds a column to the table with the given name.
-
-        :param name: Name of the new column
-        :return: boolean indicating if the column was added successfully
-        """
-        col_map = self.settings.get_setting("subj_map")
-        if name in col_map.keys():  # if column already exists, return false
-            return False
-        new_col_nr = self.settings.get_setting("next_col")
-        new_col_name = "c" + str(new_col_nr)
-        col_map[name] = new_col_name
-        self._cur.execute(SQL_ADD_COLUMN.format(new_col_name))  # add column to database with name "c" + the next number
-        self._conn.commit()
-        self.settings.set_setting("subj_map", col_map)
-        self.settings.set_setting("next_col", new_col_nr + 1)
-        return True
-
-    def delete_column(self, name: str) -> None:
-        """
-        Deletes a column from the table if it exists. (The column is not deleted from the actual database,
-        it is just not visible anymore via this class.)
-
-        :param name: the name of the column to delete
-        """
-        col_map = self.settings.get_setting("subj_map")
-        if name in col_map.keys():
-            col_map.pop(name, None)  # remove the given column from the map. the database column is not deleted.
-            self.settings.set_setting("subj_map", col_map)
-
-    def update_user_column(self, col_name: str, subj_name: str, new_value: Any) -> bool:
-        """
-        Update a value in a column made by the user
-
-        :param col_name: the name of the column that should be updated
-        :param subj_name: the subject name for which the row should be updated
-        :param new_value: the value that should be inserted
-        :return: boolean indicating if the column was updated successfully
-        """
-        col_map = self.settings.get_setting("subj_map")
-        if col_name in col_map.keys():  # only try to update if column is known
-            self._cur.execute(SQL_UPDATE_USER_COLUMN.format(col_map[col_name]), (new_value, subj_name))
-            self._conn.commit()
-            return True
-        else:
-            return False
-
-    def change_column_name(self, old: str, new: str) -> bool:
-        """
-        Update the name of a user-made column
-
-        :param old: the old name
-        :param new: the new name
-        :return: boolean indicating if the name was updated successfully
-        """
-        col_map = self.settings.get_setting("subj_map")
-        if (new in col_map.keys()) or (old not in col_map.keys()):
-            return False
-
-        col_map[new] = col_map[old]  # add new name and map it to database column of the old name
-        col_map.pop(old, None)       # remove old name from the map
-        self.settings.set_setting("subj_map", col_map)
-        return True
-
-    def get_subjects(self) -> List[str]:
-        """
-        Returns a list of all subjects
-
-        :return: list of subject names
-        """
-        self._cur.execute(SQL_GET_SUBJECTS)
-        return [x[0] for x in self._cur.fetchall()]
-
-    def get_dataframes_subject(self, subject_name: str) -> List[pd.DataFrame]:
-        """
-        Returns a list of pandas DataFrames of all the labeled sensor-data belonging to the subject
-
-        :param subject_name: subject name
-        :return: list of pandas DataFrames
-        """
-        from database.db_label import LabelManager
-        from database.settings import Settings
-        self._cur.execute(SQL_GET_SUBJECT_DATA, [subject_name])  # get the stored information for this subject
-        subject_data = self._cur.fetchall()
-
-        if len(subject_data) == 0 or subject_data[0][0] is None:  # if subject doesn't exist or sensor hasn't been set,
-            return []                                             # return an empty list
-
-        subject_data = subject_data[0]
-        lm = LabelManager(self.project_name)
-        paths = lm.get_file_names(subject_data[0], subject_data[1], subject_data[2])  # get datafile paths for subject
-        data_frames = []
-        settings_dict = Settings(self.project_name).settings_dict
-
-        for path in paths:
-            if os.path.isfile(path):
-                # For each file, load a DataFrame and add the labels to it
-                sd = SensorData(path, settings_dict)
-                time_col_name = sd.metadata['names'][0]  # making the assumption that the time column is always the first
-                sd.add_timestamp_column(time_col_name, "Timestamp")
-                end_datetime = datetime.strptime(str(sd.get_data()['Timestamp'].iloc[-1]), DATETIME_FORMAT)
-                labels = lm.get_labels_between_dates(subject_data[0], sd.metadata['datetime'], end_datetime)
-                sd.add_labels(labels, "Label", "Timestamp")
-                data_frames.append(sd.get_data())
-
-        return data_frames
-
-    def get_table(self):
-        """
-        Returns the full table together with a list of all column names.
-
-        :return: list of column names and a list of tuples containing the table data
-        """
-        col_map = self.settings.get_setting("subj_map")
-        col_names = ["Subject name", "Sensor ID", "Start date", "End date"] + list(col_map.keys())
-        cols_to_select = list(col_map.values())  # only select the database columns that are currently used by the user
-        select_string = ""
-        for col in cols_to_select:
-            select_string += ", " + col
-        self._cur.execute(SQL_GET_TABLE.format(select_string))
-        return col_names, self._cur.fetchall()

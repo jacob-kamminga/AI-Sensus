@@ -23,6 +23,7 @@ from gui.dialog_new import NewProject
 from gui.dialog_settings import SettingsDialog
 from gui.dialog_subject_old import SubjectTable
 from gui.dialog_subject import SubjectDialog
+from gui.dialog_subject_sensor_map import SubjectSensorMapDialog
 from gui_components.camera import Camera
 from gui_components.plot import Plot
 from gui_components.sensor_data import SensorData
@@ -70,16 +71,18 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionOpen_Video.triggered.connect(self.video.prompt_file)
         self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data.prompt_file)
         self.pushButton_label.clicked.connect(self.open_label)
+
         self.actionImport_Settings.triggered.connect(self.open_settings)
         self.actionCamera_Settings.triggered.connect(self.open_camera_settings)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings)
+        self.actionSubject_Mapping.triggered.connect(self.open_subject_sensor_map_dialog)
+
         self.lineEdit_function_regex.returnPressed.connect(self.plot.new_plot)
         self.doubleSpinBox_video_offset.valueChanged.connect(self.camera.change_offset)
         self.doubleSpinBox_speed.valueChanged.connect(self.video.change_speed)
         self.doubleSpinBox_plot_width.valueChanged.connect(self.plot.change_plot_width)
         self.doubleSpinBox_plot_height.valueChanged.connect(self.plot.change_plot_height)
         self.comboBox_functions.activated.connect(self.plot.change_plot)
-        self.actionSubject_Mapping.triggered.connect(self.open_subject_settings)
         self.actionExport_Sensor_Data.triggered.connect(self.open_export)
         self.actionMachine_Learning.triggered.connect(self.open_machine_learning)
 
@@ -179,6 +182,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         subject_settings = SubjectDialog(self.project_dialog.project_name)
         subject_settings.exec_()
         subject_settings.show()
+
+    def open_subject_sensor_map_dialog(self):
+        dialog = SubjectSensorMapDialog(self.project_dialog.project_name)
+        dialog.exec_()
+        dialog.show()
 
     def open_export(self):
         """

@@ -1,4 +1,5 @@
 import sqlite3
+from typing import List
 
 SQL_CREATE_TABLE = "create table sensor \
 ( \
@@ -9,11 +10,12 @@ SQL_CREATE_TABLE = "create table sensor \
 ); \
  \
 create unique index sensor_sensor_id_uindex \
-  on sensor (sensor_name);"
+  on sensor (name);"
 
-SQL_INSERT_SENSOR = "INSERT INTO sensor(sensor_name) VALUES (?)"
-SQL_SELECT_ID = "SELECT id FROM sensor WHERE sensor_name = ?"
-SQL_SELECT_SENSOR_NAME = "SELECT sensor_name FROM sensor WHERE id = ?"
+SQL_INSERT_SENSOR = "INSERT INTO sensor(name) VALUES (?)"
+SQL_SELECT_ALL_SENSORS = "SELECT * FROM sensor"
+SQL_SELECT_ID = "SELECT id FROM sensor WHERE name = ?"
+SQL_SELECT_SENSOR_NAME = "SELECT name FROM sensor WHERE id = ?"
 
 
 class SensorManager:
@@ -43,6 +45,13 @@ class SensorManager:
             return self._cur.fetchone()[0]
         except sqlite3.Error:
             return -1
+
+    def get_all_sensors(self) -> List[str]:
+        try:
+            self._cur.execute(SQL_SELECT_ALL_SENSORS)
+            return self._cur.fetchall()
+        except sqlite3.Error:
+            return ["error"]
 
     def get_sensor_name(self, id_: int) -> str:
         try:
