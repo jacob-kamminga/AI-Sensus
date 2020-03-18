@@ -39,7 +39,7 @@ class SensorManager:
         except sqlite3.Error:
             return False
 
-    def get_id(self, sensor_name: str) -> int:
+    def get_id_by_name(self, sensor_name: str) -> int:
         try:
             self._cur.execute(SQL_SELECT_ID, (sensor_name,))
             return self._cur.fetchone()[0]
@@ -64,6 +64,6 @@ class SensorManager:
         try:
             self._cur.execute(SQL_INSERT_SENSOR, (sensor_name,))
             self._conn.commit()
-            return self.get_id(sensor_name)
+            return self.get_id_by_name(sensor_name)
         except sqlite3.Error:
             return -1

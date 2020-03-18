@@ -53,13 +53,13 @@ class OffsetManager:
 
         if len(results) == 0:
             # Camera-sensor combination unknown; add to table with offset 0
-            c.execute(SQL_REPLACE_OFFSET, (camera_id, sensor_id, 0, added))
+            c.execute(SQL_INSERT_OFFSET, (camera_id, sensor_id, 0, added))
             self._conn.commit()
             return 0
 
         # Camera-Sensor combination known
         res = results[0]
-        c.execute(SQL_REPLACE_OFFSET, (camera_id, sensor_id, res, added))
+        c.execute(SQL_UPDATE_OFFSET, (res, camera_id, sensor_id, added))
         self._conn.commit()
         return res
 

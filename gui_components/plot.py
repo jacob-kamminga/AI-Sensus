@@ -190,7 +190,7 @@ class Plot:
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
             if event.button == 1:
-                self.new_label = LabelSpecs(self.gui.project_dialog.project_name, self.sensor_data.data.metadata['sn'],
+                self.new_label = LabelSpecs(self.gui.project_dialog.project_name, self.sensor_data.sensor_id,
                                             self.label_storage)
 
                 self.new_label.dateTimeEdit_start.setDateTime(xdata_qdt)
@@ -199,7 +199,7 @@ class Plot:
             elif event.button == 3:
                 if not self.labeling:
                     self.large_label = LabelSpecs(self.gui.project_dialog.project_name,
-                                                  self.sensor_data.data.metadata['sn'],
+                                                  self.sensor_data.sensor_id,
                                                   self.label_storage)
                     self.large_label.dateTimeEdit_start.setDateTime(xdata_qdt)
                 # If it is the second time, check if the user wants to delete the label or if the label should start

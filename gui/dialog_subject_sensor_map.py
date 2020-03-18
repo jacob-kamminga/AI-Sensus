@@ -1,15 +1,11 @@
-from datetime import datetime
-
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QDate, QStringListModel, QDateTime
-from PyQt5.QtWidgets import QInputDialog, QLineEdit, QTableWidgetItem, QMessageBox, QDateEdit, QComboBox, QDateTimeEdit
+from PyQt5.QtWidgets import QTableWidgetItem
 
 from database.db_sensor import SensorManager
-from database.db_subject import SubjectManager, INDEX_SUBJECT_NAME, INDEX_SUBJECT_ID
-from gui.designer_subject_sensor_map import Ui_Dialog
+from database.db_subject import SubjectManager
 from database.db_subject_sensor_map import SubjectSensorMapManager
-from database.db_label import LabelManager
-
+from gui.designer_subject_sensor_map import Ui_Dialog
+from gui.dialog_new_subject_sensor_map import NewSubjectSensorMapDialog
 
 INDEX_MAP_ID = 0
 INDEX_MAP_SUBJECT = 1
@@ -35,10 +31,12 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
         self.all_sensors = self.sensor_manager.get_all_sensors()
         self.sensors_dict = dict((id_, name) for id_, name in self.all_sensors)
 
-        self.maps = self.map_manager.get_all_maps()
+        self.maps = None
         self.column_names = ["ID", "Subject", "Sensor", "Start date", "End date"]
 
         self.create_table()
+
+        self.pushButton_add_map.clicked.connect(self.open_new_subject_sensor_map_dialog)
 
         # # Fill table
         # self.tableWidget.blockSignals(True)  # blockSignals to prevent calls to update functions
@@ -80,6 +78,8 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
     def create_table(self):
         self.tableWidget.blockSignals(True)
 
+        self.maps = self.map_manager.get_all_maps()
+
         self.tableWidget.setColumnCount(len(self.column_names))
         self.tableWidget.setRowCount(len(self.maps))
         self.tableWidget.setHorizontalHeaderLabels(self.column_names)
@@ -91,16 +91,6 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
             start_dt = row[INDEX_MAP_START]
             end_dt = row[INDEX_MAP_END]
 
-            # subject_combobox = QComboBox()
-            # subject_combobox.setModel(QStringListModel())
-            # subject_combobox.addItems(self.subjects_dict.values())
-            # subject_combobox.setCurrentText(self.subjects_dict[subject_id])
-            #
-            # sensor_combobox = QComboBox()
-            # sensor_combobox.setModel(QStringListModel())
-            # sensor_combobox.addItems(self.sensors_dict.values())
-            # sensor_combobox.setCurrentText(self.sensors_dict[sensor_id])
-
             self.tableWidget.setItem(i, INDEX_MAP_ID, QTableWidgetItem(str(id_)))
             self.tableWidget.setItem(i, INDEX_MAP_SUBJECT, QTableWidgetItem(self.subjects_dict[subject_id]))
             self.tableWidget.setItem(i, INDEX_MAP_SENSOR, QTableWidgetItem(self.sensors_dict[sensor_id]))
@@ -111,6 +101,24 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
         self.tableWidget.hideColumn(INDEX_MAP_ID)
 
         self.tableWidget.blockSignals(False)
+
+    def clear_table(self):
+        self.tableWidget.blockSignals(True)
+        self.tableWidget.clear()
+        self.tableWidget.blockSignals(False)
+
+    def open_new_subject_sensor_map_dialog(self):
+        dialog = NewSubjectSensorMapDialog(self.map_manager,
+                                           self.subject_manager,
+                                           self.sensor_manager,
+                                           self.subjects_dict,
+                                           self.sensors_dict)
+        dialog.exec_()
+        dialog.show()
+
+        if dialog.new_map_added:
+            self.clear_table()
+            self.create_table()
 
     # def add_row(self) -> None:
     #     text, accepted = QInputDialog.getText(self, "Enter new subject name", "Subject name:", QLineEdit.Normal, "")

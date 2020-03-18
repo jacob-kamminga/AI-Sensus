@@ -21,7 +21,6 @@ from gui.dialog_label_settings import LabelSettingsDialog
 from gui.dialog_machine_learning import MachineLearningDialog
 from gui.dialog_new import NewProject
 from gui.dialog_settings import SettingsDialog
-from gui.dialog_subject_old import SubjectTable
 from gui.dialog_subject import SubjectDialog
 from gui.dialog_subject_sensor_map import SubjectSensorMapDialog
 from gui_components.camera import Camera
@@ -193,20 +192,19 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the export dialog window, and if a subject and a file location and name are chosen, exports the data
         accordingly.
         """
-        export = ExportDialog()
-        export.comboBox.addItems(self.subject_mapping.get_subjects())
+        export = ExportDialog(self.project_dialog.project_name)
         export.exec_()
         export.show()
 
-        if export.is_accepted and export.comboBox.currentText():
-            filename, _ = QFileDialog.getSaveFileName(self, "Save File", QDir.homePath())
-
-            try:
-                export_data.export(self.subject_mapping.get_dataframes_subject(export.comboBox.currentText()), "Label",
-                                   "Timestamp", filename, [])
-            except Exception as e:
-                print(e)
-                QMessageBox.warning(self, 'Warning', str(e), QMessageBox.Cancel)
+        # if export.is_accepted and export.comboBox.currentText():
+        #     filename, _ = QFileDialog.getSaveFileName(self, "Save File", QDir.homePath())
+        #
+        #     try:
+        #         export_data.export(self.subject_mapping.get_dataframes_subject(export.comboBox.currentText()), "Label",
+        #                            "Timestamp", filename, [])
+        #     except Exception as e:
+        #         print(e)
+        #         QMessageBox.warning(self, 'Warning', str(e), QMessageBox.Cancel)
 
     def open_machine_learning(self):
         """

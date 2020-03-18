@@ -73,7 +73,7 @@ class SensorData:
             # Retrieve the SensorData object that parses the sensor data file
             self.data = sensor_data.SensorData(self.file_path, self.settings.settings_dict)
             sensor_name = self.data.metadata['sn']
-            self.sensor_id = self.sensor_manager.get_id(sensor_name)
+            self.sensor_id = self.sensor_manager.get_id_by_name(sensor_name)
 
             if self.sensor_id == -1:
                 self.sensor_id = self.sensor_manager.insert_sensor(sensor_name)

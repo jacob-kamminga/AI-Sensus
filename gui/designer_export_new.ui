@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>510</width>
-    <height>298</height>
+    <width>587</width>
+    <height>317</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,9 +18,12 @@
     <rect>
      <x>40</x>
      <y>60</y>
-     <width>211</width>
-     <height>171</height>
+     <width>241</width>
+     <height>221</height>
     </rect>
+   </property>
+   <property name="selectionMode">
+    <enum>QAbstractItemView::MultiSelection</enum>
    </property>
   </widget>
   <widget class="QLabel" name="label_select_subjects">
@@ -45,8 +48,8 @@
   <widget class="QLabel" name="label_start">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>60</y>
+     <x>300</x>
+     <y>70</y>
      <width>41</width>
      <height>16</height>
     </rect>
@@ -58,8 +61,8 @@
   <widget class="QLabel" name="label_end">
    <property name="geometry">
     <rect>
-     <x>270</x>
-     <y>110</y>
+     <x>300</x>
+     <y>120</y>
      <width>31</width>
      <height>16</height>
     </rect>
@@ -68,37 +71,57 @@
     <string>End:</string>
    </property>
   </widget>
-  <widget class="QDateTimeEdit" name="dateTimeEdit_start">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>60</y>
-     <width>141</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QDateTimeEdit" name="dateTimeEdit_end">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>110</y>
-     <width>141</width>
-     <height>22</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QPushButton" name="pushButton_export">
    <property name="geometry">
     <rect>
-     <x>370</x>
-     <y>250</y>
+     <x>460</x>
+     <y>260</y>
      <width>93</width>
      <height>28</height>
     </rect>
    </property>
    <property name="text">
     <string>Export</string>
+   </property>
+  </widget>
+  <widget class="QDateEdit" name="dateEdit_start">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>70</y>
+     <width>110</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QTimeEdit" name="timeEdit_start">
+   <property name="geometry">
+    <rect>
+     <x>480</x>
+     <y>70</y>
+     <width>81</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QDateEdit" name="dateEdit_end">
+   <property name="geometry">
+    <rect>
+     <x>350</x>
+     <y>120</y>
+     <width>110</width>
+     <height>22</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QTimeEdit" name="timeEdit_end">
+   <property name="geometry">
+    <rect>
+     <x>480</x>
+     <y>120</y>
+     <width>81</width>
+     <height>22</height>
+    </rect>
    </property>
   </widget>
  </widget>

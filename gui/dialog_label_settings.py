@@ -12,26 +12,34 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.setupUi(self)
         self.label_manager = label_manager
         self.settings = settings
-        self.accepted.connect(self.add_label)
+
         self.settings_changed = False
+
+        self.accepted.connect(self.add_label)
         self.pushButton.clicked.connect(self.delete_label)
         self.comboBox.currentTextChanged.connect(self.label_changed)
         self.comboBox_2.currentTextChanged.connect(self.color_changed)
         self.opacity_box.valueChanged.connect(self.opacity_changed)
+
         opacity = settings.get_setting("label_opacity")
         colors = ['blue', 'deepskyblue', 'cyan', 'green', 'lime', 'red', 'yellow', 'orange', 'magenta', 'grey', 'black']
+
         self.comboBox_2.addItems(colors)
         self.comboBox_3.addItems(colors)
         self.opacity_box.setValue(opacity)
         self.color_dict = dict()
+
         for label in self.label_manager.get_label_types():
             self.comboBox.addItem(label[0])
             self.color_dict[label[0]] = label[1]
+
         if self.label_manager.get_label_types():
             self.comboBox_2.setCurrentText(self.label_manager.get_label_types()[0][1])
 
     def add_label(self):
         self.settings_changed = True
+
+
         if self.lineEdit.text():
             self.label_manager.add_label_type(self.lineEdit.text(), self.comboBox_3.currentText(), '')
 

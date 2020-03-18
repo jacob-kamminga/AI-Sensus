@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\Dennis\Documents\Work\labeling_app\project\gui\designer_new_subject.ui'
+# Form implementation generated from reading ui file 'C:\Users\Dennis\stack\documents\work\LabelingApp\gui\designer_new_subject.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.0
 #
@@ -61,7 +61,7 @@ class Ui_Dialog(object):
         self.lineEdit_size.setGeometry(QtCore.QRect(100, 110, 241, 20))
         self.lineEdit_size.setObjectName("lineEdit_size")
         self.label = QtWidgets.QLabel(Dialog)
-        self.label.setGeometry(QtCore.QRect(170, 10, 191, 21))
+        self.label.setGeometry(QtCore.QRect(170, 10, 191, 31))
         font = QtGui.QFont()
         font.setPointSize(12)
         font.setBold(True)
