@@ -42,9 +42,9 @@
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <layout class="QVBoxLayout" name="verticalLayout_label">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="label_label">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
@@ -67,14 +67,14 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox"/>
+         <widget class="QComboBox" name="comboBox_label"/>
         </item>
        </layout>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="verticalLayout_3">
+       <layout class="QVBoxLayout" name="verticalLayout_color">
         <item>
-         <widget class="QLabel" name="label_2">
+         <widget class="QLabel" name="label_color">
           <property name="maximumSize">
            <size>
             <width>16777215</width>
@@ -97,7 +97,7 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_2"/>
+         <widget class="QComboBox" name="comboBox_color"/>
         </item>
        </layout>
       </item>
@@ -111,26 +111,26 @@
      </widget>
     </item>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <layout class="QHBoxLayout" name="horizontalLayout_new_label">
       <item>
-       <widget class="QLabel" name="label_3">
+       <widget class="QLabel" name="label_new_label">
         <property name="text">
          <string>Add label:</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineEdit"/>
+       <widget class="QLineEdit" name="lineEdit_new_label"/>
       </item>
       <item>
-       <widget class="QComboBox" name="comboBox_3"/>
+       <widget class="QComboBox" name="comboBox_new_label_color"/>
       </item>
      </layout>
     </item>
     <item>
-     <layout class="QGridLayout" name="gridLayout">
+     <layout class="QGridLayout" name="gridLayout_opacity">
       <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="opacity_box">
+       <widget class="QDoubleSpinBox" name="doubleSpinBox_opacity">
         <property name="decimals">
          <number>0</number>
         </property>
@@ -146,7 +146,7 @@
        </widget>
       </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="label_4">
+       <widget class="QLabel" name="label_opacity">
         <property name="text">
          <string>Label color intensity (%):</string>
         </property>

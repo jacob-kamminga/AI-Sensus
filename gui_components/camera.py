@@ -28,10 +28,10 @@ class Camera:
         self.update_timezone(timezone)
 
         # Update offset between camera and sensor data
-        if self.gui.sensor_data.sensor_id is not None:
+        if self.gui.sensor_data_file.sensor_id is not None:
             offset = self.offset_manager.get_offset(self.camera_id,
-                                                    self.gui.sensor_data.sensor_id,
-                                                    self.gui.sensor_data.datetime)
+                                                    self.gui.sensor_data_file.sensor_id,
+                                                    self.gui.sensor_data_file.datetime)
 
             self.gui.doubleSpinBox_video_offset.setValue(offset)
 
@@ -39,11 +39,11 @@ class Camera:
         """
         Updates the offset in the database.
         """
-        date = self.gui.sensor_data.datetime.date()
+        date = self.gui.sensor_data_file.datetime.date()
 
-        if self.gui.sensor_data.sensor_id is not None:
+        if self.gui.sensor_data_file.sensor_id is not None:
             self.offset_manager.set_offset(self.camera_id,
-                                           self.gui.sensor_data.sensor_id,
+                                           self.gui.sensor_data_file.sensor_id,
                                            offset,
                                            date)
 
@@ -67,11 +67,11 @@ class Camera:
     #
     #             self.gui.doubleSpinBox_video_offset.clear()
     #
-    #             if self.gui.comboBox_camera_ids.currentText() and self.gui.sensor_data.data:
+    #             if self.gui.comboBox_camera_ids.currentText() and self.gui.sensor_data_file.data:
     #                 self.gui.doubleSpinBox_video_offset.setValue(
     #                     self.offset_manager.get_offset(self.gui.comboBox_camera_ids.currentText(),
-    #                                                    self.gui.sensor_data.data.metadata['sn'],
-    #                                                    self.gui.sensor_data.data.metadata['date'])
+    #                                                    self.gui.sensor_data_file.data.metadata['sn'],
+    #                                                    self.gui.sensor_data_file.data.metadata['date'])
     #                 )
     #             else:
     #                 self.gui.doubleSpinBox_video_offset.setValue(0)

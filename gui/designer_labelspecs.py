@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\Dennis\Documents\Work\labeling_app\project\gui\designer_labelspecs.ui'
+# Form implementation generated from reading ui file 'C:\Users\Dennis\stack\documents\work\LabelingApp\gui\designer_labelspecs.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.0
 #
@@ -27,14 +27,14 @@ class Ui_LabelSpecs(object):
         self.verticalLayout_3.setObjectName("verticalLayout_3")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
         self.verticalLayout_4.setObjectName("verticalLayout_4")
-        self.label_3 = QtWidgets.QLabel(self.verticalLayoutWidget_3)
-        self.label_3.setMaximumSize(QtCore.QSize(16777215, 20))
+        self.label_title = QtWidgets.QLabel(self.verticalLayoutWidget_3)
+        self.label_title.setMaximumSize(QtCore.QSize(16777215, 20))
         font = QtGui.QFont()
         font.setPointSize(12)
-        self.label_3.setFont(font)
-        self.label_3.setAlignment(QtCore.Qt.AlignCenter)
-        self.label_3.setObjectName("label_3")
-        self.verticalLayout_4.addWidget(self.label_3)
+        self.label_title.setFont(font)
+        self.label_title.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_title.setObjectName("label_title")
+        self.verticalLayout_4.addWidget(self.label_title)
         self.comboBox_labels = QtWidgets.QComboBox(self.verticalLayoutWidget_3)
         self.comboBox_labels.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.comboBox_labels.setObjectName("comboBox_labels")
@@ -74,7 +74,7 @@ class Ui_LabelSpecs(object):
     def retranslateUi(self, LabelSpecs):
         _translate = QtCore.QCoreApplication.translate
         LabelSpecs.setWindowTitle(_translate("LabelSpecs", "Dialog"))
-        self.label_3.setText(_translate("LabelSpecs", "Label"))
+        self.label_title.setText(_translate("LabelSpecs", "Label"))
         self.label_from.setText(_translate("LabelSpecs", "From"))
         self.dateTimeEdit_start.setDisplayFormat(_translate("LabelSpecs", "MMM-dd HH:mm:ss.zzz"))
         self.label_to.setText(_translate("LabelSpecs", "To"))

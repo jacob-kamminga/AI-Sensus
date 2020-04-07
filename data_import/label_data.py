@@ -31,7 +31,7 @@ class LabelData:
         if not self._sensor_id:
             raise Exception('self._sensor_id is None')
 
-        return self._label_manager.get_all_labels(self._sensor_id)
+        return self._label_manager.get_all_labels_by_file(self._sensor_id)
 
     def get_data(self):
         if not self._data:

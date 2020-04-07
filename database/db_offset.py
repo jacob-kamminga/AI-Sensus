@@ -10,10 +10,10 @@ SQL_CREATE_TABLE = "create table offset \
   constraint offset_pk \
     unique (camera_id, sensor_id) \
 );"
-SQL_INSERT_OFFSET = "INSERT INTO offset(camera_id, sensor_id, offset, added) VALUES (?, ?, ?, ?)"
-SQL_SELECT_OFFSET_DATE = "SELECT offset FROM offset WHERE camera_id = ? AND sensor_id = ? AND added = ?"
-SQL_SELECT_OFFSET_NO_DATE = "SELECT offset FROM offset WHERE camera_id = ? AND sensor_id = ? ORDER BY added DESC"
-SQL_UPDATE_OFFSET = "UPDATE offset SET offset = ? WHERE camera_id = ? AND sensor_id = ? AND added = ?"
+SQL_INSERT_OFFSET = "INSERT INTO offset(camera, sensor, offset, added) VALUES (?, ?, ?, ?)"
+SQL_SELECT_OFFSET_DATE = "SELECT offset FROM offset WHERE camera = ? AND sensor = ? AND added = ?"
+SQL_SELECT_OFFSET_NO_DATE = "SELECT offset FROM offset WHERE camera = ? AND sensor = ? ORDER BY added DESC"
+SQL_UPDATE_OFFSET = "UPDATE offset SET offset = ? WHERE camera = ? AND sensor = ? AND added = ?"
 
 
 class OffsetManager:

@@ -1,24 +1,23 @@
-import os.path
 import sqlite3
-from database import settings
 from datetime import datetime
-from typing import Any, List
-from data_import.sensor_data import SensorData
-import pandas as pd
+from typing import List
 
-SQL_CREATE_TABLE = "create table subject_sensor_map\
+from database import settings
+
+SQL_CREATE_TABLE = "create table sensor_data_file\
 (\
-    subject_id INTEGER,\
-    sensor_id  INTEGER   not null,\
-    start_date TIMESTAMP not null,\
-    end_date   TIMESTAMP not null,\
-    id         INTEGER\
-        constraint subject_sensor_map_pk\
-            primary key\
+    id        INTEGER not null\
+        constraint sensor_data_files_pk\
+            primary key autoincrement,\
+    file_name TEXT    not null,\
+    file_path TEXT,\
+    sensor_id INTEGER\
+        references sensor,\
+    datetime  TIMESTAMP\
 );\
 \
-create unique index subject_sensor_map_subject_id_start_date_uindex\
-    on subject_sensor_map (subject_id, start_date);"
+create unique index sensor_data_files_file_name_uindex\
+    on sensor_data_file (file_name);"
 
 SQL_DELETE_MAP = "DELETE FROM subject_sensor_map WHERE id = ?"
 SQL_INSERT_MAP = "INSERT INTO subject_sensor_map (subject_id, sensor_id, start_datetime, end_datetime) VALUES " \

@@ -1,61 +1,62 @@
-from datetime import datetime
+import datetime as dt
+from typing import Optional
 
 from PyQt5 import QtWidgets
 
 from database.db_label import LabelManager
+from database.db_label_type import LabelTypeManager
 from gui.designer_labelspecs import Ui_LabelSpecs
 
 
 class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
 
-    def __init__(self, project_name, serial_number, label_manager: LabelManager):
+    def __init__(self, sensor_data_file: int, label_manager: LabelManager, label_type_manager: LabelTypeManager):
         super().__init__()
-        # Initialize the generated UI from designer_gui.py.
         self.setupUi(self)
 
-        self.serial_number = serial_number
-        self.label = Label()
+        self.sensor_data_file = sensor_data_file
+        self.label_manager = label_manager
+        self.label_type_manager = label_type_manager
+
+        self.label_type_dict = dict()
+
+        for row in self.label_type_manager.get_all_label_types():
+            self.label_type_dict[row["activity"]] = {"id": row["id"],
+                                                     "color": row["color"],
+                                                     "description": row["description"]}
+
+        self.selected_label = Label()
+        self.is_accepted = False
+
+        # Connect methods to listeners
         self.dateTimeEdit_start.dateTimeChanged.connect(self.start_changed)
         self.dateTimeEdit_end.dateTimeChanged.connect(self.stop_changed)
-        self.label_manager = LabelManager(project_name)
-        self.accepted.connect(self.send_label)
-        self.comboBox_labels.currentTextChanged.connect(self.label_changed)
-        self.is_accepted = False
-        self.label_manager = label_manager
+        self.accepted.connect(self.add_label_to_db)
+        self.comboBox_labels.currentTextChanged.connect(self.update_label_type)
 
-        if label_manager.get_label_types():
-            self.label.label = label_manager.get_label_types()[0][0]
-
-        for label in label_manager.get_label_types():
-            self.comboBox_labels.addItem(label[0])
+        self.comboBox_labels.addItems(self.label_type_dict.keys())
 
     def start_changed(self, value):
-        self.label.start = value.toPyDateTime()
+        self.selected_label.start = value.toPyDateTime()
 
     def stop_changed(self, value):
-        self.label.end = value.toPyDateTime()
+        self.selected_label.end = value.toPyDateTime()
 
-    def label_changed(self, label):
-        self.label.label = label
+    def update_label_type(self, activity: str):
+        self.selected_label.type = self.label_type_dict[activity]["id"]
 
-    def send_label(self):
-        if not self.label.label == '':
-            self.label_manager.add_label(self.label.start, self.label.end, str(self.label.label), self.serial_number)
+    def add_label_to_db(self):
+        if self.selected_label.type is not None:
+            self.label_manager.add_label(self.selected_label.start,
+                                         self.selected_label.end,
+                                         self.selected_label.type,
+                                         self.sensor_data_file)
             self.is_accepted = True
 
 
 class Label:
 
     def __init__(self):
-        self.label = ''
-        self.start = None
-        self.end = None
-
-    def setLabel(self, name: str):
-        self.label = name
-
-    def setStart(self, start: datetime):
-        self.start = start
-
-    def setEnd(self, end: datetime):
-        self.end = end
+        self.type: Optional[int] = None
+        self.start: Optional[dt.datetime] = None
+        self.end: Optional[dt.datetime] = None

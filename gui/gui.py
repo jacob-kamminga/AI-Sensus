@@ -25,13 +25,13 @@ from gui.dialog_subject import SubjectDialog
 from gui.dialog_subject_sensor_map import SubjectSensorMapDialog
 from gui_components.camera import Camera
 from gui_components.plot import Plot
-from gui_components.sensor_data import SensorData
+from gui_components.sensor_data_file import SensorDataFile
 from gui_components.video import Video
 from machine_learning.classifier import Classifier, make_predictions
 
-LABEL_COL = 'Label'
-TIME_COL = 'Time'
-TIMESTAMP_COL = 'Timestamp'
+COL_LABEL = 'Label'
+COL_TIME = 'Time'
+COL_TIMESTAMP = 'Timestamp'
 
 
 class GUI(QMainWindow, Ui_MainWindow):
@@ -53,7 +53,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         # GUI components
         self.video = Video(self)
-        self.sensor_data = SensorData(self)
+        self.sensor_data_file = SensorDataFile(self)
         self.plot = Plot(self)
         self.camera = Camera(self)
 
@@ -68,12 +68,13 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_plus_10s.activated.connect(self.video.fast_forward_10s)
         self.shortcut_minus_10s.activated.connect(self.video.rewind_10s)
         self.actionOpen_Video.triggered.connect(self.video.prompt_file)
-        self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data.prompt_file)
-        self.pushButton_label.clicked.connect(self.open_label)
+        self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data_file.prompt_file)
+        self.pushButton_label.clicked.connect(self.open_label_dialog)
 
-        self.actionImport_Settings.triggered.connect(self.open_settings)
-        self.actionCamera_Settings.triggered.connect(self.open_camera_settings)
-        self.actionLabel_Settings.triggered.connect(self.open_label_settings)
+        self.actionImport_Settings.triggered.connect(self.open_settings_dialog)
+        self.actionCamera_Settings.triggered.connect(self.open_camera_settings_dialog)
+        self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
+        self.actionSubjects.triggered.connect(self.open_subject_dialog)
         self.actionSubject_Mapping.triggered.connect(self.open_subject_sensor_map_dialog)
 
         self.lineEdit_function_regex.returnPressed.connect(self.plot.new_plot)
@@ -83,7 +84,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox_plot_height.valueChanged.connect(self.plot.change_plot_height)
         self.comboBox_functions.activated.connect(self.plot.change_plot)
         self.actionExport_Sensor_Data.triggered.connect(self.open_export)
-        self.actionMachine_Learning.triggered.connect(self.open_machine_learning)
+        self.actionMachine_Learning.triggered.connect(self.open_machine_learning_dialog)
 
         # Initialize the libraries that are needed to plot the sensor data, and add them to the GUI
         self.figure = matplotlib.pyplot.figure()
@@ -125,25 +126,27 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         # Open the last opened files
         self.video.open_previous_file()
-        self.sensor_data.open_previous_file()
+        self.sensor_data_file.open_previous_file()
 
-    def open_label(self):
+    def open_label_dialog(self):
         """
         Opens the label dialog window.
         """
-        if not self.sensor_data.data:
+        if not self.sensor_data_file.sensor_data:
             QMessageBox.information(self, "Warning", "You need to import sensor data first.", QMessageBox.Ok)
         else:
-            dialog = LabelSpecs(self.project_dialog.project_name,
-                                self.sensor_data.data.metadata['sn'],
-                                self.plot.label_storage)
+            dialog = LabelSpecs(self.sensor_data_file.id_,
+                                self.plot.label_manager,
+                                self.plot.label_type_manager)
             dialog.exec_()
             dialog.show()
 
             if dialog.is_accepted:
-                self.add_label_highlight(dialog.label.start, dialog.label.end, dialog.label.label)
+                self.add_label_highlight(dialog.selected_label.start,
+                                         dialog.selected_label.end,
+                                         dialog.selected_label.label)
 
-    def open_settings(self):
+    def open_settings_dialog(self):
         """
         Opens the settings dialog window.
         """
@@ -151,7 +154,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         settings.exec_()
         settings.show()
 
-    def open_camera_settings(self):
+    def open_camera_settings_dialog(self):
         """
         Opens the camera settings dialog window.
         """
@@ -160,13 +163,16 @@ class GUI(QMainWindow, Ui_MainWindow):
         camera_settings.show()
 
         if camera_settings.selected_camera_id is not None:
+            self.video.update_camera(camera_settings.selected_camera_id)
             self.camera.change_camera(camera_settings.selected_camera_id)
 
-    def open_label_settings(self):
+    def open_label_settings_dialog(self):
         """
         Opens the label settings dialog window.
         """
-        label_settings = LabelSettingsDialog(self.plot.label_storage, self.settings)
+        label_settings = LabelSettingsDialog(self.plot.label_manager,
+                                             self.plot.label_type_manager,
+                                             self.settings)
         label_settings.exec_()
         label_settings.show()
 
@@ -174,7 +180,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         if label_settings.settings_changed:
             self.plot.draw_graph()
 
-    def open_subject_settings(self):
+    def open_subject_dialog(self):
         """
         Opens the subject mapping dialog window.
         """
@@ -192,7 +198,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the export dialog window, and if a subject and a file location and name are chosen, exports the data
         accordingly.
         """
-        export = ExportDialog(self.project_dialog.project_name)
+        export = ExportDialog(self.project_dialog.project_name, self.settings.settings_dict)
         export.exec_()
         export.show()
 
@@ -206,7 +212,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         #         print(e)
         #         QMessageBox.warning(self, 'Warning', str(e), QMessageBox.Cancel)
 
-    def open_machine_learning(self):
+    def open_machine_learning_dialog(self):
         """
         Opens the machine learning dialog window.
         :return:
@@ -243,10 +249,10 @@ class GUI(QMainWindow, Ui_MainWindow):
                 return
 
             if self.label_data.get_sensor_id() is None:
-                if self.sensor_data.sensor_id is None:
+                if self.sensor_data_file.sensor_id is None:
                     raise Exception('self.sensor_id is None')
 
-                self.label_data.set_sensor_id(self.sensor_data.sensor_id)
+                self.label_data.set_sensor_id(self.sensor_data_file.sensor_id)
 
             # show a window to tell the user that the classifier is running
             working_msg = QDialog()
@@ -255,17 +261,17 @@ class GUI(QMainWindow, Ui_MainWindow):
             working_msg.open()
 
             # run the classifier
-            self.ml_dataframe = self.sensor_data.data.__copy__()
-            self.ml_dataframe.add_timestamp_column(TIME_COL, TIMESTAMP_COL)
-            labels = self.plot.label_storage.get_labels_date(self.sensor_data.sensor_id,
-                                                             self.sensor_data.datetime.date())
-            self.ml_dataframe.add_labels(labels, LABEL_COL, TIMESTAMP_COL)
+            self.ml_dataframe = self.sensor_data_file.sensor_data.__copy__()
+            self.ml_dataframe.add_timestamp_column(COL_TIME, COL_TIMESTAMP)
+            labels = self.plot.label_manager.get_labels_by_file_and_date(self.sensor_data_file.sensor_id,
+                                                                         self.sensor_data_file.datetime.date())
+            self.ml_dataframe.add_labels(labels, COL_LABEL, COL_TIMESTAMP)
             raw_data = self.ml_dataframe.get_data()
 
             # Remove data points where label is unknown
-            raw_data = raw_data[raw_data[LABEL_COL] != 'unknown']
+            raw_data = raw_data[raw_data[COL_LABEL] != 'unknown']
 
-            self.ml_dataframe = wd.windowing(raw_data, self.ml_used_columns, LABEL_COL, TIMESTAMP_COL, **funcs)
+            self.ml_dataframe = wd.windowing(raw_data, self.ml_used_columns, COL_LABEL, COL_TIMESTAMP, **funcs)
             self.ml_classifier.set_df(self.ml_dataframe)
             self.ml_classifier.set_features(features)
             res = self.ml_classifier.classify()
@@ -279,8 +285,8 @@ class GUI(QMainWindow, Ui_MainWindow):
                 label, start_dt, end_dt = prediction['label'], datetime.fromisoformat(prediction['begin']), \
                                           datetime.fromisoformat(prediction['end'])
                 # convert datetime times to time in seconds, which is used on the x-axis of the data-plot
-                start = (start_dt - self.sensor_data.datetime).total_seconds()
-                end = (end_dt - self.sensor_data.datetime).total_seconds()
+                start = (start_dt - self.sensor_data_file.datetime).total_seconds()
+                end = (end_dt - self.sensor_data_file.datetime).total_seconds()
 
                 # add highlight to data-plot and play video in a loop
                 span, text = self.add_suggestion_highlight(start, end, label)
@@ -318,7 +324,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
                 # user accepted the current suggestion, add it to the database and make a new highlight
                 if response == QMessageBox.Yes:
-                    self.plot.label_storage.add_label(start_dt, end_dt, label, self.sensor_data.sensor_id)
+                    self.plot.label_manager.add_label(start_dt, end_dt, label, self.sensor_data_file.sensor_id)
                     self.add_label_highlight(start, end, label)
                     self.canvas.draw()
 

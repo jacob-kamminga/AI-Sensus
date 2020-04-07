@@ -103,18 +103,19 @@ class SensorData:
         # Parse metadata and data
         self._settings = settings
         self._data = self.parse(self._settings)
+        """ The sensor data as a DataFrame. """
 
     def __copy__(self):
         new = type(self)(self.file_path, self._settings)
         new.__dict__.update(self.__dict__)
         return new
 
-    def parse(self, settings):
+    def parse(self, settings) -> pd.DataFrame:
         """
         Parses a csv file to get metadata and data.
 
         :param settings: contains the metadata
-        :return: the parsed data
+        :return: the parsed data as a DataFrame
         """
         # Parse metadata from headers
         with open(self.file_path) as file:

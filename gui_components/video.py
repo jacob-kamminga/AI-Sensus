@@ -1,6 +1,7 @@
+import datetime as dt
 import ntpath
 import os
-from datetime import timedelta
+from typing import Optional
 
 from PyQt5 import QtGui
 from PyQt5.QtCore import QUrl, QDir
@@ -23,7 +24,8 @@ class Video:
         self.video_manager = VideoManager(self.gui.project_dialog.project_name)
         self.camera_manager = CameraManager(self.gui.project_dialog.project_name)
 
-        self.datetime = None
+        self.id_: Optional[int] = None
+        self.datetime: Optional[dt.datetime] = None
         self.position = None
         self.timezone = None
         self.offset = None
@@ -65,23 +67,28 @@ class Video:
             # Save the path for next time
             self.settings.set_setting('last_videofile', self.file_path)
 
+            file_name = ntpath.basename(self.file_path)
+
             # Check if a camera has already been set for this video
-            file_base_name = ntpath.basename(self.file_path)
-            camera_id = self.video_manager.get_camera(file_base_name)
+            camera_id = self.video_manager.get_camera(file_name)
 
             # Camera has not been set yet
             if camera_id == -1:
-                self.gui.open_camera_settings()
+                self.gui.open_camera_settings_dialog()
             else:
                 self.gui.camera.change_camera(camera_id)
 
             self.update_datetime()
 
             # Save file mapping to database if not exists
-            id_ = self.video_manager.get_video_id(file_base_name)
-            # File mapping does not exist
-            if id_ == -1:
-                self.video_manager.insert_video(file_base_name, self.gui.camera.camera_id)
+            self.id_ = self.video_manager.get_video_id(file_name)
+
+            # Video not yet in database
+            if self.id_ == -1:
+                self.video_manager.insert_video(file_name, self.file_path, self.gui.camera.camera_id, self.datetime)
+            # Video already in database -> update file path
+            else:
+                self.video_manager.update_file_path(file_name, self.file_path)
 
             # Play the video in the QMediaPlayer and activate the associated widgets
             self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
@@ -95,13 +102,17 @@ class Video:
         self.datetime = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera.timezone)
         self.update_labels_datetime()
 
+    def update_camera(self, camera_id: int):
+        if self.id_ is not None:
+            self.video_manager.update_camera(self.id_, camera_id)
+
     def update_labels_datetime(self):
         video_hms = self.datetime.strftime("%H:%M:%S")
         video_date = self.datetime.strftime("%d-%B-%Y")
 
         if self.position is not None:
             current_video_time = get_hms_sum(video_hms, ms_to_hms(self.position))
-            current_video_date = (self.datetime + timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
+            current_video_date = (self.datetime + dt.timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
             self.gui.label_video_time_value.setText(current_video_time)
             self.gui.label_video_date_value.setText(current_video_date)
         else:
@@ -114,7 +125,7 @@ class Video:
         """
         if self.datetime is not None and self.gui.plot.x_min_dt is not None:
             self.offset = self.gui.plot.x_min_dt - self.datetime
-            self.offset_ms = self.offset / timedelta(milliseconds=1)
+            self.offset_ms = self.offset / dt.timedelta(milliseconds=1)
             self.position = self.offset_ms
 
             self.gui.mediaPlayer.setPosition(self.position)

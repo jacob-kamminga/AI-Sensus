@@ -1,11 +1,11 @@
 import sqlite3
 from datetime import datetime
 
-SQL_SELECT_LABEL_DATA_BETWEEN_DATES = "SELECT start_time, end_time, label_name, sensor.name FROM label_data, sensor " \
-                                      "WHERE sensor_id = ? AND " \
+SQL_SELECT_LABEL_DATA_BETWEEN_DATES = "SELECT start_time, end_time, label_type, sensor.name FROM label, sensor " \
+                                      "WHERE sensor_data_file = ? AND " \
                                       "start_time BETWEEN ? AND ? AND " \
                                       "end_time BETWEEN ? AND ? AND " \
-                                      "label_data.sensor_id = sensor.id"
+                                      "label.sensor_data_file = sensor.id"
 
 
 class ExportManager:

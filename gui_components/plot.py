@@ -1,4 +1,5 @@
-from datetime import timedelta, datetime
+import datetime as dt
+from typing import Optional
 
 import pandas as pd
 from PyQt5.QtCore import QDateTime
@@ -7,11 +8,17 @@ from matplotlib.dates import date2num, num2date
 
 from data_import.label_data import LabelData
 from database.db_label import LabelManager
+from database.db_label_type import LabelTypeManager
 from gui.dialog_label import LabelSpecs
+from gui_components.sensor_data_file import SensorDataFile
 
 LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1
-LABEL_LABEL_NAME_INDEX = 2
+LABEL_TYPE_INDEX = 2
+
+KEY_ACTIVITY = "activity"
+KEY_ID = "id"
+KEY_COLOR = "color"
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 QDATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss.zzz"
@@ -22,10 +29,11 @@ class Plot:
     def __init__(self, gui):
         self.gui = gui
         self.settings = gui.settings
-        self.sensor_data = gui.sensor_data
+        self.sensor_data_file: SensorDataFile = gui.sensor_data_file
 
-        self.label_storage = LabelManager(self.gui.project_dialog.project_name)
-        self.label_data = LabelData(self.label_storage)
+        self.label_manager = LabelManager(self.gui.project_dialog.project_name)
+        self.label_type_manager = LabelTypeManager(self.gui.project_dialog.project_name)
+        self.label_data = LabelData(self.label_manager)
 
         self.data_plot = None
         self.current_plot = None
@@ -33,10 +41,10 @@ class Plot:
 
         self.formulas = dict()
         self.highlights = dict()
-        self.colors = dict()
+        self.label_types = dict()
 
-        self.x_min_dt = None
-        self.x_max_dt = None
+        self.x_min_dt: Optional[dt.datetime] = None
+        self.x_max_dt: Optional[dt.datetime] = None
         self.x_min = None
         self.x_max = None
 
@@ -46,7 +54,7 @@ class Plot:
         self.plot_width = self.settings.get_setting('plot_width')
         self.plot_height_factor = self.settings.get_setting('plot_height_factor')
 
-        self.new_label = None
+        self.new_label: Optional[LabelSpecs] = None
         self.large_label = None
 
         # Initialize the boolean that keeps track if the user is labeling with the right-mouse button
@@ -59,9 +67,9 @@ class Plot:
         try:
             if not self.gui.lineEdit_function_name.text():
                 raise Exception
-            self.sensor_data.data.add_column_from_func(self.gui.lineEdit_function_name.text(),
-                                                       self.gui.lineEdit_function_regex.text())
-            self.sensor_data.df = self.sensor_data.data.get_data()
+            self.sensor_data_file.sensor_data.add_column_from_func(self.gui.lineEdit_function_name.text(),
+                                                                   self.gui.lineEdit_function_regex.text())
+            self.sensor_data_file.df = self.sensor_data_file.sensor_data.get_data()
             self.gui.comboBox_functions.addItem(self.gui.lineEdit_function_name.text())
             self.formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
             stored_formulas = self.settings.get_setting("formulas")
@@ -85,15 +93,15 @@ class Plot:
         else:
             self.gui.label_current_formula.clear()
 
-        self.y_min = self.sensor_data.df[self.current_plot].min()
-        self.y_max = self.sensor_data.df[self.current_plot].max()
+        self.y_min = self.sensor_data_file.df[self.current_plot].min()
+        self.y_max = self.sensor_data_file.df[self.current_plot].max()
         self.draw_graph()
 
     def change_plot_width(self, value):
         self.settings.set_setting('plot_width', value)
         self.plot_width = value
 
-        if self.sensor_data.data:
+        if self.sensor_data_file.sensor_data is not None:
             self.update_plot_axis()
 
     def change_plot_height(self, value):
@@ -104,12 +112,12 @@ class Plot:
         """
         Every time the timer calls this function, the axis of the graph is updated.
         """
-        position_dt = self.x_min_dt + timedelta(seconds=self.gui.mediaPlayer.position() / 1000)
+        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)
         new_position_dt = position_dt if position == -1.0 else position
 
-        plot_width_delta = timedelta(seconds=(self.plot_width / 2))
-        video_offset_delta = timedelta(seconds=self.gui.doubleSpinBox_video_offset.value())
-        video_offset = timedelta(seconds=0)
+        plot_width_delta = dt.timedelta(seconds=(self.plot_width / 2))
+        video_offset_delta = dt.timedelta(seconds=self.gui.doubleSpinBox_video_offset.value())
+        video_offset = dt.timedelta(seconds=0)
 
         if self.gui.video.offset is not None:
             video_offset = self.gui.video.offset
@@ -126,45 +134,51 @@ class Plot:
         """
         Redraws the graph with the right colors, labels, etc.
         """
-        if not self.sensor_data.data:
+        if self.sensor_data_file.sensor_data is None:
             return
 
         self.data_plot.clear()
 
-        time = self.sensor_data.df[self.sensor_data.df.columns[0]]
-        self.sensor_data.df['clock_time'] = self.sensor_data.datetime + pd.to_timedelta(time, unit='s')
+        time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]
+        self.sensor_data_file.df['clock_time'] = self.sensor_data_file.datetime + pd.to_timedelta(time, unit='s')
 
-        self.x_min_dt = self.sensor_data.df['clock_time'].min()
-        self.x_max_dt = self.sensor_data.df['clock_time'].max()
-        self.x_min = date2num(self.sensor_data.df['clock_time'].min())
-        self.x_max = date2num(self.sensor_data.df['clock_time'].max())
+        self.x_min_dt = self.sensor_data_file.df['clock_time'].min()
+        self.x_max_dt = self.sensor_data_file.df['clock_time'].max()
+        self.x_min = date2num(self.sensor_data_file.df['clock_time'].min())
+        self.x_max = date2num(self.sensor_data_file.df['clock_time'].max())
 
         self.data_plot.axis([self.x_min, self.x_max, self.y_min, self.y_max])
-        self.data_plot.plot(self.sensor_data.df['clock_time'], self.sensor_data.df[self.current_plot], ',-',
+        self.data_plot.plot(self.sensor_data_file.df['clock_time'], self.sensor_data_file.df[self.current_plot], ',-',
                             linewidth=1, color='black')
         self.vertical_line = self.data_plot.axvline(x=0)
         self.vertical_line.set_color('red')
 
-        for label_type in self.label_storage.get_label_types():
-            self.colors[label_type[0]] = label_type[1]
+        for row in self.label_type_manager.get_all_label_types():
+            self.label_types[row[KEY_ID]] = {KEY_ACTIVITY: row[KEY_ACTIVITY], KEY_COLOR: row[KEY_COLOR]}
 
-        labels = self.label_storage.get_labels_date(self.sensor_data.sensor_id,
-                                                    self.sensor_data.datetime.date())
+        labels = self.label_manager.get_all_labels_by_file(self.sensor_data_file.id_)
+
         self.highlights = {}
 
         for label in labels:
             label_start = label[LABEL_START_TIME_INDEX]
             label_end = label[LABEL_END_TIME_INDEX]
-            self.add_label_highlight(label_start, label_end, label[LABEL_LABEL_NAME_INDEX])
+            label_type = label[LABEL_TYPE_INDEX]
+            self.add_label_highlight(label_start, label_end, label_type)
 
         self.gui.canvas.draw()
 
-    def add_label_highlight(self, label_start: datetime, label_end: datetime, label_type: str):
+    def add_label_highlight(self, label_start: dt.datetime, label_end: dt.datetime, label_type: int):
         label_start_num = date2num(label_start)
         label_end_num = date2num(label_end)
         alpha = self.settings.get_setting('label_opacity') / 100
-        span = self.data_plot.axvspan(label_start_num, label_end_num, facecolor=self.colors[label_type], alpha=alpha)
-        text = self.data_plot.text((label_start_num + label_end_num) / 2, self.y_max * 0.75, label_type,
+        span = self.data_plot.axvspan(label_start_num,
+                                      label_end_num,
+                                      facecolor=self.label_types[label_type][KEY_COLOR],
+                                      alpha=alpha)
+        text = self.data_plot.text((label_start_num + label_end_num) / 2,
+                                   self.y_max * 0.75,
+                                   self.label_types[label_type][KEY_ACTIVITY],
                                    horizontalalignment='center')
 
         self.highlights[label_start] = (span, text)
@@ -183,24 +197,25 @@ class Plot:
 
         :param event: Specifies what event triggered this function.
         """
-        if self.sensor_data.data:
+        if self.sensor_data_file.sensor_data is not None:
             xdata_dt = num2date(event.xdata).replace(tzinfo=None)
             xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
 
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
             if event.button == 1:
-                self.new_label = LabelSpecs(self.gui.project_dialog.project_name, self.sensor_data.sensor_id,
-                                            self.label_storage)
+                self.new_label = LabelSpecs(self.sensor_data_file.id_,
+                                            self.label_manager,
+                                            self.label_type_manager)
 
                 self.new_label.dateTimeEdit_start.setDateTime(xdata_qdt)
 
             # If the right mouse button is used, check if this is the first or second time
             elif event.button == 3:
                 if not self.labeling:
-                    self.large_label = LabelSpecs(self.gui.project_dialog.project_name,
-                                                  self.sensor_data.sensor_id,
-                                                  self.label_storage)
+                    self.large_label = LabelSpecs(self.sensor_data_file.id_,
+                                                  self.label_manager,
+                                                  self.label_type_manager)
                     self.large_label.dateTimeEdit_start.setDateTime(xdata_qdt)
                 # If it is the second time, check if the user wants to delete the label or if the label should start
                 # or end at the start or end of another label
@@ -216,8 +231,7 @@ class Plot:
                     start = self.large_label.dateTimeEdit_start.dateTime().toPyDateTime()
                     end = self.large_label.dateTimeEdit_end.dateTime().toPyDateTime()
 
-                    for label in self.label_storage.get_labels_date(self.sensor_data.sensor_id,
-                                                                    self.sensor_data.datetime.date()):
+                    for label in self.label_manager.get_all_labels_by_file(self.sensor_data_file.id_):
                         label_start = label[LABEL_START_TIME_INDEX]
                         label_end = label[LABEL_END_TIME_INDEX]
                         label_start_qdt = QDateTime.fromString(label_start.strftime(DATETIME_FORMAT)[:-3],
@@ -238,8 +252,8 @@ class Plot:
                         reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete this label?",
                                                      QMessageBox.Yes, QMessageBox.No)
                         if reply == QMessageBox.Yes:
-                            self.label_storage.delete_label(delete_label[LABEL_START_TIME_INDEX],
-                                                            self.sensor_data.sensor_id)
+                            self.label_manager.delete_label_by_start_and_file(delete_label[LABEL_START_TIME_INDEX],
+                                                                              self.sensor_data_file.id_)
 
                             # Remove label highlight and text from plot
                             self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
@@ -248,8 +262,8 @@ class Plot:
                         self.large_label.exec_()
 
                     if self.large_label.is_accepted:
-                        self.add_label_highlight(self.large_label.label.start, self.large_label.label.end,
-                                                 self.large_label.label.label)
+                        self.add_label_highlight(self.large_label.selected_label.start, self.large_label.selected_label.end,
+                                                 self.large_label.selected_label.label)
                         self.gui.canvas.draw()
 
                 self.labeling = not self.labeling
@@ -259,7 +273,7 @@ class Plot:
         Handles the labeling by clicking, but is only triggered when the user releases the mouse button.
         :param event: Specifies the event that triggers this function.
         """
-        if self.sensor_data.data:
+        if self.sensor_data_file.sensor_data is not None:
             xdata_dt = num2date(event.xdata).replace(tzinfo=None)
             xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
 
@@ -278,8 +292,7 @@ class Plot:
                 start = self.new_label.dateTimeEdit_start.dateTime().toPyDateTime()
                 end = self.new_label.dateTimeEdit_end.dateTime().toPyDateTime()
 
-                for label in self.label_storage.get_labels_date(self.sensor_data.sensor_id,
-                                                                self.sensor_data.datetime.date()):
+                for label in self.label_manager.get_all_labels_by_file(self.sensor_data_file.id_):
                     label_start = label[LABEL_START_TIME_INDEX]
                     label_end = label[LABEL_END_TIME_INDEX]
 
@@ -300,8 +313,8 @@ class Plot:
                     reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete this label?",
                                                  QMessageBox.Yes, QMessageBox.No)
                     if reply == QMessageBox.Yes:
-                        self.label_storage.delete_label(delete_label[LABEL_START_TIME_INDEX],
-                                                        self.sensor_data.sensor_id)
+                        self.label_manager.delete_label_by_start_and_file(delete_label[LABEL_START_TIME_INDEX],
+                                                                          self.sensor_data_file.sensor_id)
                         # Remove label highlight and text from plot
                         self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
                         self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
@@ -309,8 +322,9 @@ class Plot:
                     self.new_label.exec_()
 
                 if self.new_label.is_accepted:
-                    self.add_label_highlight(self.new_label.label.start, self.new_label.label.end,
-                                             self.new_label.label.label)
+                    self.add_label_highlight(self.new_label.selected_label.start,
+                                             self.new_label.selected_label.end,
+                                             self.new_label.selected_label.type)
                     self.gui.canvas.draw()
             elif event.button == 3:
                 pass

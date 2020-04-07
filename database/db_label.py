@@ -1,64 +1,67 @@
 import sqlite3
-from datetime import datetime, date
+import datetime as dt
 from typing import List, Tuple
 
-SQL_CREATE_LABEL_DATA = "create table label_type \
-( \
-  name        TEXT, \
-  color       TEXT, \
-  description TEXT, \
-  id          INTEGER not null \
-    constraint label_type_pk \
-      primary key autoincrement \
-);"
+SQL_CREATE_TABLE_LABEL = \
+    "create table label\
+(\
+    id               INTEGER   not null\
+        constraint label_pk\
+            primary key autoincrement,\
+    start_time       TIMESTAMP not null,\
+    end_time         TIMESTAMP not null,\
+    label_type       INTEGER   not null\
+        references label_type\
+            on update cascade on delete cascade,\
+    sensor_data_file INTEGER   not null\
+        references sensor_data_file\
+            on update cascade on delete cascade\
+);\
+\
+create unique index label_start_time_sensor_data_file_id_uindex\
+    on label (start_time, sensor_data_file);"
 
-SQL_CREATE_LABEL_TYPE = "create table label_type \
-( \
-  name        TEXT, \
-  color       TEXT, \
-  description TEXT, \
-  id          INTEGER not null \
-    constraint label_type_pk \
-      primary key autoincrement \
-);"
+SQL_DELETE_LABEL_BY_ID = \
+    "DELETE FROM label " \
+    "WHERE id = ?"
 
-SQL_CREATE_SENSOR_DATA_FILE = "create table sensor_data_file \
-( \
-  file_name TEXT    not null, \
-  sensor_id INTEGER, \
-  datetime  TIMESTAMP, \
-  id        INTEGER not null \
-    constraint sensor_data_files_pk \
-      primary key autoincrement \
-); \
- \
-create unique index sensor_data_files_file_name_uindex \
-  on sensor_data_file (file_name);"
+SQL_DELETE_LABEL_BY_START_AND_FILE = \
+    "DELETE FROM label " \
+    "WHERE start_time = ? " \
+    "AND sensor_data_file = ?"
 
-SQL_DELETE_LABEL_DATA = "DELETE FROM label_data WHERE start_time = ? AND sensor_id = ?"
-SQL_DELETE_LABEL_DATA_ALL = "DELETE FROM label_data WHERE label_name = ?"
-SQL_DELETE_LABEL_TYPE = "DELETE FROM label_type WHERE name = ?"
+SQL_INSERT_LABEL = \
+    "INSERT INTO label(start_time, end_time, label_type, sensor_data_file) VALUES (?, ?, ?, ?)"
 
-SQL_INSERT_FILE = "INSERT INTO sensor_data_file(file_name, sensor_id, datetime) VALUES (?,?,?)"
-SQL_INSERT_LABEL = "INSERT INTO label_data(start_time, end_time, label_name, sensor_id) VALUES (?,?,?,?)"
-SQL_INSERT_LABEL_TYPE = "INSERT INTO label_type(name, color, description) VALUES (?,?,?)"
+SQL_SELECT_ALL_LABELS = \
+    "SELECT * " \
+    "FROM label " \
+    "ORDER BY start_time"
 
-SQL_SELECT_ALL_LABELS = "SELECT * FROM label_data ORDER BY start_time ASC"
-SQL_SELECT_FILE_NAMES = "SELECT file_name FROM sensor_data_file WHERE sensor_id = ? AND (datetime BETWEEN ? AND ?)"
-SQL_SELECT_LABEL_TYPES = "SELECT * FROM label_type"
-SQL_SELECT_LABELS = "SELECT start_time, end_time, label_name FROM label_data WHERE sensor_id = ? ORDER BY " \
-                    "start_time ASC"
-SQL_SELECT_LABELS_BETWEEN_DATES = "SELECT start_time, end_time, label_name FROM label_data WHERE (start_time " \
-                               "BETWEEN ? AND ?) AND sensor_id = ? ORDER BY start_time ASC"
-SQL_SELECT_LABELS_DATE = "SELECT start_time, end_time, label_name FROM label_data WHERE date(start_time) = ? AND " \
-                      "sensor_id = ? ORDER BY start_time ASC"
-SQL_SELECT_SENSOR_IDS = "SELECT sensor_id FROM sensor_data_file"
+SQL_SELECT_LABELS_BY_FILE = \
+    "SELECT start_time, end_time, label_type " \
+    "FROM label " \
+    "WHERE sensor_data_file = ? " \
+    "ORDER BY start_time"
 
-SQL_UPDATE_COLOR = "UPDATE label_type SET color = ? WHERE name = ?"
-SQL_UPDATE_DESC = "UPDATE label_type SET description = ? WHERE name = ?"
-SQL_UPDATE_LABEL = "UPDATE label_data SET label_name = ? WHERE start_time = ? AND sensor_id = ?"
-SQL_UPDATE_NAME_DATA = "UPDATE label_data SET label_name = ? WHERE label_name = ?"
-SQL_UPDATE_NAME_TYPE = "UPDATE label_type SET name = ? WHERE name = ?"
+SQL_SELECT_LABELS_BETWEEN_DATES = \
+    "SELECT start_time, end_time, label_type " \
+    "FROM label " \
+    "WHERE (start_time BETWEEN ? AND ?) " \
+    "AND sensor_data_file = ? " \
+    "ORDER BY start_time"
+
+# SQL_SELECT_LABELS_BY_FILE_AND_DATE = \
+#     "SELECT start_time, end_time, label_type " \
+#     "FROM label " \
+#     "WHERE sensor_data_file = ? " \
+#     "AND start_time = ? " \
+#     "ORDER BY start_time"
+
+SQL_UPDATE_LABEL = \
+    "UPDATE label " \
+    "SET label_type = ? " \
+    "WHERE start_time = ? AND sensor_data_file = ?"
 
 
 class LabelManager:
@@ -74,173 +77,80 @@ class LabelManager:
 
     def create_tables(self) -> None:
         """Method for creating the necessary label tables in the database."""
-        c = self._conn.cursor()
-        c.execute(SQL_CREATE_LABEL_TYPE)
-        c.execute(SQL_CREATE_LABEL_DATA)
-        c.execute(SQL_CREATE_SENSOR_DATA_FILE)
+        self._cur.execute(SQL_CREATE_TABLE_LABEL)
         self._conn.commit()
 
-    def add_label_type(self, name: str, color: str, desc: str) -> bool:
+    def add_label(self, start_time: dt.datetime, end_time: dt.datetime, label_type: int, sensor_data_file: int) -> bool:
         """
-        Creates a new label type.
-
-        :param name: The name of the new label type
-        :param color: The color of the new label
-        :param desc: The description of the label
-        :return: boolean indication if the label type was added successfully
-        """
-        try:
-            self._cur.execute(SQL_INSERT_LABEL_TYPE, (name, color, desc))
-            self._conn.commit()
-            return True
-        except sqlite3.Error as e:
-            return False
-
-    def delete_label_type(self, name: str) -> None:
-        """
-        Deletes a label type.
-
-        :param name: The name of the label type
-        """
-        self._cur.execute(SQL_DELETE_LABEL_DATA_ALL, [name])
-        self._cur.execute(SQL_DELETE_LABEL_TYPE, [name])
-        self._conn.commit()
-
-    def add_label(self, start_time: datetime, end_time: datetime, name: str, sensor_id: int) -> bool:
-        """
-        Adds a label to the data of a sensor.
+        Add a label to the database.
 
         :param start_time: The timestamp in the sensor-data at which the label starts
         :param end_time: The The timestamp in the sensor-data at which the label ends
-        :param name: The name of the label type that is used
-        :param sensor_id: The sensor ID belonging to the data
-        :return: boolean indication if the label was added successfully
+        :param label_type: The ID of the label type
+        :param sensor_data_file: The ID of the sensor data file
+        :return: True if label was added successfully
         """
         try:
-            self._cur.execute(SQL_INSERT_LABEL, (start_time, end_time, name, sensor_id))
+            self._cur.execute(SQL_INSERT_LABEL, (start_time, end_time, label_type, sensor_data_file))
             self._conn.commit()
             return True
-        except sqlite3.Error as e:
+        except sqlite3.Error:
             return False
 
-    def delete_label(self, start_time: datetime, sensor_id: int) -> None:
+    def delete_label_by_id(self, id_: int) -> None:
         """
-        Deletes a label linked to data.
+        Delete a label from the database.
 
-        :param start_time: The time at which the label starts
-        :param sensor_id: The sensor ID for which the label has been made
+        :param id_: The ID of the label to delete.
         """
-        self._cur.execute(SQL_DELETE_LABEL_DATA, (start_time, sensor_id))
+        self._cur.execute(SQL_DELETE_LABEL_BY_ID, (id_,))
+        self._conn.commit()
+        
+    def delete_label_by_start_and_file(self, start_dt: dt.datetime, sensor_data_file: int) -> None:
+        """
+        Delete a label from the database.
+
+        :param start_dt: The start dt.datetime
+        :param sensor_data_file: The ID of the sensor data file
+        """
+        self._cur.execute(SQL_DELETE_LABEL_BY_START_AND_FILE, (start_dt, sensor_data_file))
         self._conn.commit()
 
-    def update_label_name(self, old_name: str, new_name: str) -> None:
-        """
-        Updates the name of an existing label type. This also updates the name of all the labels that were made using
-        the old name.
-
-        :param old_name: The name of the label type that has to be changed
-        :param new_name: The name that the label type should get
-        """
-        self._cur.execute(SQL_UPDATE_NAME_DATA, (new_name, old_name))
-        self._cur.execute(SQL_UPDATE_NAME_TYPE, (new_name, old_name))
-        self._conn.commit()
-
-    def update_label_color(self, label_name: str, color: str) -> None:
-        """
-        Updates the color of an existing label type.
-
-        :param label_name: The name of the label type
-        :param color: The new color that the label type should get
-        """
-        self._cur.execute(SQL_UPDATE_COLOR, (color, label_name))
-        self._conn.commit()
-
-    def update_label_description(self, label_name: str, desc: str) -> None:
-        """
-        Updates the description of an existing label type.
-
-        :param label_name: The name of the label type
-        :param desc: The new description that the label type should get
-        """
-        self._cur.execute(SQL_UPDATE_DESC, (desc, label_name))
-        self._conn.commit()
-
-    def change_label(self, start_time: datetime, label_name: str, sensor_id: int) -> None:
+    def change_label(self, start_time: dt.datetime, label_name: str, sensor_data_file: int) -> None:
         """
         Changes the label type of a data-label.
 
         :param start_time: The start time of the label
         :param label_name: The name of the label type into which the label should be changed
-        :param sensor_id: The sensor ID belonging to this label
+        :param sensor_data_file: The ID of the sensor data file
         """
-        self._cur.execute(SQL_UPDATE_LABEL, (label_name, start_time, sensor_id))
+        self._cur.execute(SQL_UPDATE_LABEL, (label_name, start_time, sensor_data_file))
         self._conn.commit()
 
-    def get_label_types(self) -> List[Tuple[str, str, str]]:
+    def get_all_labels_by_file(self, sensor_data_file: int) -> List[Tuple[dt.datetime, dt.datetime, int]]:
         """
-        Returns all label types.
+        Returns all the labels for a given sensor data file.
 
-        :return: List of tuples (label name, label color, label description) of all label types
+        :param sensor_data_file: The ID of the sensor data file
+        :return: List of tuples (start_time, end_time, activity) belonging to the sensor sensor data file
         """
-        self._cur.execute(SQL_SELECT_LABEL_TYPES)
+        self._cur.execute(SQL_SELECT_LABELS_BY_FILE, (sensor_data_file,))
         return self._cur.fetchall()
 
-    def get_all_labels(self, sensor_id: int) -> List[Tuple[datetime, datetime, str]]:
-        """
-        Returns all the labels for a given sensor.
+    # def get_labels_by_file_and_date(self, sensor_date_file: int, date: dt.date) \
+    #         -> List[Tuple[dt.datetime, dt.datetime, int]]:
+    #     """
+    #     Returns all the labels for a given sensor on a given date.
+    #
+    #     :param sensor_date_file: The ID of the sensor data file
+    #     :param date: The date for which the labels should be returned
+    #     :return: List of tuples (start_time, end_time, label_name)
+    #     """
+    #     self._cur.execute(SQL_SELECT_LABELS_BY_FILE_AND_DATE, (sensor_date_file, date))
+    #     return self._cur.fetchall()
 
-        :param sensor_id: The sensor ID of the sensor for which the labels need to be returned
-        :return: List of tuples (start_time, end_time, label_name) of all labels belonging to the sensor
-        """
-        self._cur.execute(SQL_SELECT_LABELS, [sensor_id])
-        return self._cur.fetchall()
-
-    def file_is_added(self, file_name: str) -> bool:
-        """
-        Function for checking if a file is already added.
-
-        :param file_name: The base name of the file
-        :return: boolean indicating if the file is already added or not
-        """
-        self._cur.execute("SELECT 1 FROM sensor_data_file WHERE file_name = ?", [file_name])
-        return len(self._cur.fetchall()) == 1
-
-    def add_file(self, filename: str, sensor_id: int, datetime_: datetime) -> None:
-        """
-        Adds a new file mapping.
-
-        :param filename: file path
-        :param sensor_id: sensor id
-        :param datetime_: datetime of the data-file
-        """
-        self._cur.execute(SQL_INSERT_FILE, (filename, sensor_id, datetime_))
-        self._conn.commit()
-
-    def get_file_names(self, sensor_id: int, start_date: datetime, end_date: datetime) -> List[str]:
-        """
-        Returns all file paths for a given sensor between two dates.
-
-        :param sensor_id: sensor id
-        :param start_date: start date
-        :param end_date: end date
-        :return: list of file paths
-        """
-        self._cur.execute(SQL_SELECT_FILE_NAMES, (sensor_id, start_date, end_date))
-        return [x[0] for x in self._cur.fetchall()]
-
-    def get_labels_date(self, sensor_id: int, date_: date) -> List[Tuple[datetime, datetime, str]]:
-        """
-        Returns all the labels for a given sensor on a given date.
-
-        :param sensor_id: The sensor ID of the sensor for which the labels need to be returned
-        :param date_: The date for which the labels should be returned
-        :return: List of tuples (start_time, end_time, label_name)
-        """
-        self._cur.execute(SQL_SELECT_LABELS_DATE, (date_, sensor_id))
-        return self._cur.fetchall()
-
-    def get_labels_between_dates(self, sensor_id: int, start_date: datetime, end_date: datetime) \
-            -> List[Tuple[datetime, datetime, str]]:
+    def get_labels_between_dates(self, sensor_id: int, start_date: dt.datetime, end_date: dt.datetime) \
+            -> List[Tuple[dt.datetime, dt.datetime, str]]:
         """
         Returns all the labels for a given sensor between the given dates.
 
@@ -251,15 +161,6 @@ class LabelManager:
         """
         self._cur.execute(SQL_SELECT_LABELS_BETWEEN_DATES, (start_date, end_date, sensor_id))
         return self._cur.fetchall()
-
-    def get_sensor_ids(self) -> List[str]:
-        """
-        Returns a list of all sensor ids that have been used so far in this project.
-
-        :return: list of sensor ids
-        """
-        self._cur.execute(SQL_SELECT_SENSOR_IDS)
-        return [x[0] for x in self._cur.fetchall()]
 
     # TODO: update export location?
     # def export_labels_all(self) -> None:
