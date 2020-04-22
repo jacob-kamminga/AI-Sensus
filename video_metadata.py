@@ -61,7 +61,7 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     :param timezone: The timezone that should be used
     :return: datetime: The begin UTC datetime of the video (without tzinfo)
     """
-    if not os.path.isfile(file_path):
+    if file_path is None or not os.path.isfile(file_path):
         raise FileNotFoundException(file_path)
 
     args = 'ffprobe -v error -select_streams v:0 -show_entries stream_tags=creation_time ' \

@@ -28,7 +28,7 @@ class NewSubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         self.label_warning_duplicate_name.setVisible(False)
 
         # Get the current names to check uniqueness
-        self.existing_names = [x[0] for x in self.subject_manager.get_all_subjects_name_id()]
+        self.existing_names = self.subject_manager.get_all_subjects_name_id().keys()
 
         # Check whether the entered name already exists (violates UNIQUE constraint)
         self.lineEdit_name.textChanged.connect(self.check_unique)

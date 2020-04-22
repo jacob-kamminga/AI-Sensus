@@ -5,16 +5,16 @@ import matplotlib.animation
 import matplotlib.pyplot as plt
 import numpy as np
 from PyQt5 import QtCore
-from PyQt5.QtCore import QDir, Qt
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QShortcut, QDialog
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
-from data_export import export_data, windowing as wd
+from data_export import windowing as wd
 from database.db_subject_sensor_map import SubjectSensorMapManager
-from gui.dialog_camera_settings import CameraSettingsDialog
 from gui.designer_gui import Ui_MainWindow
+from gui.dialog_camera_settings import CameraSettingsDialog
 from gui.dialog_export import ExportDialog
 from gui.dialog_label import LabelSpecs
 from gui.dialog_label_settings import LabelSettingsDialog
@@ -159,6 +159,10 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the camera settings dialog window.
         """
         camera_settings = CameraSettingsDialog(self.video.camera_manager)
+
+        if self.video.file_name is not None:
+            camera_settings.setWindowTitle(self.video.file_name)
+
         camera_settings.exec_()
         camera_settings.show()
 

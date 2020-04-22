@@ -20,6 +20,7 @@ class Video:
     def __init__(self, gui):
         self.gui = gui
         self.settings = gui.settings
+        self.file_name = None
         self.file_path = None
 
         self.video_manager = VideoManager(self.gui.project_dialog.project_name)
@@ -68,11 +69,11 @@ class Video:
             # Save the path for next time
             self.settings.set_setting('last_videofile', self.file_path)
 
-            file_name = ntpath.basename(self.file_path)
+            self.file_name = ntpath.basename(self.file_path)
 
             # Check if a camera has already been set for this video
             try:
-                camera_id = self.video_manager.get_camera(file_name)
+                camera_id = self.video_manager.get_camera(self.file_name)
                 self.gui.camera.change_camera(camera_id)
             except VideoDoesNotExist:
                 self.gui.open_camera_settings_dialog()
@@ -80,14 +81,14 @@ class Video:
             self.update_datetime()
 
             # Save file mapping to database if not exists
-            self.id_ = self.video_manager.get_video_id(file_name)
+            self.id_ = self.video_manager.get_video_id(self.file_name)
 
             # Video not yet in database
             if self.id_ == -1:
-                self.video_manager.insert_video(file_name, self.file_path, self.gui.camera.camera_id, self.datetime)
+                self.video_manager.insert_video(self.file_name, self.file_path, self.gui.camera.camera_id, self.datetime)
             # Video already in database -> update file path
             else:
-                self.video_manager.update_file_path(file_name, self.file_path)
+                self.video_manager.update_file_path(self.file_name, self.file_path)
 
             # Play the video in the QMediaPlayer and activate the associated widgets
             self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
