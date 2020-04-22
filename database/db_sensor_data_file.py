@@ -1,6 +1,8 @@
 import sqlite3
-from datetime import datetime
+import datetime as dt
 from typing import List
+
+from exceptions import SensorDataFileDoesNotExist
 
 SQL_CREATE_TABLE = "create table sensor_data_file\
 (\
@@ -24,8 +26,18 @@ SQL_SELECT_ID_BY_FILE_NAME = \
     "FROM sensor_data_file " \
     "WHERE file_name = ?"
 
-SQL_SELECT_FILE_NAMES_BY_SENSOR_ID = \
+SQL_SELECT_FILE_NAME_BY_ID = \
     "SELECT file_name " \
+    "FROM sensor_data_file " \
+    "WHERE id = ?"
+
+SQL_SELECT_FILE_PATH_BY_ID = \
+    "SELECT file_path " \
+    "FROM sensor_data_file " \
+    "WHERE id = ?"
+
+SQL_SELECT_IDS_BY_SENSOR_AND_DATES = \
+    "SELECT id " \
     "FROM sensor_data_file " \
     "WHERE sensor_id = ? " \
     "AND (datetime BETWEEN ? AND ?)"
@@ -65,22 +77,34 @@ class SensorDataFileManager:
         :param file_name: The base name of the file
         :return: The ID of the sensor data file, or -1 if not exists
         """
-        try:
-            self._cur.execute(SQL_SELECT_ID_BY_FILE_NAME, (file_name,))
-            return self._cur.fetchone()[0]
-        except sqlite3.Error:
-            return -1
+        self._cur.execute(SQL_SELECT_ID_BY_FILE_NAME, (file_name,))
+        res = self._cur.fetchone()
 
-    def add_file(self, file_name: str, file_path: str, sensor_id: int, datetime_: datetime) -> int:
+        if res is None:
+            raise SensorDataFileDoesNotExist()
+
+        return res[0]
+
+    def get_file_name_by_id(self, id_: int) -> str:
+        """
+        Get the file name of the sensor data file associated with the ID.
+
+        :param id_: The ID of the sensor data file
+        :return: The file name
+        """
+        self._cur.execute(SQL_SELECT_FILE_NAME_BY_ID, (id_,))
+        return self._cur.fetchone()[0]
+
+    def add_file(self, file_name: str, file_path: str, sensor_id: int, datetime: dt.datetime) -> int:
         """
         Add a new file mapping.
 
         :param file_name: The file name
         :param file_path: The last known file path
         :param sensor_id: The sensor ID
-        :param datetime_: datetime of the data-file
+        :param datetime: datetime of the data-file
         """
-        self._cur.execute(SQL_INSERT_FILE, (file_name, file_path, sensor_id, datetime_))
+        self._cur.execute(SQL_INSERT_FILE, (file_name, file_path, sensor_id, datetime))
         self._conn.commit()
         return self._cur.lastrowid
 
@@ -94,17 +118,17 @@ class SensorDataFileManager:
         self._cur.execute(SQL_UPDATE_FILE_PATH, (file_path, file_name))
         self._conn.commit()
 
-    def get_file_path_by_file_name(self, file_name: str):
+    def get_file_path_by_id(self, id_: int) -> str:
         """
-        Get the file path of the sensor data file indicated by the file name.
+        Get the file path of the sensor data file associated with the ID.
 
-        :param file_name: The file name
-        :return: The file path
+        :param id_: The ID of the sensor data file entity
+        :return: The file path string
         """
-        self._cur.execute(SQL_SELECT_FILE_PATH_BY_FILE_NAME, (file_name,))
+        self._cur.execute(SQL_SELECT_FILE_PATH_BY_ID, (id_,))
         return self._cur.fetchone()[0]
 
-    def get_file_names_between_dates(self, sensor_id: int, start_date: datetime, end_date: datetime) -> List[str]:
+    def get_ids_by_sensor_and_dates(self, sensor_id: int, start_date: dt.datetime, end_date: dt.datetime) -> List[int]:
         """
         Returns all file names for a given sensor between two dates.
 
@@ -113,7 +137,7 @@ class SensorDataFileManager:
         :param end_date: end date
         :return: list of file names
         """
-        self._cur.execute(SQL_SELECT_FILE_NAMES_BY_SENSOR_ID, (sensor_id, start_date, end_date))
+        self._cur.execute(SQL_SELECT_IDS_BY_SENSOR_AND_DATES, (sensor_id, start_date, end_date))
         return [x[0] for x in self._cur.fetchall()]
 
     def get_sensor_ids(self) -> List[str]:

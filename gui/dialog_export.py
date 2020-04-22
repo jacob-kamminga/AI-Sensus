@@ -4,8 +4,8 @@ import os
 
 import pandas as pd
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QDate, QTime, QDir
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtCore import QDate, QTime, QDir, Qt
+from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton
 
 from data_import.sensor_data import SensorData
 from database.db_export import ExportManager
@@ -14,12 +14,14 @@ from database.db_subject import SubjectManager
 from database.db_subject_sensor_map import SubjectSensorMapManager
 from gui.designer_export_new import Ui_Dialog
 
-DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+COL_LABEL = 'Label'
+COL_TIME = 'Time'
+COL_TIMESTAMP = 'Timestamp'
 
 
 class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, project_name: str, settings_dict: dict):
+    def __init__(self, project_name: str, settings_dict: dict, datetime: dt.datetime = None):
         super().__init__()
         self.setupUi(self)
 
@@ -32,88 +34,68 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         self.subject_dict = self.subject_manager.get_all_subjects_name_id()
 
         self.init_subject_list_widget()
-        self.init_date_time_widgets()
+        self.init_date_time_widgets(datetime)
 
         self.pushButton_export.clicked.connect(self.export)
 
     def init_subject_list_widget(self):
         self.listWidget_subjects.addItems(self.subject_dict.keys())
 
-    def init_date_time_widgets(self):
-        self.dateEdit_start.setDate(QDate.currentDate().addDays(-1))
-        self.dateEdit_end.setDate(QDate.currentDate())
-        self.timeEdit_start.setTime(QTime.currentTime())
-        self.timeEdit_end.setTime(QTime.currentTime())
+    def init_date_time_widgets(self, datetime):
+        if datetime is not None:
+            self.dateEdit_start.setDate(datetime.date())
+            self.dateEdit_end.setDate(datetime.date())
+            self.timeEdit_start.setTime(datetime.time())
+            self.timeEdit_end.setTime((datetime + dt.timedelta(hours=1)).time())
+        else:
+            self.dateEdit_start.setDate(QDate.currentDate().addDays(-1))
+            self.dateEdit_end.setDate(QDate.currentDate())
+            self.timeEdit_start.setTime(QTime.currentTime())
+            self.timeEdit_end.setTime(QTime.currentTime())
 
-    def get_labels(self):
-        selected_subject_ids = [self.subject_dict.get(item.text()) for item in self.listWidget_subjects.selectedItems()]
-        selected_start_dt = self.dateEdit_start.dateTime()
-        selected_start_dt.setTime(self.timeEdit_start.time())
-        selected_start_dt = selected_start_dt.toPyDateTime()
-        selected_end_dt = self.dateEdit_end.dateTime()
-        selected_end_dt.setTime(self.timeEdit_end.time())
-        selected_end_dt = selected_end_dt.toPyDateTime()
+    def get_sensor_ids(self, subject_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
+        return self.map_manager.get_sensor_ids_by_dates(subject_id, start_dt, end_dt)
 
-        all_sensor_ids = []
-        all_labels = []
+    def get_sensor_data_file_ids(self, sensor_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
+        return self.sensor_data_file_manager.get_ids_by_sensor_and_dates(sensor_id,
+                                                                         start_dt,
+                                                                         end_dt)
 
-        for subject_id in selected_subject_ids:
-            sensor_ids = self.map_manager.get_sensor_ids_between_dates(subject_id,
-                                                                       selected_start_dt,
-                                                                       selected_end_dt)
-            all_sensor_ids.extend(sensor_ids)
+    def get_labels(self, sensor_data_file_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
+        labels = self.export_manager.get_labels_by_dates(sensor_data_file_id,
+                                                         start_dt,
+                                                         end_dt)
+        return [{"start": label["start_time"],
+                 "end": label["end_time"],
+                 "activity": label["activity"]} for label in labels]
 
-        for sensor_id in all_sensor_ids:
-            file_names = self.sensor_data_file_manager.get_file_names_between_dates(sensor_id,
-                                                                                    selected_start_dt,
-                                                                                    selected_end_dt)
+    def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
+        file_path = self.get_file_path(sensor_data_file_id)
+        sensor_data = SensorData(file_path, self.settings_dict)
 
-            self.check_file_paths(file_names)
+        return sensor_data
 
-            label_data = self.export_manager.get_label_data_between_dates(sensor_id,
-                                                                          selected_start_dt,
-                                                                          selected_end_dt)
-
-            all_labels.extend(label_data)
-
-        # Format datetime objects
-        all_labels = [(row[0].strftime(DATETIME_FORMAT), row[1].strftime(DATETIME_FORMAT), row[2], row[3])
-                      for row in all_labels]
-
-        return all_labels
-
-    def get_sensor_data(self, sensor_ids: [str], start_dt: dt.datetime, end_dt: dt.datetime) -> [pd.DataFrame]:
-        for sensor_id in sensor_ids:
-            file_names = self.sensor_data_file_manager.get_file_names_between_dates(sensor_id,
-                                                                                    start_dt,
-                                                                                    end_dt)
-
-            self.check_file_paths(file_names)
-
-            file_paths = [self.sensor_data_file_manager.get_file_path_by_file_name(file_name) for file_name in file_names]
-
-            for file_path in file_paths:
-                sensor_data = SensorData(file_path, self.settings_dict)
-
-                sensor_data.add_labels()
-
-    def check_file_paths(self, file_names: [str]):
+    def get_file_path(self, sensor_data_file_id: int) -> str:
         """
         Check whether the file paths in the database are still valid and update if necessary.
 
-        :param file_names: The list of file names
+        :param sensor_data_file_id: The list of file names
         """
-        for file_name in file_names:
-            # Check whether the file path is still valid
-            file_path = self.sensor_data_file_manager.get_file_path_by_file_name(file_name)
+        file_path = self.sensor_data_file_manager.get_file_path_by_id(sensor_data_file_id)
 
-            # File path invalid
-            if file_path is not None and not os.path.isfile(file_path):
-                # Prompt the user for the correct file path
-                new_file_path = self.prompt_file_location(file_name, file_path)
+        # Check whether the file path is still valid
+        if os.path.isfile(file_path):
+            return file_path
+        else:
+            # Invalid:
+            # Prompt the user for the correct file path
+            file_name = self.sensor_data_file_manager.get_file_name_by_id(sensor_data_file_id)
+            new_file_path = self.prompt_file_location(file_name, file_path)
 
-                # Update path in database
-                self.sensor_data_file_manager.update_file_path(file_name, new_file_path)
+            # Update path in database
+            self.sensor_data_file_manager.update_file_path(file_name, new_file_path)
+
+            return new_file_path
 
     def prompt_file_location(self, file_name: str, old_path: str) -> str:
         """
@@ -142,6 +124,20 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         return file_path
 
+    def get_start_datetime(self) -> dt.datetime:
+        start_dt = self.dateEdit_start.dateTime()
+        start_dt.setTime(self.timeEdit_start.time())
+
+        return start_dt.toPyDateTime()
+
+    def get_end_datetime(self) -> dt.datetime:
+        end_dt = self.dateEdit_end.dateTime()
+        end_dt.setTime(self.timeEdit_end.time())
+        return end_dt.toPyDateTime()
+
+    def get_subject_ids(self) -> [int]:
+        return [self.subject_dict.get(item.text()) for item in self.listWidget_subjects.selectedItems()]
+
     @staticmethod
     def save_to_csv(label_data, file_path):
         with open(file_path, 'w', newline='') as out:
@@ -150,12 +146,35 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
             csv_out.writerows(label_data)
 
     def export(self):
-        labels = self.get_labels()
-        file_path = self.prompt_save_location()
+        subject_ids: [int] = self.get_subject_ids()
+        start_dt: dt.datetime = self.get_start_datetime()
+        end_dt: dt.datetime = self.get_end_datetime()
 
-        # Retrieve the SensorData object that parses the sensor data file
-        data = SensorData(self.file_path, self.settings_dict)
-        sensor_name = self.data.metadata['sn']
-        sensor_id = self.sensor_manager.get_id_by_name(sensor_name)
+        for subject_id in subject_ids:
+            df: pd.DataFrame = pd.DataFrame()
+            sensor_ids = self.get_sensor_ids(subject_id, start_dt, end_dt)
 
-        self.save_to_csv(labels, file_path)
+            for sensor_id in sensor_ids:
+                sensor_data_file_ids = self.get_sensor_data_file_ids(sensor_id, start_dt, end_dt)
+
+                for file_id in sensor_data_file_ids:
+                    labels = self.get_labels(file_id, start_dt, end_dt)
+                    sensor_data = self.get_sensor_data(file_id)
+
+                    sensor_data.add_timestamp_column(COL_TIME)
+                    sensor_data.filter_between_dates(start_dt, end_dt)
+                    sensor_data.add_labels(labels)
+
+                    df = df.append(sensor_data.get_data())
+
+                file_path = self.prompt_save_location()
+
+                if file_path:
+                    df.to_csv(file_path)
+
+        d = QDialog()
+        b = QPushButton("OK", d)
+        b.clicked.connect(d.close)
+        d.setWindowTitle("Export successful")
+        d.setWindowModality(Qt.ApplicationModal)
+        d.exec_()

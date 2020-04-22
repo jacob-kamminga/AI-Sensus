@@ -1,6 +1,8 @@
 import sqlite3
 from typing import List
 
+from exceptions import SensorDoesNotExist
+
 SQL_CREATE_TABLE = "create table sensor \
 ( \
   id          INTEGER not null \
@@ -40,11 +42,13 @@ class SensorManager:
             return False
 
     def get_id_by_name(self, sensor_name: str) -> int:
-        try:
-            self._cur.execute(SQL_SELECT_ID, (sensor_name,))
-            return self._cur.fetchone()[0]
-        except sqlite3.Error:
-            return -1
+        self._cur.execute(SQL_SELECT_ID, (sensor_name,))
+        res = self._cur.fetchone()
+
+        if res is None:
+            raise SensorDoesNotExist(sensor_name)
+
+        return res[0]
 
     def get_all_sensors(self) -> List[str]:
         try:

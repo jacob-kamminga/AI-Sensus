@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QFileDialog
 import video_metadata
 from database.db_camera import CameraManager
 from database.db_video import VideoManager
+from exceptions import VideoDoesNotExist
 from utils import get_hms_sum, ms_to_hms
 
 
@@ -70,13 +71,11 @@ class Video:
             file_name = ntpath.basename(self.file_path)
 
             # Check if a camera has already been set for this video
-            camera_id = self.video_manager.get_camera(file_name)
-
-            # Camera has not been set yet
-            if camera_id == -1:
-                self.gui.open_camera_settings_dialog()
-            else:
+            try:
+                camera_id = self.video_manager.get_camera(file_name)
                 self.gui.camera.change_camera(camera_id)
+            except VideoDoesNotExist:
+                self.gui.open_camera_settings_dialog()
 
             self.update_datetime()
 

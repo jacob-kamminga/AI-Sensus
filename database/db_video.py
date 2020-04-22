@@ -103,7 +103,7 @@ class VideoManager:
         """
         Updates the associated camera of a video.
 
-        :param file_name: The file name of the video
+        :param video_id: The ID of the video
         :param camera_id: The camera ID of the camera associated with the video
         """
         self._cur.execute(SQL_UPDATE_CAMERA, (camera_id, video_id))

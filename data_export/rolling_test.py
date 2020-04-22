@@ -64,7 +64,7 @@ def test_sensor_data():
         res.append([labels[i][0], labels[i + 1][0], labels[i][1]])
 
     sensor_data.add_timestamp_column('Time', 'Timestamp')
-    sensor_data.add_labels(res, 'Label', 'Timestamp')
+    sensor_data.add_labels_ml(res, 'Label', 'Timestamp')
 
     return sensor_data.get_data()
 

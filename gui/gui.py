@@ -198,7 +198,9 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the export dialog window, and if a subject and a file location and name are chosen, exports the data
         accordingly.
         """
-        export = ExportDialog(self.project_dialog.project_name, self.settings.settings_dict)
+        export = ExportDialog(self.project_dialog.project_name,
+                              self.settings.settings_dict,
+                              self.sensor_data_file.datetime)
         export.exec_()
         export.show()
 
@@ -265,7 +267,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.ml_dataframe.add_timestamp_column(COL_TIME, COL_TIMESTAMP)
             labels = self.plot.label_manager.get_labels_by_file_and_date(self.sensor_data_file.sensor_id,
                                                                          self.sensor_data_file.datetime.date())
-            self.ml_dataframe.add_labels(labels, COL_LABEL, COL_TIMESTAMP)
+            self.ml_dataframe.add_labels_ml(labels, COL_LABEL, COL_TIMESTAMP)
             raw_data = self.ml_dataframe.get_data()
 
             # Remove data points where label is unknown

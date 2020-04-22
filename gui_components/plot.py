@@ -262,8 +262,9 @@ class Plot:
                         self.large_label.exec_()
 
                     if self.large_label.is_accepted:
-                        self.add_label_highlight(self.large_label.selected_label.start, self.large_label.selected_label.end,
-                                                 self.large_label.selected_label.label)
+                        self.add_label_highlight(self.large_label.selected_label.start,
+                                                 self.large_label.selected_label.end,
+                                                 self.large_label.selected_label.type)
                         self.gui.canvas.draw()
 
                 self.labeling = not self.labeling

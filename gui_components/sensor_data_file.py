@@ -12,6 +12,7 @@ from database.db_label import LabelManager
 from database.db_offset import OffsetManager
 from database.db_sensor import SensorManager
 from database.db_sensor_data_file import SensorDataFileManager
+from exceptions import SensorDoesNotExist, SensorDataFileDoesNotExist
 
 
 class SensorDataFile:
@@ -82,9 +83,10 @@ class SensorDataFile:
             # Retrieve the SensorData object that parses the sensor data file
             self.sensor_data = SensorData(self.file_path, self.settings.settings_dict)
             sensor_name = self.sensor_data.metadata['sn']
-            self.sensor_id = self.sensor_manager.get_id_by_name(sensor_name)
 
-            if self.sensor_id is None:
+            try:
+                self.sensor_id = self.sensor_manager.get_id_by_name(sensor_name)
+            except SensorDoesNotExist:
                 self.sensor_id = self.sensor_manager.insert_sensor(sensor_name)
 
             # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary
@@ -106,17 +108,17 @@ class SensorDataFile:
             # Check if the sensor data file is already in the label database, if not add it
             file_name = ntpath.basename(self.file_path)
 
-            self.id_ = self.sensor_data_file_manager.get_id_by_file_name(file_name)
+            try:
+                self.id_ = self.sensor_data_file_manager.get_id_by_file_name(file_name)
 
-            # Sensor data file not found in database
-            if self.id_ == -1:
-                # Add sensor data file to database
+                if self.sensor_data_file_manager.get_file_path_by_id(self.id_) != self.file_path:
+                    self.sensor_data_file_manager.update_file_path(file_name, self.file_path)
+
+            except SensorDataFileDoesNotExist:
                 self.id_ = self.sensor_data_file_manager.add_file(file_name,
                                                                   self.file_path,
                                                                   self.sensor_id,
                                                                   self.datetime)
-            elif self.sensor_data_file_manager.get_file_path_by_file_name(file_name) != self.file_path:
-                self.sensor_data_file_manager.update_file_path(file_name, self.file_path)
 
             # Add every column in the DataFrame to the possible Data Series that can be plotted, except for time,
             # and plot the first one

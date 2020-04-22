@@ -28,7 +28,7 @@ class TestClassifier(unittest.TestCase):
     sensor_data.add_timestamp_column(TIME_COL, TIMESTAMP_COL)
     sensor_data.add_column_from_func('accel', 'sqrt(Ax^2 + Ay^2 + Az^2)')
     sensor_data.add_column_from_func('gyro', 'sqrt(Gx^2 + Gy^2 + Gz^2)')
-    sensor_data.add_labels(label_data.get_data(), LABEL_COL, TIMESTAMP_COL)
+    sensor_data.add_labels_ml(label_data.get_data(), LABEL_COL, TIMESTAMP_COL)
     data = sensor_data.get_data()
 
     # Remove data points where label == 'unknown'

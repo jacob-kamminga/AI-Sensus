@@ -24,8 +24,13 @@ SQL_INSERT_MAP = "INSERT INTO subject_sensor_map (subject_id, sensor_id, start_d
                  "(?, ?, ?, ?)"
 
 SQL_SELECT_ALL_MAPS = "SELECT * FROM subject_sensor_map"
-SQL_SELECT_SENSOR_IDS_BETWEEN_DATES = "SELECT sensor_id FROM subject_sensor_map WHERE subject_id = ? AND " \
-                                      "(start_datetime BETWEEN ? AND ? OR end_datetime BETWEEN ? AND ?)"
+SQL_SELECT_SENSOR_IDS_BETWEEN_DATES = "SELECT sensor_id " \
+                                      "FROM subject_sensor_map " \
+                                      "WHERE subject_id = ? " \
+                                      "AND (? BETWEEN start_datetime AND end_datetime " \
+                                      "OR ? BETWEEN start_datetime AND end_datetime " \
+                                      "OR start_datetime BETWEEN ? AND ? " \
+                                      "OR end_datetime BETWEEN ? AND ?)"
 SQL_UPDATE_MAP = "UPDATE subject_sensor_map SET subject_id = ?, sensor_id = ?, start_datetime = ?, end_datetime = ? " \
                  "WHERE id = ?"
 SQL_UPDATE_START_DATE = "UPDATE subject_sensor_map SET start_datetime = ? WHERE id = ?"
@@ -67,22 +72,11 @@ class SubjectSensorMapManager:
         self._cur.execute(SQL_SELECT_ALL_MAPS)
         return self._cur.fetchall()
 
-    # def get_sensor_ids_between_dates(self, subject_ids: [int], start_dt: datetime, end_dt: datetime):
-    #     sql_stat = f"SELECT sensor_id FROM subject_sensor_map WHERE subject_id IN " \
-    #                f"{','.join(['?'] * len(subject_ids))} AND " \
-    #                f"(start_datetime BETWEEN ? AND ? OR end_datetime BETWEEN ? AND ?)"
-    #
-    #     print(sql_stat)
-    #     print(subject_ids)
-    #
-    #     self._cur.execute(f"SELECT sensor_id FROM subject_sensor_map WHERE subject_id IN "
-    #                       f"{','.join(['?'] * len(subject_ids))} AND "
-    #                       f"(start_datetime BETWEEN ? AND ? OR end_datetime BETWEEN ? AND ?)",
-    #                       subject_ids.extend([start_dt, end_dt, start_dt, end_dt]))
-    #     return self._cur.fetchall()
-
-    def get_sensor_ids_between_dates(self, subject_id: [int], start_dt: datetime, end_dt: datetime):
-        self._cur.execute(SQL_SELECT_SENSOR_IDS_BETWEEN_DATES, (subject_id, start_dt, end_dt, start_dt, end_dt))
+    def get_sensor_ids_by_dates(self, subject_id: [int], start_dt: datetime, end_dt: datetime):
+        self._cur.execute(
+            SQL_SELECT_SENSOR_IDS_BETWEEN_DATES,
+            (subject_id, start_dt, end_dt, start_dt, end_dt, start_dt, end_dt)
+        )
         return [row[0] for row in self._cur.fetchall()]
 
     def delete_map(self, id_: int) -> None:
