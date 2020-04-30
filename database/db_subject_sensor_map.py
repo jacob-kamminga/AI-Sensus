@@ -1,6 +1,6 @@
 import sqlite3
 from datetime import datetime
-from typing import List
+from typing import List, Tuple
 
 from database import settings
 
@@ -68,7 +68,7 @@ class SubjectSensorMapManager:
         self._cur.execute(SQL_INSERT_MAP, (subject_id, sensor_id, start_date, end_date))
         self._conn.commit()
 
-    def get_all_maps(self) -> List[str]:
+    def get_all_maps(self) -> List[Tuple[str]]:
         self._cur.execute(SQL_SELECT_ALL_MAPS)
         return self._cur.fetchall()
 
