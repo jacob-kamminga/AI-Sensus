@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\Dennis\stack\documents\work\LabelingApp\gui\designer_subject_sensor_map.ui'
+# Form implementation generated from reading ui file '..\..\gui\designer_subject_sensor_map.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -31,6 +31,9 @@ class Ui_Dialog(object):
         self.pushButton_add_map = QtWidgets.QPushButton(Dialog)
         self.pushButton_add_map.setObjectName("pushButton_add_map")
         self.horizontalLayout.addWidget(self.pushButton_add_map)
+        self.pushButton_edit_map = QtWidgets.QPushButton(Dialog)
+        self.pushButton_edit_map.setObjectName("pushButton_edit_map")
+        self.horizontalLayout.addWidget(self.pushButton_edit_map)
         self.pushButton_remove_map = QtWidgets.QPushButton(Dialog)
         self.pushButton_remove_map.setObjectName("pushButton_remove_map")
         self.horizontalLayout.addWidget(self.pushButton_remove_map)
@@ -50,5 +53,6 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.pushButton_add_map.setText(_translate("Dialog", "Add map"))
-        self.pushButton_remove_map.setText(_translate("Dialog", "Remove map"))
+        self.pushButton_add_map.setText(_translate("Dialog", "Add"))
+        self.pushButton_edit_map.setText(_translate("Dialog", "Edit"))
+        self.pushButton_remove_map.setText(_translate("Dialog", "Remove"))

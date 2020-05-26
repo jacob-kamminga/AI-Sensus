@@ -7,6 +7,7 @@ from database.db_sensor import SensorManager
 from database.db_subject import SubjectManager
 from database.db_subject_sensor_map import SubjectSensorMapManager
 from gui.designer_subject_sensor_map import Ui_Dialog
+from gui.dialog_edit_subject_sensor_map import EditSubjectSensorMapDialog
 from gui.dialog_new_subject_sensor_map import NewSubjectSensorMapDialog
 
 INDEX_MAP_ID = 0
@@ -39,6 +40,7 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
         self.create_table()
 
         self.pushButton_add_map.clicked.connect(self.open_new_map_dialog)
+        self.pushButton_edit_map.clicked.connect(self.open_edit_map_dialog)
         self.pushButton_remove_map.clicked.connect(self.open_remove_map_msg)
 
     def create_table(self):
@@ -50,12 +52,12 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
         self.tableWidget.setRowCount(len(self.maps))
         self.tableWidget.setHorizontalHeaderLabels(self.column_names)
 
-        for i, row in enumerate(self.maps):
-            id_ = row[INDEX_MAP_ID]
-            subject_id = row[INDEX_MAP_SUBJECT]
-            sensor_id = row[INDEX_MAP_SENSOR]
-            start_dt = row[INDEX_MAP_START]
-            end_dt = row[INDEX_MAP_END]
+        for i, map_ in enumerate(self.maps):
+            id_ = map_[INDEX_MAP_ID]
+            subject_id = map_[INDEX_MAP_SUBJECT]
+            sensor_id = map_[INDEX_MAP_SENSOR]
+            start_dt = map_[INDEX_MAP_START]
+            end_dt = map_[INDEX_MAP_END]
 
             self.tableWidget.setItem(i, INDEX_MAP_ID, QTableWidgetItem(str(id_)))
             self.tableWidget.setItem(i, INDEX_MAP_SUBJECT, QTableWidgetItem(self.subjects_dict[subject_id]))
@@ -86,6 +88,26 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
             self.clear_table()
             self.create_table()
 
+    def open_edit_map_dialog(self):
+        indices = self.tableWidget.selectionModel().selectedRows()
+
+        if len(indices) > 0:
+            row = indices[0].row()
+            id_ = int(self.maps[row][INDEX_MAP_ID])
+
+            dialog = EditSubjectSensorMapDialog(self.map_manager,
+                                                self.subject_manager,
+                                                self.sensor_manager,
+                                                self.subjects_dict,
+                                                self.sensors_dict,
+                                                id_)
+            dialog.exec_()
+            dialog.show()
+
+            if dialog.map_edited:
+                self.clear_table()
+                self.create_table()
+
     def open_remove_map_msg(self):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
@@ -96,9 +118,9 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
         msg.exec_()
 
     def remove_map(self):
-        indexes = self.tableWidget.selectionModel().selectedRows()
+        indices = self.tableWidget.selectionModel().selectedRows()
 
-        for index in indexes:
+        for index in indices:
             row = index.row()
             id_ = self.maps[row][INDEX_MAP_ID]
             self.map_manager.delete_map(int(id_))

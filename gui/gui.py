@@ -20,6 +20,7 @@ from gui.dialog_label import LabelSpecs
 from gui.dialog_label_settings import LabelSettingsDialog
 from gui.dialog_machine_learning import MachineLearningDialog
 from gui.dialog_new import NewProject
+from gui.dialog_sensor import SensorDialog
 from gui.dialog_settings import SettingsDialog
 from gui.dialog_subject import SubjectDialog
 from gui.dialog_subject_sensor_map import SubjectSensorMapDialog
@@ -74,6 +75,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionImport_Settings.triggered.connect(self.open_settings_dialog)
         self.actionCamera_Settings.triggered.connect(self.open_camera_settings_dialog)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
+        self.actionSensors.triggered.connect(self.open_sensor_dialog)
         self.actionSubjects.triggered.connect(self.open_subject_dialog)
         self.actionSubject_Mapping.triggered.connect(self.open_subject_sensor_map_dialog)
 
@@ -191,6 +193,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         subject_settings = SubjectDialog(self.project_dialog.project_name)
         subject_settings.exec_()
         subject_settings.show()
+
+    def open_sensor_dialog(self):
+        """
+        Opens the subject mapping dialog window.
+        """
+        sensor_settings = SensorDialog(self.project_dialog.project_name)
+        sensor_settings.exec_()
+        sensor_settings.show()
 
     def open_subject_sensor_map_dialog(self):
         dialog = SubjectSensorMapDialog(self.project_dialog.project_name)

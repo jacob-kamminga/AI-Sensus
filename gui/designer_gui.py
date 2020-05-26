@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'C:\Users\denni\Documents\LabelingApp\project_new\LabelingApp\gui\designer_gui.ui'
+# Form implementation generated from reading ui file '..\..\gui\designer_gui.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.14.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -239,7 +239,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.splitter_main, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 693, 26))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 693, 21))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -267,12 +267,15 @@ class Ui_MainWindow(object):
         self.actionCamera_Settings.setObjectName("actionCamera_Settings")
         self.actionSubjects = QtWidgets.QAction(MainWindow)
         self.actionSubjects.setObjectName("actionSubjects")
+        self.actionSensors = QtWidgets.QAction(MainWindow)
+        self.actionSensors.setObjectName("actionSensors")
         self.menuFile.addAction(self.actionOpen_Video)
         self.menuFile.addAction(self.actionOpen_Sensor_Data)
         self.menuFile.addAction(self.actionExport_Sensor_Data)
         self.menuFile.addAction(self.actionImport_Settings)
         self.menuFile.addAction(self.actionCamera_Settings)
         self.menuFile.addAction(self.actionLabel_Settings)
+        self.menuFile.addAction(self.actionSensors)
         self.menuFile.addAction(self.actionSubjects)
         self.menuFile.addAction(self.actionSubject_Mapping)
         self.menuFile.addAction(self.actionMachine_Learning)
@@ -310,5 +313,6 @@ class Ui_MainWindow(object):
         self.actionExit.setText(_translate("MainWindow", "Exit"))
         self.actionCamera_Settings.setText(_translate("MainWindow", "Camera Settings"))
         self.actionSubjects.setText(_translate("MainWindow", "Subjects"))
+        self.actionSensors.setText(_translate("MainWindow", "Sensors"))
 from PyQt5.QtMultimedia import QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
