@@ -95,8 +95,9 @@ class Video:
             self.gui.pushButton_play.setEnabled(True)
             self.gui.horizontalSlider_time.setEnabled(True)
 
-            self.pause()
             self.sync_with_sensor_data()
+            self.pause()
+            self.unmute()
 
     def update_datetime(self):
         self.datetime = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera.timezone)
@@ -226,7 +227,7 @@ class Video:
             return
         elif self.gui.mediaPlayer.isMuted():
             self.unmute()
-        elif not self.gui.mediaPlayer.isMuted:
+        elif not self.gui.mediaPlayer.isMuted():
             self.mute()
 
     def fast_forward_10s(self):
