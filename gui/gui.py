@@ -65,6 +65,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         # Connect all the buttons, spin boxes, combo boxes and line edits to their appropriate helper functions.
         self.pushButton_play.clicked.connect(self.video.toggle_play)
+        self.pushButton_mute.clicked.connect(self.video.toggle_mute)
         self.shortcut_pause.activated.connect(self.video.toggle_play)
         self.shortcut_plus_10s.activated.connect(self.video.fast_forward_10s)
         self.shortcut_minus_10s.activated.connect(self.video.rewind_10s)

@@ -14,10 +14,27 @@ SQL_CREATE_TABLE = "create table sensor \
 create unique index sensor_sensor_id_uindex \
   on sensor (name);"
 
-SQL_INSERT_SENSOR = "INSERT INTO sensor(name) VALUES (?)"
-SQL_SELECT_ALL_SENSORS = "SELECT * FROM sensor"
-SQL_SELECT_ID = "SELECT id FROM sensor WHERE name = ?"
-SQL_SELECT_SENSOR_NAME = "SELECT name FROM sensor WHERE id = ?"
+SQL_INSERT_SENSOR = \
+    "INSERT INTO sensor(name) " \
+    "VALUES (?)"
+SQL_SELECT_ALL_SENSORS = \
+    "SELECT * " \
+    "FROM sensor"
+SQL_SELECT_ID = \
+    "SELECT id " \
+    "FROM sensor " \
+    "WHERE name = ?"
+SQL_SELECT_SENSOR_NAME = \
+    "SELECT name " \
+    "FROM sensor " \
+    "WHERE id = ?"
+SQL_UPDATE_NAME_BY_ID = \
+    "UPDATE sensor " \
+    "SET name = ? " \
+    "WHERE id = ?"
+SQL_DELETE_SENSOR_BY_ID = \
+    "DELETE FROM sensor " \
+    "WHERE id = ?"
 
 
 class SensorManager:
@@ -71,3 +88,19 @@ class SensorManager:
             return self.get_id_by_name(sensor_name)
         except sqlite3.Error:
             return -1
+
+    def update_name_by_id(self, sensor_id, sensor_name):
+        try:
+            self._cur.execute(SQL_UPDATE_NAME_BY_ID, (sensor_name, sensor_id))
+            self._conn.commit()
+            return True
+        except sqlite3.Error:
+            return False
+
+    def delete_sensor_by_id(self, sensor_id: int):
+        try:
+            self._cur.execute(SQL_DELETE_SENSOR_BY_ID, (sensor_id,))
+            self._conn.commit()
+            return True
+        except sqlite3.Error:
+            return False

@@ -201,6 +201,34 @@ class Video:
         elif self.gui.mediaPlayer.state() == QMediaPlayer.PausedState:
             self.play()
 
+    def mute(self):
+        if self.gui.mediaPlayer.media().isNull():
+            return
+        else:
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap("resources/mute.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
+            self.gui.mediaPlayer.setMuted(True)
+            self.gui.pushButton_mute.setIcon(icon)
+
+    def unmute(self):
+        if self.gui.mediaPlayer.media().isNull():
+            return
+        else:
+            icon = QtGui.QIcon()
+            icon.addPixmap(QtGui.QPixmap("resources/unmute.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+
+            self.gui.mediaPlayer.setMuted(False)
+            self.gui.pushButton_mute.setIcon(icon)
+
+    def toggle_mute(self):
+        if self.gui.mediaPlayer.media().isNull():
+            return
+        elif self.gui.mediaPlayer.isMuted():
+            self.unmute()
+        elif not self.gui.mediaPlayer.isMuted:
+            self.mute()
+
     def fast_forward_10s(self):
         """
         Sets the position of the video player 10 seconds forward

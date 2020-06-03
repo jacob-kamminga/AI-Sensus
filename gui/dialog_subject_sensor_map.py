@@ -114,8 +114,10 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
 
         msg.setText("Are you sure you want to remove the selected mappings?")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        msg.accepted.connect(self.remove_map)
-        msg.exec_()
+        action = msg.exec_()
+
+        if action == QMessageBox.Ok:
+            self.remove_map()
 
     def remove_map(self):
         indices = self.tableWidget.selectionModel().selectedRows()

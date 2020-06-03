@@ -79,9 +79,16 @@
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_media_control" stretch="0,0,0">
+             <layout class="QHBoxLayout" name="horizontalLayout_media_control" stretch="0,0,0,0">
               <item>
                <widget class="QPushButton" name="pushButton_play">
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="pushButton_mute">
                 <property name="text">
                  <string/>
                 </property>

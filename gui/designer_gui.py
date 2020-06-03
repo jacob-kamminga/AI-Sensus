@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '..\..\gui\designer_gui.ui'
+# Form implementation generated from reading ui file 'C:\Users\denni\Documents\LabelingApp\project_new\LabelingApp\gui\designer_gui.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.2
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -69,6 +69,10 @@ class Ui_MainWindow(object):
         self.pushButton_play.setText("")
         self.pushButton_play.setObjectName("pushButton_play")
         self.horizontalLayout_media_control.addWidget(self.pushButton_play)
+        self.pushButton_mute = QtWidgets.QPushButton(self.layoutWidget)
+        self.pushButton_mute.setText("")
+        self.pushButton_mute.setObjectName("pushButton_mute")
+        self.horizontalLayout_media_control.addWidget(self.pushButton_mute)
         self.horizontalSlider_time = QtWidgets.QSlider(self.layoutWidget)
         self.horizontalSlider_time.setOrientation(QtCore.Qt.Horizontal)
         self.horizontalSlider_time.setObjectName("horizontalSlider_time")

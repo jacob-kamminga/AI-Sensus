@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '..\..\gui\designer_sensor.ui'
+# Form implementation generated from reading ui file 'C:\Users\denni\Documents\LabelingApp\project_new\LabelingApp\gui\designer_sensor.ui'
 #
-# Created by: PyQt5 UI code generator 5.14.2
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -23,9 +23,6 @@ class Ui_Dialog(object):
         self.verticalLayout.addWidget(self.listWidget)
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.horizontalLayout.setObjectName("horizontalLayout")
-        self.pushButton_add_sensor = QtWidgets.QPushButton(Dialog)
-        self.pushButton_add_sensor.setObjectName("pushButton_add_sensor")
-        self.horizontalLayout.addWidget(self.pushButton_add_sensor)
         self.pushButton_edit_sensor = QtWidgets.QPushButton(Dialog)
         self.pushButton_edit_sensor.setObjectName("pushButton_edit_sensor")
         self.horizontalLayout.addWidget(self.pushButton_edit_sensor)
@@ -48,6 +45,5 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.pushButton_add_sensor.setText(_translate("Dialog", "Add"))
         self.pushButton_edit_sensor.setText(_translate("Dialog", "Edit"))
         self.pushButton_remove_sensor.setText(_translate("Dialog", "Remove"))
