@@ -124,16 +124,6 @@ class SensorData:
         new.__dict__.update(self.__dict__)
         return new
 
-    def parse_sensor_id_config(self, file, config: sqlite3.Row):
-
-        if SENSOR_ID_COLUMN in config.keys():
-            self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW], config[SENSOR_ID_COLUMN])
-        else:
-            self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW])
-
-    def parse_headers_config(self, file, config: sqlite3.Row):
-        self.metadata['names'] = parse_names(file, config[HEADERS_ROW])
-
     def parse_model_config(self, file, config: sqlite3.Row):
         if config[DATE_COLUMN] != -1:
             self.metadata['date'] = parse_header_option(file, config[DATE_ROW], config[DATE_COLUMN])

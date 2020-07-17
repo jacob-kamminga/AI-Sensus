@@ -50,10 +50,11 @@ class SensorDataFile:
         """ The model ID. """
 
     def open_previous_file(self):
-        previous_path = self.settings.get_setting('last_datafile')
+        previous_path = self.settings.get_setting(PREVIOUS_SENSOR_DATA_FILE)
 
         if previous_path is not None:
-            if os.path.isfile(previous_path):
+            previous_path = Path(previous_path)
+            if previous_path.is_file():
                 self.file_path = previous_path
                 self.open_file()
 
