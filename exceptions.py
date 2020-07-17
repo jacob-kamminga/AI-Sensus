@@ -13,6 +13,11 @@ class SensorDoesNotExist(Exception):
     pass
 
 
+class SensorModelDoesNotExist(Exception):
+    """The sensor does not exist in the database."""
+    pass
+
+
 class SensorDataFileDoesNotExist(Exception):
     """The sensor data file does not exist in the database."""
     pass

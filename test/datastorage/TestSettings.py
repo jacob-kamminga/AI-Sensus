@@ -1,6 +1,6 @@
 import shutil
 import unittest
-from database.settings import *
+from settings import *
 import os.path
 
 
@@ -20,7 +20,7 @@ class TestSettings(unittest.TestCase):
         self.assertIs(None, s1.get_setting('test_setting1'))  # setting 'test_setting1' should not be set yet
         s1.set_setting('test_setting1', 'test_value')         # set the value of 'test_setting1' to 'test_value'
 
-        s2 = Settings('new_project')                                    # create a new Settings instance
+        s2 = Settings('new_project')                                    # create a new ProjectSettings instance
         self.assertEqual('test_value', s2.get_setting('test_setting1'))  # 'test_setting1' should return 'test_value'
         s2.set_setting('test_setting2', 42)
         self.assertEqual(42, s2.get_setting('test_setting2'))  # integer values should also work

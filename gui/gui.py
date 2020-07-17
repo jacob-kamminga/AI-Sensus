@@ -1,5 +1,6 @@
 from datetime import datetime
 from datetime import timedelta
+from typing import Optional
 
 import matplotlib.animation
 import matplotlib.pyplot as plt
@@ -12,23 +13,25 @@ from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
 from data_export import windowing as wd
-from database.db_subject_sensor_map import SubjectSensorMapManager
-from gui.designer_gui import Ui_MainWindow
-from gui.dialog_camera_settings import CameraSettingsDialog
-from gui.dialog_export import ExportDialog
-from gui.dialog_label import LabelSpecs
-from gui.dialog_label_settings import LabelSettingsDialog
-from gui.dialog_machine_learning import MachineLearningDialog
-from gui.dialog_new import NewProject
-from gui.dialog_sensor import SensorDialog
-from gui.dialog_settings import SettingsDialog
-from gui.dialog_subject import SubjectDialog
-from gui.dialog_subject_sensor_map import SubjectSensorMapDialog
+from database.sensor_usage_manager import SubjectSensorMapManager
+from gui.designer.gui import Ui_MainWindow
+from gui.dialogs.camera_settings import CameraSettingsDialog
+from gui.dialogs.export import ExportDialog
+from gui.dialogs.label import LabelSpecs
+from gui.dialogs.label_settings import LabelSettingsDialog
+from gui.dialogs.machine_learning import MachineLearningDialog
+from gui.dialogs.sensor import SensorDialog
+from gui.dialogs.sensor_model import SensorModelDialog
+from gui.dialogs.settings import SettingsDialog
+from gui.dialogs.subject import SubjectDialog
+from gui.dialogs.subject_sensor_map import SubjectSensorMapDialog
+from gui.dialogs.welcome import Welcome
 from gui_components.camera import Camera
 from gui_components.plot import Plot
 from gui_components.sensor_data_file import SensorDataFile
 from gui_components.video import Video
 from machine_learning.classifier import Classifier, make_predictions
+from project_settings import ProjectSettings
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -39,18 +42,12 @@ class GUI(QMainWindow, Ui_MainWindow):
 
     def __init__(self):
         super().__init__()
-        # Initialize the generated UI from designer_gui.py.
         self.setupUi(self)
-
         register_matplotlib_converters()
 
-        # Before showing the full GUI, a dialog window needs to be prompted where the user can choose between an
-        # existing project and a new project, in which case the settings need to be specified
-        self.project_dialog = NewProject()
-        self.project_dialog.exec_()
+        self.settings: Optional[ProjectSettings] = None
 
-        # Save the settings from the new project dialog window.
-        self.settings = self.project_dialog.new_settings
+        self.show_welcome_dialog()
 
         # GUI components
         self.video = Video(self)
@@ -77,6 +74,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionCamera_Settings.triggered.connect(self.open_camera_settings_dialog)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
         self.actionSensors.triggered.connect(self.open_sensor_dialog)
+        self.actionSensor_models.triggered.connect(self.open_sensor_model_dialog)
         self.actionSubjects.triggered.connect(self.open_subject_dialog)
         self.actionSubject_Mapping.triggered.connect(self.open_subject_sensor_map_dialog)
 
@@ -119,7 +117,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox_plot_height.setValue(self.plot.plot_height_factor)
 
         # Initialize the classes that retrieve information from the database
-        self.subject_mapping = SubjectSensorMapManager(self.project_dialog.project_name)
+        self.subject_mapping = SubjectSensorMapManager(self.settings)
 
         # Machine learning fields
         self.ml_dataframe = None
@@ -131,6 +129,20 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.video.open_previous_file()
         self.sensor_data_file.open_previous_file()
 
+    def show_welcome_dialog(self):
+        """
+        Open the welcome dialog.
+        """
+        dialog = Welcome()
+
+        if dialog.settings is None:
+            dialog.exec()
+
+        self.settings = dialog.settings
+
+        if self.settings is None:
+            exit(0)
+
     def open_label_dialog(self):
         """
         Opens the label dialog window.
@@ -141,7 +153,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             dialog = LabelSpecs(self.sensor_data_file.id_,
                                 self.plot.label_manager,
                                 self.plot.label_type_manager)
-            dialog.exec_()
+            dialog.exec()
             dialog.show()
 
             if dialog.is_accepted:
@@ -151,83 +163,84 @@ class GUI(QMainWindow, Ui_MainWindow):
 
     def open_settings_dialog(self):
         """
-        Opens the settings dialog window.
+        Opens the settings_dict dialog window.
         """
-        settings = SettingsDialog(self.settings)
-        settings.exec_()
-        settings.show()
+        dialog = SettingsDialog(self.settings)
+        dialog.exec()
+        dialog.show()
 
     def open_camera_settings_dialog(self):
         """
-        Opens the camera settings dialog window.
+        Opens the camera settings_dict dialog window.
         """
-        camera_settings = CameraSettingsDialog(self.video.camera_manager)
+        dialog = CameraSettingsDialog(self.video.camera_manager)
 
         if self.video.file_name is not None:
-            camera_settings.setWindowTitle(self.video.file_name)
+            dialog.setWindowTitle(self.video.file_name)
 
-        camera_settings.exec_()
-        camera_settings.show()
+        dialog.exec()
+        dialog.show()
 
-        if camera_settings.selected_camera_id is not None:
-            self.video.update_camera(camera_settings.selected_camera_id)
-            self.camera.change_camera(camera_settings.selected_camera_id)
+        if dialog.selected_camera_id is not None:
+            self.video.update_camera(dialog.selected_camera_id)
+            self.camera.change_camera(dialog.selected_camera_id)
 
     def open_label_settings_dialog(self):
         """
-        Opens the label settings dialog window.
+        Opens the label settings_dict dialog window.
         """
-        label_settings = LabelSettingsDialog(self.plot.label_manager,
-                                             self.plot.label_type_manager,
-                                             self.settings)
-        label_settings.exec_()
-        label_settings.show()
+        dialog = LabelSettingsDialog(
+            self.plot.label_manager,
+            self.plot.label_type_manager,
+            self.settings
+        )
+        dialog.exec()
+        dialog.show()
 
         # Upon window close
-        if label_settings.settings_changed:
+        if dialog.settings_changed:
             self.plot.draw_graph()
 
     def open_subject_dialog(self):
         """
-        Opens the subject mapping dialog window.
+        Open the subject mapping dialog window.
         """
-        subject_settings = SubjectDialog(self.project_dialog.project_name)
-        subject_settings.exec_()
-        subject_settings.show()
+        dialog = SubjectDialog(self.settings)
+        dialog.exec()
+        dialog.show()
 
     def open_sensor_dialog(self):
         """
-        Opens the subject mapping dialog window.
+        Open the sensor dialog window.
         """
-        sensor_settings = SensorDialog(self.project_dialog.project_name)
-        sensor_settings.exec_()
-        sensor_settings.show()
+        dialog = SensorDialog(self.settings)
+        dialog.exec()
+        dialog.show()
+
+    def open_sensor_model_dialog(self):
+        """
+        Open the sensor model dialog.
+        """
+        dialog = SensorModelDialog(self.settings)
+        dialog.exec()
+        dialog.show()
 
     def open_subject_sensor_map_dialog(self):
-        dialog = SubjectSensorMapDialog(self.project_dialog.project_name)
-        dialog.exec_()
+        dialog = SubjectSensorMapDialog(self.settings)
+        dialog.exec()
         dialog.show()
 
     def open_export(self):
         """
-        Opens the export dialog window, and if a subject and a file location and name are chosen, exports the data
+        Open the export dialog window, and if a subject and a file location and name are chosen, export the data
         accordingly.
         """
-        export = ExportDialog(self.project_dialog.project_name,
-                              self.settings.settings_dict,
-                              self.sensor_data_file.datetime)
-        export.exec_()
-        export.show()
-
-        # if export.is_accepted and export.comboBox.currentText():
-        #     filename, _ = QFileDialog.getSaveFileName(self, "Save File", QDir.homePath())
-        #
-        #     try:
-        #         export_data.export(self.subject_mapping.get_dataframes_subject(export.comboBox.currentText()), "Label",
-        #                            "Timestamp", filename, [])
-        #     except Exception as e:
-        #         print(e)
-        #         QMessageBox.warning(self, 'Warning', str(e), QMessageBox.Cancel)
+        dialog = ExportDialog(
+            self.settings,
+            self.sensor_data_file.datetime
+        )
+        dialog.exec()
+        dialog.show()
 
     def open_machine_learning_dialog(self):
         """
@@ -328,7 +341,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                                                self.ms_to_hms(int(end * 1000))))
                 msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
                 stop_button = msg.addButton("Stop suggestions", QMessageBox.ActionRole)
-                response = msg.exec_()
+                response = msg.exec()
 
                 # user has given a response, stop the loop and remove highlight
                 self.loop = None

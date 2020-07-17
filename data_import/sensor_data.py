@@ -1,13 +1,19 @@
 import re
 import datetime as dt
+import sqlite3
+from pathlib import Path
 
 import pandas as pd
 
 import parse_function.custom_function_parser as parser
+from constants import DATE_ROW, DATE_COLUMN, TIME_ROW, TIME_COLUMN, SENSOR_ID_ROW, SENSOR_ID_COLUMN, HEADERS_ROW, \
+    COMMENT_STYLE
 from data_import import sensor as sens, column_metadata as cm
 from data_import.import_exception import ImportException
+from database.sensor_model_manager import SensorModelManager
 from parse_function.parse_exception import ParseException
 from machine_learning.classifier import CLASSIFIER_NAN
+from project_settings import ProjectSettings
 
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1
@@ -15,7 +21,7 @@ LABEL_INDEX = 2
 COLUMN_TIMESTAMP = "Timestamp"
 
 
-def parse_header_option(file, row_nr, col_nr):
+def parse_header_option(file, row_nr, col_nr=1):
     """
     Parses a specific part of the header with a line number and a column number. Raises an ImportException if the file
     is smaller than the given row number or if the line is smaller than the given column number.
@@ -74,13 +80,13 @@ def parse_names(file, row_nr):
 
 class SensorData:
 
-    def __init__(self, file_path, settings):
+    def __init__(self, file_path: Path, settings: ProjectSettings, sensor_model_id):
         """
         The SensorData starts parsing as soon as it's constructed. Only SensorData.get_data() needs to
         be called in order to get the parsed data. SensorData.metadata contains the metadata.
 
         :param file_path: path to the file to be parsed
-        :param settings: The settings dictionary contains information on where metadata can
+        :param settings: The settings_dict dictionary contains information on where metadata can
         be found in the parsed file. It should have the following keys in order for it to work:
 
             - time_row, time_col   (row and column where 'time' attribute is located)
@@ -101,35 +107,64 @@ class SensorData:
                                     for more information on the function see parse_function.custom_function_parser)
         """
         # Initialize primitives
+        self.settings = settings
+        self.sensor_model_manager = SensorModelManager(self.settings)
         self.file_path = file_path
+        self.sensor_model_id = sensor_model_id
         self.metadata = dict()
         self.col_metadata = dict()
 
         # Parse metadata and data
-        self._settings = settings
-        self._data = self.parse(self._settings)
+        self._settings_dict = settings.settings_dict
+        self._data = self.parse(self._settings_dict)
         """ The sensor data as a DataFrame. """
 
     def __copy__(self):
-        new = type(self)(self.file_path, self._settings)
+        new = type(self)(self.file_path, self.settings, self.sensor_model_id)
         new.__dict__.update(self.__dict__)
         return new
 
-    def parse(self, settings) -> pd.DataFrame:
+    def parse_sensor_id_config(self, file, config: sqlite3.Row):
+
+        if SENSOR_ID_COLUMN in config.keys():
+            self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW], config[SENSOR_ID_COLUMN])
+        else:
+            self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW])
+
+    def parse_headers_config(self, file, config: sqlite3.Row):
+        self.metadata['names'] = parse_names(file, config[HEADERS_ROW])
+
+    def parse_model_config(self, file, config: sqlite3.Row):
+        if config[DATE_COLUMN] != -1:
+            self.metadata['date'] = parse_header_option(file, config[DATE_ROW], config[DATE_COLUMN])
+        else:
+            self.metadata['date'] = parse_header_option(file, config[DATE_ROW])
+
+        if config[TIME_COLUMN] != -1:
+            self.metadata['time'] = parse_header_option(file, config[TIME_ROW], config[TIME_COLUMN])
+        else:
+            self.metadata['time'] = parse_header_option(file, config[TIME_ROW])
+
+        if config[SENSOR_ID_COLUMN] != -1:
+            self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW], config[SENSOR_ID_COLUMN])
+        else:
+            self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW])
+
+        self.metadata['names'] = parse_names(file, config[HEADERS_ROW])
+        self.metadata[COMMENT_STYLE] = config[COMMENT_STYLE]
+
+    def parse(self, settings_dict) -> pd.DataFrame:
         """
         Parses a csv file to get metadata and data.
 
-        :param settings: contains the metadata
+        :param settings_dict: contains the metadata
         :return: the parsed data as a DataFrame
         """
         # Parse metadata from headers
-        with open(self.file_path) as file:
+        with self.file_path.open() as file:
             try:
-                self.metadata['time'] = parse_header_option(file, settings['time_row'], settings['time_col'])
-                self.metadata['date'] = parse_header_option(file, settings['date_row'], settings['date_col'])
-                self.metadata['sr'] = parse_header_option(file, settings['sr_row'], settings['sr_col'])
-                self.metadata['sn'] = parse_header_option(file, settings['sn_row'], settings['sn_col'])
-                self.metadata['names'] = parse_names(file, settings['names_row'])
+                sensor_model = self.sensor_model_manager.get_model_by_id(self.sensor_model_id)
+                self.parse_model_config(file, sensor_model)
 
                 # Create datetime object from date and time and put it in metadata
                 self.metadata['datetime'] = dt.datetime.strptime(self.metadata['date'] + self.metadata['time'],
@@ -139,11 +174,13 @@ class SensorData:
                 raise
 
         # set column metadata
-        self.set_column_metadata(settings)
+        self.set_column_metadata(settings_dict)
 
         # Parse data from file
-        data = pd.read_csv(self.file_path, header=None, names=self.metadata['names'],
-                           comment=settings['comment'])
+        data = pd.read_csv(self.file_path,
+                           header=None,
+                           names=self.metadata['names'],
+                           comment=self.metadata[COMMENT_STYLE])
 
         # Pass parse exceptions on
         try:
@@ -169,7 +206,7 @@ class SensorData:
 
     def set_column_metadata(self, settings):
         """
-        Sets the metadata for every column using the settings.
+        Sets the metadata for every column using the settings_dict.
         """
         for name in self.metadata['names']:
             # parse data_type

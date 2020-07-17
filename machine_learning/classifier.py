@@ -6,7 +6,7 @@ from data_export import windowing as wd
 from data_import import label_data as ld
 from data_import import sensor_data as sd
 from data_import import sensor_data_test as sdt
-from database import db_label as ls
+from database import label_manager as ls
 
 """ Constants """
 

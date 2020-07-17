@@ -1,17 +1,18 @@
 import pytz
 
-from database.db_camera import CameraManager
-from database.db_offset import OffsetManager
+from database.camera_manager import CameraManager
+from database.offset_manager import OffsetManager
+from project_settings import ProjectSettings
 
 
 class Camera:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings = gui.settings
+        self.settings: ProjectSettings = gui.settings
 
-        self.camera_manager = CameraManager(self.gui.project_dialog.project_name)
-        self.offset_manager = OffsetManager(self.gui.project_dialog.project_name)
+        self.camera_manager = CameraManager(self.settings)
+        self.offset_manager = OffsetManager(self.settings)
 
         self.camera_id = None
         self.camera_name = None

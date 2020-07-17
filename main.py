@@ -8,4 +8,4 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     project = gui.GUI()
     project.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

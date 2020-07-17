@@ -7,10 +7,11 @@ from PyQt5.QtWidgets import QMessageBox
 from matplotlib.dates import date2num, num2date
 
 from data_import.label_data import LabelData
-from database.db_label import LabelManager
-from database.db_label_type import LabelTypeManager
-from gui.dialog_label import LabelSpecs
+from database.label_manager import LabelManager
+from database.label_type_manager import LabelTypeManager
+from gui.dialogs.label import LabelSpecs
 from gui_components.sensor_data_file import SensorDataFile
+from project_settings import ProjectSettings
 
 LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1
@@ -28,11 +29,11 @@ class Plot:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings = gui.settings
+        self.settings: ProjectSettings = gui.settings
         self.sensor_data_file: SensorDataFile = gui.sensor_data_file
 
-        self.label_manager = LabelManager(self.gui.project_dialog.project_name)
-        self.label_type_manager = LabelTypeManager(self.gui.project_dialog.project_name)
+        self.label_manager = LabelManager(self.settings)
+        self.label_type_manager = LabelTypeManager(self.settings)
         self.label_data = LabelData(self.label_manager)
 
         self.data_plot = None
@@ -259,7 +260,7 @@ class Plot:
                             self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
                             self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
                     else:
-                        self.large_label.exec_()
+                        self.large_label.exec()
 
                     if self.large_label.is_accepted:
                         self.add_label_highlight(self.large_label.selected_label.start,
@@ -320,7 +321,7 @@ class Plot:
                         self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
                         self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
                 else:
-                    self.new_label.exec_()
+                    self.new_label.exec()
 
                 if self.new_label.is_accepted:
                     self.add_label_highlight(self.new_label.selected_label.start,

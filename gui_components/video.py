@@ -9,9 +9,10 @@ from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWidgets import QFileDialog
 
 import video_metadata
-from database.db_camera import CameraManager
-from database.db_video import VideoManager
+from database.camera_manager import CameraManager
+from database.video_manager import VideoManager
 from exceptions import VideoDoesNotExist
+from project_settings import ProjectSettings
 from utils import get_hms_sum, ms_to_hms
 
 
@@ -19,12 +20,12 @@ class Video:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings = gui.settings
+        self.settings: ProjectSettings = gui.settings
         self.file_name = None
         self.file_path = None
 
-        self.video_manager = VideoManager(self.gui.project_dialog.project_name)
-        self.camera_manager = CameraManager(self.gui.project_dialog.project_name)
+        self.video_manager = VideoManager(self.settings)
+        self.camera_manager = CameraManager(self.settings)
 
         self.id_: Optional[int] = None
         self.datetime: Optional[dt.datetime] = None
