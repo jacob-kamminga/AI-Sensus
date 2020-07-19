@@ -1,11 +1,13 @@
 import json
+import sqlite3
 
 from pathlib import Path
 from typing import Optional
 
 from PyQt5.QtWidgets import QDialog, QFileDialog
 
-from constants import APP_CONFIG_FILE, PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR
+from constants import APP_CONFIG_FILE, PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, PROJECT_DATABASE_FILE
+from database.create_database import create_database
 from gui.designer.welcome import Ui_Dialog
 from gui.dialogs.new_project import NewProject
 from project_settings import ProjectSettings
@@ -70,6 +72,13 @@ class Welcome(QDialog, Ui_Dialog):
             if project_dir:
                 self.settings = ProjectSettings(Path(project_dir))
 
+                # Create database
+                try:
+                    conn = sqlite3.connect(Path(project_dir).joinpath(PROJECT_DATABASE_FILE).as_posix())
+                    create_database(conn)
+                except sqlite3.Error as e:
+                    print(e)
+
                 # Save project in app config
                 self.app_config.setdefault(PROJECTS, []).append({
                     PROJECT_NAME: project_name,
@@ -77,6 +86,8 @@ class Welcome(QDialog, Ui_Dialog):
                 })
                 self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
                 self.save_app_config()
+
+                self.close()
 
     def open_existing_project_dialog(self):
         """

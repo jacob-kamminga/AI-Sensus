@@ -4,7 +4,29 @@ from typing import List
 from exceptions import SensorModelDoesNotExist
 from project_settings import ProjectSettings
 
-SQL_CREATE_TABLE = ""
+SQL_CREATE_TABLE = "create table sensor_model \
+( \
+    id               INTEGER \
+        constraint sensor_model_pk \
+            primary key autoincrement, \
+    model_name       VARCHAR(50) not null, \
+    date_format      TEXT        not null, \
+    date_row         INTEGER     not null, \
+    date_column      INTEGER, \
+    date_regex       TEXT, \
+    time_format      TEXT        not null, \
+    time_row         INTEGER     not null, \
+    time_column      INTEGER, \
+    time_regex       TEXT, \
+    sensor_id_row    INTEGER     not null, \
+    sensor_id_column INTEGER, \
+    sensor_id_regex  TEXT, \
+    headers_row      INTEGER     not null, \
+    comment_style    TEXT        not null \
+); \
+ \
+create unique index sensor_model_name_uindex \
+    on sensor_model (model_name);"
 
 SQL_INSERT_MODEL = (
     "INSERT INTO sensor_model("

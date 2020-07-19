@@ -1,18 +1,16 @@
 import sqlite3
 from datetime import date
-from pathlib import Path
 
-from constants import PROJECT_DATABASE_FILE
 from project_settings import ProjectSettings
 
 SQL_CREATE_TABLE = "create table offset \
 ( \
-  camera_id INTEGER not null, \
-  sensor_id INTEGER not null, \
+  camera    INTEGER not null, \
+  sensor    INTEGER not null, \
   offset    DOUBLE  not null, \
   added     DATE    not null, \
   constraint offset_pk \
-    unique (camera_id, sensor_id) \
+    unique (camera, sensor) \
 );"
 SQL_INSERT_OFFSET = "INSERT INTO offset(camera, sensor, offset, added) VALUES (?, ?, ?, ?)"
 SQL_SELECT_OFFSET_DATE = "SELECT offset FROM offset WHERE camera = ? AND sensor = ? AND added = ?"

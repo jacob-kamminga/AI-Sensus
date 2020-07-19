@@ -12,7 +12,7 @@ from data_import.sensor_data import SensorData
 from database.export_manager import ExportManager
 from database.sensor_data_file_manager import SensorDataFileManager
 from database.subject_manager import SubjectManager
-from database.sensor_usage_manager import SubjectSensorMapManager
+from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.export_new import Ui_Dialog
 from project_settings import ProjectSettings
 
@@ -29,7 +29,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         self.export_manager = ExportManager(settings)
         self.subject_manager = SubjectManager(settings)
-        self.map_manager = SubjectSensorMapManager(settings)
+        self.map_manager = SensorUsageManager(settings)
         self.sensor_data_file_manager = SensorDataFileManager(settings)
         self.settings_dict = settings.settings_dict
 

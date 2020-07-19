@@ -1,10 +1,8 @@
 import sqlite3
-from pathlib import Path
 from typing import List, Tuple
 
 import pytz
 
-from constants import PROJECT_DATABASE_FILE
 from project_settings import ProjectSettings
 
 SQL_CREATE_TABLE = "create table camera \

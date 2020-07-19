@@ -1,17 +1,17 @@
 import sqlite3
-from pathlib import Path
 from typing import List
 
-from constants import PROJECT_DATABASE_FILE
-from exceptions import SensorDoesNotExist
 from project_settings import ProjectSettings
 
 SQL_CREATE_TABLE = "create table sensor \
 ( \
-  id          INTEGER not null \
+  id    INTEGER not null \
     constraint sensor_pk \
       primary key autoincrement, \
-  sensor_name TEXT    not null \
+  name  TEXT    not null, \
+  model INTEGER not null \
+      references sensor_model \
+          on update cascade on delete cascade \
 ); \
  \
 create unique index sensor_sensor_id_uindex \

@@ -13,7 +13,7 @@ from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
 from data_export import windowing as wd
-from database.sensor_usage_manager import SubjectSensorMapManager
+from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.gui import Ui_MainWindow
 from gui.dialogs.camera_settings import CameraSettingsDialog
 from gui.dialogs.export import ExportDialog
@@ -117,7 +117,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox_plot_height.setValue(self.plot.plot_height_factor)
 
         # Initialize the classes that retrieve information from the database
-        self.subject_mapping = SubjectSensorMapManager(self.settings)
+        self.subject_mapping = SensorUsageManager(self.settings)
 
         # Machine learning fields
         self.ml_dataframe = None

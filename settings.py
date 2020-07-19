@@ -14,11 +14,11 @@ def new_project(project_name: str) -> None:
     """
     if not os.path.exists('projects/' + project_name):
         from database.label_manager import LabelManager
-        from database.sensor_usage_manager import SubjectSensorMapManager
+        from database.sensor_usage_manager import SensorUsageManager
         os.mkdir('projects/' + project_name)
         Settings(project_name, True)
         LabelManager(project_name).create_table()
-        SubjectSensorMapManager(project_name).create_table()
+        SensorUsageManager(project_name).create_table()
 
 
 class Settings:

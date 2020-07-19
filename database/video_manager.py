@@ -1,10 +1,7 @@
+import datetime as dt
 import sqlite3
-from pathlib import Path
 from typing import List, Tuple
 
-import datetime as dt
-
-from constants import PROJECT_DATABASE_FILE
 from exceptions import VideoDoesNotExist
 from project_settings import ProjectSettings
 

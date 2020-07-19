@@ -15,7 +15,6 @@ from database.offset_manager import OffsetManager
 from database.sensor_manager import SensorManager
 from database.sensor_data_file_manager import SensorDataFileManager
 from database.sensor_model_manager import SensorModelManager
-from exceptions import SensorDoesNotExist, SensorDataFileDoesNotExist
 from gui.dialogs.sensor_model import SensorModelDialog
 from project_settings import ProjectSettings
 

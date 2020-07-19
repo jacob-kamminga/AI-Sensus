@@ -4,60 +4,59 @@ from typing import List, Tuple
 
 from project_settings import ProjectSettings
 
-SQL_CREATE_TABLE = "create table sensor_data_file\
-(\
-    id        INTEGER not null\
-        constraint sensor_data_files_pk\
-            primary key autoincrement,\
-    file_name TEXT    not null,\
-    file_path TEXT,\
-    sensor_id INTEGER\
-        references sensor,\
-    datetime  TIMESTAMP\
-);\
+SQL_CREATE_TABLE = "create table sensor_usage \
+( \
+    id             INTEGER \
+        constraint subject_sensor_map_pk \
+            primary key, \
+    subject_id     INTEGER  not null, \
+    sensor_id      INTEGER  not null, \
+    start_datetime DATETIME not null, \
+    end_datetime   DATETIME not null \
+); \
 \
-create unique index sensor_data_files_file_name_uindex\
-    on sensor_data_file (file_name);"
+create unique index subject_sensor_map_subject_id_start_datetime_uindex \
+    on sensor_usage (subject_id, start_datetime);"
 
 SQL_DELETE_MAP = \
-    "DELETE FROM subject_sensor_map " \
+    "DELETE FROM sensor_usage " \
     "WHERE id = ?"
 SQL_INSERT_MAP = \
-    "INSERT INTO subject_sensor_map (subject_id, sensor_id, start_datetime, end_datetime) " \
+    "INSERT INTO sensor_usage (subject_id, sensor_id, start_datetime, end_datetime) " \
     "VALUES (?, ?, ?, ?)"
 
 SQL_SELECT_ALL_MAPS = \
     "SELECT * " \
-    "FROM subject_sensor_map"
+    "FROM sensor_usage"
 SQL_SELECT_MAP_BY_ID = \
     "SELECT * " \
-    "FROM subject_sensor_map " \
+    "FROM sensor_usage " \
     "WHERE id = ?"
 SQL_SELECT_SENSOR_IDS_BETWEEN_DATES = \
     "SELECT sensor_id " \
-    "FROM subject_sensor_map " \
+    "FROM sensor_usage " \
     "WHERE subject_id = ? " \
     "AND (? BETWEEN start_datetime AND end_datetime " \
     "OR ? BETWEEN start_datetime AND end_datetime " \
     "OR start_datetime BETWEEN ? AND ? " \
     "OR end_datetime BETWEEN ? AND ?)"
 SQL_UPDATE_MAP = \
-    "UPDATE subject_sensor_map " \
+    "UPDATE sensor_usage " \
     "SET subject_id = ?, sensor_id = ?, start_datetime = ?, end_datetime = ? " \
     "WHERE id = ?"
 SQL_UPDATE_START_DATE = \
-    "UPDATE subject_sensor_map " \
+    "UPDATE sensor_usage " \
     "SET start_datetime = ? " \
     "WHERE id = ?"
 SQL_UPDATE_END_DATE = \
-    "UPDATE subject_sensor_map " \
+    "UPDATE sensor_usage " \
     "SET end_datetime = ? " \
     "WHERE id = ?"
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 
 
-class SubjectSensorMapManager:
+class SensorUsageManager:
 
     def __init__(self, settings: ProjectSettings):
         self._conn = sqlite3.connect(
@@ -71,7 +70,7 @@ class SubjectSensorMapManager:
         self._cur.executescript(SQL_CREATE_TABLE)
         self._conn.commit()
 
-    def add_map(self, subject_id: int, sensor_id: int, start_date: dt.datetime, end_date: dt.datetime) -> None:
+    def add_usage(self, subject_id: int, sensor_id: int, start_date: dt.datetime, end_date: dt.datetime) -> None:
         """
         Adds a new subject.
 
@@ -83,11 +82,11 @@ class SubjectSensorMapManager:
         self._cur.execute(SQL_INSERT_MAP, (subject_id, sensor_id, start_date, end_date))
         self._conn.commit()
 
-    def get_all_maps(self) -> List[Tuple[str]]:
+    def get_all_usages(self) -> List[Tuple[str]]:
         self._cur.execute(SQL_SELECT_ALL_MAPS)
         return self._cur.fetchall()
 
-    def get_map_by_id(self, map_id: int) -> List[Tuple[str]]:
+    def get_usage_by_id(self, map_id: int) -> List[Tuple[str]]:
         self._cur.execute(SQL_SELECT_MAP_BY_ID, (map_id,))
         return self._cur.fetchall()
 
@@ -98,7 +97,7 @@ class SubjectSensorMapManager:
         )
         return [row[0] for row in self._cur.fetchall()]
 
-    def delete_map(self, id_: int) -> None:
+    def delete_usage(self, id_: int) -> None:
         """
         Removes a subject from the table.
 
@@ -107,7 +106,7 @@ class SubjectSensorMapManager:
         self._cur.execute(SQL_DELETE_MAP, (id_,))
         self._conn.commit()
 
-    def update_map(
+    def update_usage(
             self,
             id_: int,
             subject_id: int,

@@ -11,7 +11,8 @@ SQL_CREATE_TABLE = "create table sensor_data_file\
       primary key autoincrement,\
   file_name TEXT    not null,\
   file_path TEXT,\
-  sensor_id INTEGER,\
+  sensor_id INTEGER\
+      references sensor,\
   datetime  TIMESTAMP\
 );\
 \

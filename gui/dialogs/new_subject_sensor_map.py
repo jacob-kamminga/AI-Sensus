@@ -3,14 +3,14 @@ from PyQt5.QtCore import QDate, QTime
 
 from database.sensor_manager import SensorManager
 from database.subject_manager import SubjectManager
-from database.sensor_usage_manager import SubjectSensorMapManager
+from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.new_subject_sensor_map import Ui_Dialog
 
 
 class NewSubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def __init__(self,
-                 map_manager: SubjectSensorMapManager,
+                 map_manager: SensorUsageManager,
                  subject_manager: SubjectManager,
                  sensor_manager: SensorManager,
                  subjects_dict: dict,
@@ -67,5 +67,5 @@ class NewSubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
             new_map_subject_id = self.subject_manager.get_id_by_name(new_map_subject_name)
             new_map_sensor_id = self.sensor_manager.get_id_by_name(new_map_sensor_name)
 
-            self.map_manager.add_map(new_map_subject_id, new_map_sensor_id, new_map_start_dt, new_map_end_dt)
+            self.map_manager.add_usage(new_map_subject_id, new_map_sensor_id, new_map_start_dt, new_map_end_dt)
             self.new_map_added = True

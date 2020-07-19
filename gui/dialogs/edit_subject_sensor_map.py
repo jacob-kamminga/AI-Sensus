@@ -5,7 +5,7 @@ from PyQt5.QtCore import QDate, QTime
 
 from database.sensor_manager import SensorManager
 from database.subject_manager import SubjectManager
-from database.sensor_usage_manager import SubjectSensorMapManager
+from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.edit_subject_sensor_map import Ui_Dialog
 
 INDEX_MAP_ID = 0
@@ -20,7 +20,7 @@ DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 class EditSubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def __init__(self,
-                 map_manager: SubjectSensorMapManager,
+                 map_manager: SensorUsageManager,
                  subject_manager: SubjectManager,
                  sensor_manager: SensorManager,
                  subjects_dict: dict,
@@ -65,7 +65,7 @@ class EditSubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
         self.timeEdit_end.setTime(current_time)
 
     def set_current_map(self):
-        map_ = self.map_manager.get_map_by_id(self.map_id)[0]
+        map_ = self.map_manager.get_usage_by_id(self.map_id)[0]
         subject_id = map_[INDEX_MAP_SUBJECT]
         sensor_id = map_[INDEX_MAP_SENSOR]
 
@@ -101,5 +101,5 @@ class EditSubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
             subject_id = self.subject_manager.get_id_by_name(subject)
             sensor_id = self.sensor_manager.get_id_by_name(sensor)
 
-            self.map_manager.update_map(self.map_id, subject_id, sensor_id, start_dt, end_dt)
+            self.map_manager.update_usage(self.map_id, subject_id, sensor_id, start_dt, end_dt)
             self.map_edited = True

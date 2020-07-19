@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
 
 from database.sensor_manager import SensorManager
 from database.subject_manager import SubjectManager
-from database.sensor_usage_manager import SubjectSensorMapManager
+from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.subject_sensor_map import Ui_Dialog
 from gui.dialogs.edit_subject_sensor_map import EditSubjectSensorMapDialog
 from gui.dialogs.new_subject_sensor_map import NewSubjectSensorMapDialog
@@ -27,7 +27,7 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
 
         self.subject_manager = SubjectManager(settings)
         self.sensor_manager = SensorManager(settings)
-        self.map_manager = SubjectSensorMapManager(settings)
+        self.map_manager = SensorUsageManager(settings)
 
         self.all_subjects = self.subject_manager.get_all_subjects()
         self.subjects_dict = dict((id_, name) for id_, name, _, _, _ in self.all_subjects)
@@ -47,7 +47,7 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
     def create_table(self):
         self.tableWidget.blockSignals(True)
 
-        self.maps = self.map_manager.get_all_maps()
+        self.maps = self.map_manager.get_all_usages()
 
         self.tableWidget.setColumnCount(len(self.column_names))
         self.tableWidget.setRowCount(len(self.maps))
@@ -126,6 +126,6 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
         for index in indices:
             row = index.row()
             id_ = self.maps[row][INDEX_MAP_ID]
-            self.map_manager.delete_map(int(id_))
+            self.map_manager.delete_usage(int(id_))
             self.maps.pop(row)
             self.tableWidget.removeRow(row)
