@@ -32,9 +32,10 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         # Add timezones to combobox
         self.listWidget_timezones.addItems(pytz.common_timezones)
 
-        # Select the timezone of the current camera
-        timezone_index = pytz.common_timezones.index(cameras[0][CAMERA_TIMEZONE_INDEX])
-        self.listWidget_timezones.setCurrentRow(timezone_index)
+        if len(cameras) > 0:
+            # Select the timezone of the current camera
+            timezone_index = pytz.common_timezones.index(cameras[0][CAMERA_TIMEZONE_INDEX])
+            self.listWidget_timezones.setCurrentRow(timezone_index)
 
         # Connect UI elements
         self.comboBox_camera.currentTextChanged.connect(self.load_timezones)

@@ -63,7 +63,9 @@ class SensorModelNameDialog(QDialog, Ui_Dialog):
                 SENSOR_ID_COLUMN: -1,
                 SENSOR_ID_REGEX: '',
 
-                HEADERS_ROW: -1
+                HEADERS_ROW: -1,
+
+                COMMENT_STYLE: ''
             }
 
         self.pushButton_next.pressed.connect(self.open_date_dialog)
