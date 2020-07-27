@@ -22,7 +22,6 @@ from gui.dialogs.label_settings import LabelSettingsDialog
 from gui.dialogs.machine_learning import MachineLearningDialog
 from gui.dialogs.sensor import SensorDialog
 from gui.dialogs.sensor_model import SensorModelDialog
-from gui.dialogs.settings import SettingsDialog
 from gui.dialogs.subject import SubjectDialog
 from gui.dialogs.subject_sensor_map import SubjectSensorMapDialog
 from gui.dialogs.welcome import Welcome
@@ -160,14 +159,6 @@ class GUI(QMainWindow, Ui_MainWindow):
                 self.add_label_highlight(dialog.selected_label.start,
                                          dialog.selected_label.end,
                                          dialog.selected_label.label)
-
-    def open_settings_dialog(self):
-        """
-        Opens the settings_dict dialog window.
-        """
-        dialog = SettingsDialog(self.settings)
-        dialog.exec()
-        dialog.show()
 
     def open_camera_settings_dialog(self):
         """

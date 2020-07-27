@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QErrorMessage
 
 from constants import COMMENT_STYLE
 from gui.designer.new_sensor_model_comment_style import Ui_Dialog
@@ -22,14 +22,21 @@ class SensorModelCommentStyleDialog(QDialog, Ui_Dialog):
 
     def fill_existing_data(self):
         if self.model[COMMENT_STYLE] is not None and self.model[COMMENT_STYLE] != '':
-            self.lineEdit_style.setValue(self.model[COMMENT_STYLE])
+            self.lineEdit_style.setText(self.model[COMMENT_STYLE])
 
     def open_final_dialog(self):
-        self.model[COMMENT_STYLE] = self.lineEdit_style.text()
+        comment_style = self.lineEdit_style.text()
 
-        dialog = SensorModelFinalDialog(self.settings, self.model, self.model_id, self.parent)
-        self.close()
-        dialog.exec()
+        if comment_style != '':
+            self.model[COMMENT_STYLE] = comment_style
+            dialog = SensorModelFinalDialog(self.settings, self.model, self.model_id, self.parent)
+            self.close()
+            dialog.exec()
+        else:
+            error_dialog = QErrorMessage()
+            error_dialog.setModal(True)
+            error_dialog.showMessage('Comment style cannot be empty.')
+            error_dialog.exec()
 
     def open_previous_dialog(self):
         from gui.dialogs.new_sensor_model_headers import SensorModelHeadersDialog

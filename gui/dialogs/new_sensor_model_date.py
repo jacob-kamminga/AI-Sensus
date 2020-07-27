@@ -49,7 +49,7 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
         else:
             error_dialog = QtWidgets.QErrorMessage()
             error_dialog.setModal(True)
-            error_dialog.showMessage("Format cannot be empty.")
+            error_dialog.showMessage('Date format cannot be empty.')
             error_dialog.exec()
 
     def open_previous_dialog(self):

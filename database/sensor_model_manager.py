@@ -251,9 +251,9 @@ class SensorModelManager:
         except sqlite3.Error:
             return -1
 
-    def delete_sensor_model_by_id(self, sensor_id: int):
+    def delete_sensor_model_by_id(self, model_id: int):
         try:
-            self._cur.execute(SQL_DELETE_MODEL_BY_ID, (sensor_id,))
+            self._cur.execute(SQL_DELETE_MODEL_BY_ID, (model_id,))
             self._conn.commit()
             return True
         except sqlite3.Error:

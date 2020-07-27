@@ -76,7 +76,7 @@ class SensorModelNameDialog(QDialog, Ui_Dialog):
     def open_date_dialog(self):
         model_name = self.lineEdit_model_name.text()
 
-        if model_name != "":
+        if model_name != '':
             self.model[MODEL_NAME] = model_name
             dialog = SensorModelDateDialog(self.settings, self.model, self.model_id, self.parent)
             self.close()

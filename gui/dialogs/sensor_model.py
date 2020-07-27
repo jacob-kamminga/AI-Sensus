@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog
 from constants import ID, MODEL_NAME
 from database.sensor_model_manager import SensorModelManager
 from gui.designer.sensor_model_list import Ui_Dialog
+from gui.dialogs.new_sensor_model_final import SensorModelFinalDialog
 from gui.dialogs.new_sensor_model_name import SensorModelNameDialog
 from project_settings import ProjectSettings
 
@@ -47,5 +48,5 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         if len(self.listWidget_models.selectedItems()) > 0:
             selected_model_name = self.listWidget_models.selectedItems()[0].text()
             selected_model_id = self.models[selected_model_name]
-            dialog = SensorModelNameDialog(self.settings, model_id=selected_model_id, parent=self)
+            dialog = SensorModelFinalDialog(self.settings, model_id=selected_model_id, parent=self)
             dialog.exec()
