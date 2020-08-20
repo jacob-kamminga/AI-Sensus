@@ -417,9 +417,9 @@
          <widget class="QLineEdit" name="lineEdit_function_regex"/>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_label">
+         <widget class="QPushButton" name="pushButton_delete_formula">
           <property name="text">
-           <string>Label</string>
+           <string>Delete formula</string>
           </property>
          </widget>
         </item>
@@ -445,16 +445,40 @@
     <addaction name="actionOpen_Video"/>
     <addaction name="actionOpen_Sensor_Data"/>
     <addaction name="actionExport_Sensor_Data"/>
-    <addaction name="actionCamera_Settings"/>
-    <addaction name="actionLabel_Settings"/>
-    <addaction name="actionSensors"/>
-    <addaction name="actionSensor_models"/>
-    <addaction name="actionSubjects"/>
-    <addaction name="actionSubject_Mapping"/>
-    <addaction name="actionMachine_Learning"/>
     <addaction name="actionExit"/>
    </widget>
+   <widget class="QMenu" name="menuSubject">
+    <property name="title">
+     <string>Subject</string>
+    </property>
+    <addaction name="actionSubjects"/>
+    <addaction name="actionSubject_Mapping"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionCamera_Settings"/>
+    <addaction name="actionLabel_Settings"/>
+   </widget>
+   <widget class="QMenu" name="menuSensors">
+    <property name="title">
+     <string>Sensor</string>
+    </property>
+    <addaction name="actionSensors"/>
+    <addaction name="actionSensor_models"/>
+   </widget>
+   <widget class="QMenu" name="menuLearning">
+    <property name="title">
+     <string>Learning</string>
+    </property>
+    <addaction name="actionMachine_Learning"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuSubject"/>
+   <addaction name="menuSensors"/>
+   <addaction name="menuLearning"/>
+   <addaction name="menuSettings"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen_Video">

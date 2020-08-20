@@ -6,7 +6,7 @@ from typing import Optional
 from PyQt5 import QtGui
 from PyQt5.QtCore import QUrl, QDir
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 import video_metadata
 from database.camera_manager import CameraManager
@@ -130,8 +130,20 @@ class Video:
             self.offset_ms = self.offset / dt.timedelta(milliseconds=1)
             self.position = self.offset_ms
 
-            self.gui.mediaPlayer.setPosition(self.position)
-            self.gui.horizontalSlider_time.setValue(int(self.position))
+            # The offset between the video and sensor data should be at most 12 hours
+            # Otherwise an overflow can occur in the horizontal slider
+            if self.offset <= dt.timedelta(hours=12):
+                self.gui.mediaPlayer.setPosition(self.position)
+                self.gui.horizontalSlider_time.setValue(int(self.position))
+            else:
+                print(f'offset: {self.offset}')
+                res = QMessageBox(
+                    QMessageBox.Warning,
+                    'Sync error',
+                    'Cannot synchronize the video with the sensor data. The datetime of the video and sensor data have '
+                    'an offset of more than 12 hours',
+                    QMessageBox.Ok
+                ).exec()
 
     def position_changed(self, new_position):
         """

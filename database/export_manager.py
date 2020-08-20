@@ -18,6 +18,9 @@ class ExportManager:
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
         )
+        # Enable Sqlite foreign key support
+        self._conn.execute("PRAGMA foreign_keys = 1")
+
         self._conn.row_factory = sqlite3.Row
         self._cur = self._conn.cursor()
 

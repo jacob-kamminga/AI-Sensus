@@ -4,65 +4,60 @@ from typing import List
 
 from project_settings import ProjectSettings
 
-SQL_CREATE_TABLE = "create table sensor_data_file\
-(\
-  id        INTEGER not null\
-    constraint sensor_data_file_pk\
-      primary key autoincrement,\
-  file_name TEXT    not null,\
-  file_path TEXT,\
-  sensor_id INTEGER\
-      references sensor,\
-  datetime  TIMESTAMP\
-);\
-\
-create unique index sensor_data_file_file_name_uindex\
-  on sensor_data_file (file_name);"
 
-SQL_INSERT_FILE = \
-    "INSERT INTO sensor_data_file(file_name, file_path, sensor_id, datetime) VALUES (?, ?, ?, ?)"
-
-SQL_SELECT_ID_BY_FILE_NAME = \
-    "SELECT id " \
-    "FROM sensor_data_file " \
+SQL_INSERT_FILE = (
+    "INSERT INTO sensor_data_file(file_name, file_path, sensor_id, datetime) "
+    "VALUES (?, ?, ?, ?)"
+)
+SQL_SELECT_ID_BY_FILE_NAME = (
+    "SELECT id "
+    "FROM sensor_data_file "
     "WHERE file_name = ?"
-
-SQL_SELECT_MODEL_BY_FILE_NAME = (
+)
+SQL_SELECT_SENSOR_MODEL_BY_FILE_NAME = (
     "SELECT sensor_model.id "
     "FROM sensor_data_file, sensor, sensor_model "
     "WHERE sensor_data_file.file_name = ? "
     "AND sensor_data_file.sensor_id = sensor.id "
     "AND sensor.model = sensor_model.id"
 )
-
-SQL_SELECT_FILE_NAME_BY_ID = \
-    "SELECT file_name " \
-    "FROM sensor_data_file " \
+SQL_SELECT_SENSOR_MODEL_BY_ID = (
+    "SELECT sensor_model.id "
+    "FROM sensor_data_file, sensor, sensor_model "
+    "WHERE sensor_data_file.id = ? "
+    "AND sensor_data_file.sensor_id = sensor.id "
+    "AND sensor.model = sensor_model.id"
+)
+SQL_SELECT_FILE_NAME_BY_ID = (
+    "SELECT file_name "
+    "FROM sensor_data_file "
     "WHERE id = ?"
-
-SQL_SELECT_FILE_PATH_BY_ID = \
-    "SELECT file_path " \
-    "FROM sensor_data_file " \
+)
+SQL_SELECT_FILE_PATH_BY_ID = (
+    "SELECT file_path "
+    "FROM sensor_data_file "
     "WHERE id = ?"
-
-SQL_SELECT_IDS_BY_SENSOR_AND_DATES = \
-    "SELECT id " \
-    "FROM sensor_data_file " \
-    "WHERE sensor_id = ? " \
+)
+SQL_SELECT_IDS_BY_SENSOR_AND_DATES = (
+    "SELECT id "
+    "FROM sensor_data_file "
+    "WHERE sensor_id = ? "
     "AND (datetime BETWEEN ? AND ?)"
-
-SQL_SELECT_SENSOR_IDS = \
-    "SELECT sensor_id FROM sensor_data_file"
-
-SQL_SELECT_FILE_PATH_BY_FILE_NAME = \
-    "SELECT file_path " \
-    "FROM sensor_data_file " \
+)
+SQL_SELECT_SENSOR_IDS = (
+    "SELECT sensor_id "
+    "FROM sensor_data_file"
+)
+SQL_SELECT_FILE_PATH_BY_FILE_NAME = (
+    "SELECT file_path "
+    "FROM sensor_data_file "
     "WHERE file_name = ?"
-
-SQL_UPDATE_FILE_PATH = \
-    "UPDATE sensor_data_file " \
-    "SET file_path = ? " \
+)
+SQL_UPDATE_FILE_PATH = (
+    "UPDATE sensor_data_file "
+    "SET file_path = ? "
     "WHERE file_name = ?"
+)
 
 
 class SensorDataFileManager:
@@ -72,11 +67,10 @@ class SensorDataFileManager:
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
         )
-        self._cur = self._conn.cursor()
+        # Enable Sqlite foreign key support
+        self._conn.execute("PRAGMA foreign_keys = 1")
 
-    def create_table(self):
-        self._cur.execute(SQL_CREATE_TABLE)
-        self._conn.commit()
+        self._cur = self._conn.cursor()
 
     def get_id_by_file_name(self, file_name: str) -> int:
         """
@@ -93,14 +87,23 @@ class SensorDataFileManager:
         else:
             return res[0]
 
-    def get_model_by_file_name(self, file_name: str) -> int:
-        self._cur.execute(SQL_SELECT_MODEL_BY_FILE_NAME, (file_name,))
+    def get_sensor_model_by_file_name(self, file_name: str) -> int:
+        self._cur.execute(SQL_SELECT_SENSOR_MODEL_BY_FILE_NAME, (file_name,))
         res = self._cur.fetchone()
 
-        if res is None:
-            return -1
-        else:
+        if res is not None:
             return res[0]
+        else:
+            return -1
+
+    def get_sensor_model_by_id(self, id_: int) -> int:
+        self._cur.execute(SQL_SELECT_SENSOR_MODEL_BY_ID, (id_,))
+        res = self._cur.fetchone()
+
+        if res is not None:
+            return res[0]
+        else:
+            return -1
 
     def get_file_name_by_id(self, id_: int) -> str:
         """

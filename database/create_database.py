@@ -88,7 +88,6 @@ CREATE_TABLE_SENSOR = \
               on update cascade on delete cascade\
     );"
 
-
 CREATE_UINDEX_SENSOR = \
     "create unique index sensor_sensor_id_uindex\
          on sensor (name);"

@@ -44,6 +44,10 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         register_matplotlib_converters()
 
+        # Error handling
+        # To avoid creating multiple error boxes
+        self.err_box = None
+
         self.settings: Optional[ProjectSettings] = None
 
         self.show_welcome_dialog()
@@ -67,15 +71,15 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_minus_10s.activated.connect(self.video.rewind_10s)
         self.actionOpen_Video.triggered.connect(self.video.prompt_file)
         self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data_file.prompt_file)
-        self.pushButton_label.clicked.connect(self.open_label_dialog)
+        self.pushButton_delete_formula.clicked.connect(self.plot.delete_formula)
 
-        self.actionImport_Settings.triggered.connect(self.open_settings_dialog)
         self.actionCamera_Settings.triggered.connect(self.open_camera_settings_dialog)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
         self.actionSensors.triggered.connect(self.open_sensor_dialog)
         self.actionSensor_models.triggered.connect(self.open_sensor_model_dialog)
         self.actionSubjects.triggered.connect(self.open_subject_dialog)
         self.actionSubject_Mapping.triggered.connect(self.open_subject_sensor_map_dialog)
+        self.actionExit.triggered.connect(exit)
 
         self.lineEdit_function_regex.returnPressed.connect(self.plot.new_plot)
         self.doubleSpinBox_video_offset.valueChanged.connect(self.camera.change_offset)
@@ -127,6 +131,27 @@ class GUI(QMainWindow, Ui_MainWindow):
         # Open the last opened files
         self.video.open_previous_file()
         self.sensor_data_file.open_previous_file()
+
+    def std_err_post(self, msg):
+        """
+        This method receives stderr text strings as a pyqtSlot.
+        """
+        if self.err_box is None:
+            self.err_box = QMessageBox()
+            # Both OK and window delete fire the 'finished' signal
+            self.err_box.finished.connect(self.clear)
+        # A single error is sent as a string of separate stderr .write() messages,
+        # so concatenate them.
+        self.err_box.setText(self.err_box.text() + msg)
+        # .show() is used here because .exec() or .exec_() create multiple
+        # MessageBoxes.
+        self.err_box.show()
+
+    def clear(self):
+        # QMessageBox doesn't seem to be actually destroyed when closed, just hidden.
+        # This is true even if destroy() is called or if the Qt.WA_DeleteOnClose
+        # attribute is set.  Clear text for next time.
+        self.err_box.setText('')
 
     def show_welcome_dialog(self):
         """
@@ -181,7 +206,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the label settings_dict dialog window.
         """
         dialog = LabelSettingsDialog(
-            self.plot.label_manager,
             self.plot.label_type_manager,
             self.settings
         )

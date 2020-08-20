@@ -4,29 +4,6 @@ from typing import List
 from exceptions import SensorModelDoesNotExist
 from project_settings import ProjectSettings
 
-SQL_CREATE_TABLE = "create table sensor_model \
-( \
-    id               INTEGER \
-        constraint sensor_model_pk \
-            primary key autoincrement, \
-    model_name       VARCHAR(50) not null, \
-    date_format      TEXT        not null, \
-    date_row         INTEGER     not null, \
-    date_column      INTEGER, \
-    date_regex       TEXT, \
-    time_format      TEXT        not null, \
-    time_row         INTEGER     not null, \
-    time_column      INTEGER, \
-    time_regex       TEXT, \
-    sensor_id_row    INTEGER     not null, \
-    sensor_id_column INTEGER, \
-    sensor_id_regex  TEXT, \
-    headers_row      INTEGER     not null, \
-    comment_style    TEXT        not null \
-); \
- \
-create unique index sensor_model_name_uindex \
-    on sensor_model (model_name);"
 
 SQL_INSERT_MODEL = (
     "INSERT INTO sensor_model("
@@ -100,18 +77,11 @@ class SensorModelManager:
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
         )
+        # Enable Sqlite foreign key support
+        self._conn.execute("PRAGMA foreign_keys = 1")
+
         self._conn.row_factory = sqlite3.Row
         self._cur = self._conn.cursor()
-
-    def create_table(self) -> bool:
-        """Method for creating the necessary label tables in the database."""
-        try:
-            c = self._conn.cursor()
-            c.execute(SQL_CREATE_TABLE)
-            self._conn.commit()
-            return True
-        except sqlite3.Error:
-            return False
 
     def get_id_by_name(self, model_name: str) -> int:
         self._cur.execute(SQL_SELECT_ID, (model_name,))

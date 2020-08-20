@@ -3,19 +3,6 @@ from typing import List
 
 from project_settings import ProjectSettings
 
-SQL_CREATE_TABLE = "create table sensor \
-( \
-  id    INTEGER not null \
-    constraint sensor_pk \
-      primary key autoincrement, \
-  name  TEXT    not null, \
-  model INTEGER not null \
-      references sensor_model \
-          on update cascade on delete cascade \
-); \
- \
-create unique index sensor_sensor_id_uindex \
-  on sensor (name);"
 
 SQL_INSERT_SENSOR = \
     "INSERT INTO sensor(name, model) " \
@@ -47,17 +34,10 @@ class SensorManager:
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
         )
-        self._cur = self._conn.cursor()
+        # Enable Sqlite foreign key support
+        self._conn.execute("PRAGMA foreign_keys = 1")
 
-    def create_table(self) -> bool:
-        """Method for creating the necessary label tables in the database."""
-        try:
-            c = self._conn.cursor()
-            c.execute(SQL_CREATE_TABLE)
-            self._conn.commit()
-            return True
-        except sqlite3.Error:
-            return False
+        self._cur = self._conn.cursor()
 
     def get_id_by_name(self, sensor_name: str) -> int:
         self._cur.execute(SQL_SELECT_ID, (sensor_name,))

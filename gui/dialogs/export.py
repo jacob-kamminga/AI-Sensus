@@ -27,6 +27,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         super().__init__()
         self.setupUi(self)
 
+        self.settings = settings
         self.export_manager = ExportManager(settings)
         self.subject_manager = SubjectManager(settings)
         self.map_manager = SensorUsageManager(settings)
@@ -73,7 +74,13 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
         file_path = self.get_file_path(sensor_data_file_id)
-        sensor_data = SensorData(file_path, self.settings_dict)
+        model_id = self.sensor_data_file_manager.get_sensor_model_by_id(sensor_data_file_id)
+
+        if model_id >= 0:
+            sensor_data = SensorData(Path(file_path), self.settings, model_id)
+        # Sensor model unknown
+        else:
+            sensor_data = None
 
         return sensor_data
 
@@ -162,6 +169,9 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                 for file_id in sensor_data_file_ids:
                     labels = self.get_labels(file_id, start_dt, end_dt)
                     sensor_data = self.get_sensor_data(file_id)
+
+                    if sensor_data is None:
+                        raise Exception('Sensor data not found')
 
                     sensor_data.add_timestamp_column(COL_TIME)
                     sensor_data.filter_between_dates(start_dt, end_dt)

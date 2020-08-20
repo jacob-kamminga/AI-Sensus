@@ -4,6 +4,7 @@ from typing import Optional
 import pandas as pd
 from PyQt5.QtCore import QDateTime
 from PyQt5.QtWidgets import QMessageBox
+from matplotlib.backend_bases import MouseButton
 from matplotlib.dates import date2num, num2date
 
 from data_import.label_data import LabelData
@@ -40,7 +41,7 @@ class Plot:
         self.current_plot = None
         self.vertical_line = None
 
-        self.formulas = dict()
+        self.formulas = self.settings.get_setting('formulas')
         self.highlights = dict()
         self.label_types = dict()
 
@@ -78,7 +79,8 @@ class Plot:
             self.settings.set_setting("formulas", stored_formulas)
             self.gui.lineEdit_function_regex.clear()
             self.gui.lineEdit_function_name.clear()
-        except:
+        except Exception as e:
+            print(e)
             QMessageBox.warning(self.gui, 'Warning', "Please enter a valid regular expression",
                                 QMessageBox.Cancel)
 
@@ -90,13 +92,35 @@ class Plot:
         self.current_plot = self.gui.comboBox_functions.currentText()
 
         if self.current_plot in self.formulas:
-            self.gui.label_current_formula.setText(self.formulas[self.current_plot])
+            self.gui.label_current_function_value.setText(self.formulas[self.current_plot])
         else:
-            self.gui.label_current_formula.clear()
+            self.gui.label_current_function_value.clear()
 
         self.y_min = self.sensor_data_file.df[self.current_plot].min()
         self.y_max = self.sensor_data_file.df[self.current_plot].max()
         self.draw_graph()
+
+    def delete_formula(self):
+        selected_plot = self.gui.comboBox_functions.currentText()
+        index = self.gui.comboBox_functions.findText(selected_plot)
+
+        if selected_plot in self.formulas:
+            res = QMessageBox.warning(
+                self.gui,
+                'Confirm delete',
+                'Are you sure you want to delete the selected formula?',
+                QMessageBox.Ok | QMessageBox.Cancel
+            )
+
+            if res == QMessageBox.Ok:
+                # Delete the selected plot from settings
+                self.formulas.pop(selected_plot)
+                self.settings.set_setting('formulas', self.formulas)
+
+                # Delete the selected plot from the combobox and update the plot
+                self.gui.comboBox_functions.removeItem(index)
+                self.gui.comboBox_functions.setCurrentIndex(0)
+                self.change_plot()
 
     def change_plot_width(self, value):
         self.settings.set_setting('plot_width', value)
@@ -199,12 +223,14 @@ class Plot:
         :param event: Specifies what event triggered this function.
         """
         if self.sensor_data_file.sensor_data is not None:
+            # Convert the x-position to a Python datetime
             xdata_dt = num2date(event.xdata).replace(tzinfo=None)
+            # Convert to QDateTime, without milliseconds
             xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
 
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
-            if event.button == 1:
+            if event.button == MouseButton.LEFT:
                 self.new_label = LabelSpecs(self.sensor_data_file.id_,
                                             self.label_manager,
                                             self.label_type_manager)
@@ -212,7 +238,7 @@ class Plot:
                 self.new_label.dateTimeEdit_start.setDateTime(xdata_qdt)
 
             # If the right mouse button is used, check if this is the first or second time
-            elif event.button == 3:
+            elif event.button == MouseButton.RIGHT:
                 if not self.labeling:
                     self.large_label = LabelSpecs(self.sensor_data_file.id_,
                                                   self.label_manager,

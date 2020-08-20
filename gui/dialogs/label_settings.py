@@ -2,16 +2,14 @@ from PyQt5 import QtWidgets
 
 from database.label_type_manager import LabelTypeManager
 from gui.designer.label_settings import Ui_Dialog
-from database.label_manager import LabelManager
 from project_settings import ProjectSettings
 
 
 class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, label_manager: LabelManager, label_type_manager: LabelTypeManager, settings: ProjectSettings):
+    def __init__(self, label_type_manager: LabelTypeManager, settings: ProjectSettings):
         super().__init__()
         self.setupUi(self)
-        self.label_manager = label_manager
         self.label_type_manager = label_type_manager
         self.settings = settings
 
@@ -46,7 +44,7 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             self.comboBox_color.setCurrentText(current_color)
 
         self.accepted.connect(self.add_label)
-        # self.pushButton.clicked.connect(self.delete_label)
+        self.pushButton.clicked.connect(self.delete_label)
         self.comboBox_label.currentTextChanged.connect(self.label_changed)
         self.comboBox_color.currentTextChanged.connect(self.color_changed)
         self.doubleSpinBox_opacity.valueChanged.connect(self.opacity_changed)
@@ -64,12 +62,14 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
     def delete_label(self):
         # TODO: Fix this function
         self.settings_changed = True
-        self.label_type_manager.delete_label_activity(self.comboBox_label.currentText())
+        self.label_type_manager.delete_label_type(self.comboBox_label.currentText())
         self.comboBox_label.clear()
-        for label in self.label_manager.get_label_types():
+
+        for label in self.label_type_manager.get_all_label_types():
             self.comboBox_label.addItem(label[0])
             self.color_dict[label[0]] = label[1]
-        if self.label_manager.get_label_types():
+
+        if self.label_type_manager.get_all_label_types():
             self.comboBox_color.setCurrentText(self.label_manager.get_label_types()[0][1])
 
     def label_changed(self, text):

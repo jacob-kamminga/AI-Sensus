@@ -100,9 +100,9 @@ class SensorDataFile:
             # Reset the dictionary that maps function names to functions
             self.gui.plot.formula_dict = dict()
 
-            # If sensor model unknown, prompt user
-            self.model_id = self.sensor_data_file_manager.get_model_by_file_name(file_name)
+            self.model_id = self.sensor_data_file_manager.get_sensor_model_by_file_name(file_name)
 
+            # If sensor model unknown, prompt user
             if self.model_id == -1:
                 self.open_sensor_model_dialog()
 
