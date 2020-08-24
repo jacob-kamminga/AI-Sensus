@@ -2,7 +2,9 @@ import re
 import datetime as dt
 import sqlite3
 from pathlib import Path
+from typing import List
 
+import datefinder
 import pandas as pd
 
 import parse_function.custom_function_parser as parser
@@ -78,6 +80,28 @@ def parse_names(file, row_nr):
                           + str(row_nr) + ", number of rows: " + str(i))
 
 
+def parse_date(file, config: sqlite3.Row):
+    header_date = parse_header_option(file, config[DATE_ROW])
+
+    matches: List[dt.datetime] = datefinder.find_dates(header_date)
+
+    if len(matches) == 1:
+        return matches[0].date().strftime('%Y-%m-%d')
+
+    return None
+
+
+def parse_time(file, config: sqlite3.Row):
+    header_time = parse_header_option(file, config[TIME_ROW])
+
+    matches: List[dt.datetime] = datefinder.find_dates(header_time)
+
+    if len(matches) == 1:
+        return matches[0].time().strftime('%H:%M:%S')
+
+    return None
+
+
 class SensorData:
 
     def __init__(self, file_path: Path, settings: ProjectSettings, sensor_model_id):
@@ -125,15 +149,8 @@ class SensorData:
         return new
 
     def parse_model_config(self, file, config: sqlite3.Row):
-        if config[DATE_COLUMN] != -1:
-            self.metadata['date'] = parse_header_option(file, config[DATE_ROW], config[DATE_COLUMN])
-        else:
-            self.metadata['date'] = parse_header_option(file, config[DATE_ROW])
-
-        if config[TIME_COLUMN] != -1:
-            self.metadata['time'] = parse_header_option(file, config[TIME_ROW], config[TIME_COLUMN])
-        else:
-            self.metadata['time'] = parse_header_option(file, config[TIME_ROW])
+        self.metadata['date'] = parse_date(file, config)
+        self.metadata['time'] = parse_time(file, config)
 
         if config[SENSOR_ID_COLUMN] != -1:
             self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW], config[SENSOR_ID_COLUMN])

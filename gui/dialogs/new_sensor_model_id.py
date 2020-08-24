@@ -43,7 +43,8 @@ class SensorModelIdDialog(QDialog, Ui_Dialog):
         dialog.exec()
 
     def open_previous_dialog(self):
-        from gui.dialogs.new_sensor_model_time import SensorModelTimeDialog
-        dialog = SensorModelTimeDialog(self.settings, self.model, self.model_id, self.parent)
+        from gui.dialogs.new_sensor_model_date import SensorModelDateDialog
+
+        dialog = SensorModelDateDialog(self.settings, self.model, self.model_id, self.parent)
         self.close()
         dialog.exec()

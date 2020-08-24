@@ -8,12 +8,11 @@ from project_settings import ProjectSettings
 SQL_INSERT_MODEL = (
     "INSERT INTO sensor_model("
     "model_name, "
-    "date_format, date_row, date_column, date_regex, "
-    "time_format, time_row, time_column, time_regex, "
+    "date_row, time_row, "
     "sensor_id_row, sensor_id_column, sensor_id_regex, "
     "headers_row, "
     "comment_style)"
-    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)"
+    "VALUES (?,?,?,?,?,?,?,?)"
 )
 SQL_SELECT_ALL_MODELS = (
     "SELECT id, model_name "
@@ -35,12 +34,12 @@ SQL_SELECT_NAME = (
     "WHERE id = ?"
 )
 SQL_SELECT_DATE_CONFIG = (
-    "SELECT date_format, date_row, date_column, date_regex "
+    "SELECT date_row "
     "FROM sensor_model "
     "WHERE id = ?"
 )
 SQL_SELECT_TIME_CONFIG = (
-    "SELECT time_format, time_row, time_column, time_regex "
+    "SELECT time_row "
     "FROM sensor_model "
     "WHERE id = ?"
 )
@@ -57,8 +56,7 @@ SQL_SELECT_HEADERS_CONFIG = (
 SQL_UPDATE_MODEL = (
     "UPDATE sensor_model "
     "SET model_name = ?, "
-    "date_format = ?, date_row = ?, date_column = ?, date_regex = ?, "
-    "time_format = ?, time_row = ?, time_column = ?, time_regex = ?, "
+    "date_row = ?, time_row = ?, "
     "sensor_id_row = ?, sensor_id_column = ?, sensor_id_regex = ?, "
     "headers_row = ?, "
     "comment_style = ? "
@@ -141,81 +139,21 @@ class SensorModelManager:
         except sqlite3.Error:
             return None
 
-    def insert_sensor_model(
-            self,
-            model_name: str,
-            date_format: str,
-            date_row: int,
-            date_col: int,
-            date_regex: str,
-            time_format: str,
-            time_row: int,
-            time_col: int,
-            time_regex: str,
-            sensor_id_row: int,
-            sensor_id_col: int,
-            sensor_id_regex: str,
-            headers_row: int,
-            comment_style: str
-    ) -> int:
+    def insert_sensor_model(self, model_name: str, date_row: int, time_row: int, sensor_id_row: int, sensor_id_col: int,
+                            sensor_id_regex: str, headers_row: int, comment_style: str) -> int:
         try:
-            self._cur.execute(SQL_INSERT_MODEL, (
-                model_name,
-                date_format,
-                date_row,
-                date_col,
-                date_regex,
-                time_format,
-                time_row,
-                time_col,
-                time_regex,
-                sensor_id_row,
-                sensor_id_col,
-                sensor_id_regex,
-                headers_row,
-                comment_style
-            ))
+            self._cur.execute(SQL_INSERT_MODEL, (model_name, date_row, time_row, sensor_id_row, sensor_id_col,
+                                                 sensor_id_regex, headers_row, comment_style))
             self._conn.commit()
             return self.get_id_by_name(model_name)
         except sqlite3.Error:
             return -1
 
-    def update_sensor_model(
-            self,
-            model_id: int,
-            model_name: str,
-            date_format: str,
-            date_row: int,
-            date_col: int,
-            date_regex: str,
-            time_format: str,
-            time_row: int,
-            time_col: int,
-            time_regex: str,
-            sensor_id_row: int,
-            sensor_id_col: int,
-            sensor_id_regex: str,
-            headers_row: int,
-            comment_style: str
-    ):
+    def update_sensor_model(self, model_id: int, model_name: str, date_row: int, time_row: int, sensor_id_row: int,
+                            sensor_id_col: int, sensor_id_regex: str, headers_row: int, comment_style: str):
         try:
-            self._cur.execute(SQL_UPDATE_MODEL, (
-                model_name,
-                date_format,
-                date_row,
-                date_col,
-                date_regex,
-                time_format,
-                time_row,
-                time_col,
-                time_regex,
-                sensor_id_row,
-                sensor_id_col,
-                sensor_id_regex,
-                headers_row,
-                comment_style,
-                model_id
-            ))
+            self._cur.execute(SQL_UPDATE_MODEL, (model_name, date_row, time_row, sensor_id_row, sensor_id_col,
+                                                 sensor_id_regex, headers_row, comment_style, model_id))
             self._conn.commit()
             return self.get_id_by_name(model_name)
         except sqlite3.Error:
