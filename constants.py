@@ -9,15 +9,9 @@ PLOT_HEIGHT_FACTOR = 'plot_height_factor'
 ID = 'id'
 MODEL_NAME = 'model_name'
 
-DATE_FORMAT = 'date_format'
 DATE_ROW = 'date_row'
-DATE_COLUMN = 'date_column'
-DATE_REGEX = 'date_regex'
 
-TIME_FORMAT = 'time_format'
 TIME_ROW = 'time_row'
-TIME_COLUMN = 'time_column'
-TIME_REGEX = 'time_regex'
 
 SENSOR_ID_ROW = 'sensor_id_row'
 SENSOR_ID_COLUMN = 'sensor_id_column'

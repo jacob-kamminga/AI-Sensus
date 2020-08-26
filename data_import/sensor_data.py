@@ -1,10 +1,10 @@
 import re
 import datetime as dt
 import sqlite3
+from parser import ParserError
 from pathlib import Path
-from typing import List
 
-import datefinder
+import dateutil.parser as dparser
 import pandas as pd
 
 import parse_function.custom_function_parser as parser
@@ -23,7 +23,7 @@ LABEL_INDEX = 2
 COLUMN_TIMESTAMP = "Timestamp"
 
 
-def parse_header_option(file, row_nr, col_nr=1):
+def parse_csv_comment(file, row_nr, col_nr=-1):
     """
     Parses a specific part of the header with a line number and a column number. Raises an ImportException if the file
     is smaller than the given row number or if the line is smaller than the given column number.
@@ -40,21 +40,21 @@ def parse_header_option(file, row_nr, col_nr=1):
 
     for line in file:
         if i == row_nr:
-            # Turn line into list of columns
-            line_list = re.split(', *', line[1:-1])
 
-            # If col_nr is larger than number of columns, raise ImportException
-            if col_nr - 1 >= len(line_list):
-                raise ImportException("Given column number exceeds number of columns in line - given column number: "
-                                      + str(col_nr) + ", number of columns: " + str(len(line_list)))
+            if col_nr != -1:
+                # Turn line into list of columns
+                line_list = re.split(', *', line[1:-1])
 
-            return line_list[col_nr - 1]  # column numbers start at 1
+                # If col_nr is larger than number of columns, raise ImportException
+                if col_nr - 1 >= len(line_list):
+                    raise ImportException(f"Given column number exceeds number of columns in line - given column "
+                                          f"number: {str(col_nr)}, number of columns: {str(len(line_list))}")
+
+                return line_list[col_nr - 1]  # column numbers start at 1
+            else:
+                return line[1:]
         else:
             i += 1
-
-    # row_nr is higher than number of rows in file
-    raise ImportException("Given row number exceeds numbers of rows in file - given row number: "
-                          + str(row_nr) + ", number of rows: " + str(i))
 
 
 def parse_names(file, row_nr):
@@ -80,26 +80,13 @@ def parse_names(file, row_nr):
                           + str(row_nr) + ", number of rows: " + str(i))
 
 
-def parse_date(file, config: sqlite3.Row):
-    header_date = parse_header_option(file, config[DATE_ROW])
+def parse_datetime(file, row: int):
+    header_date = parse_csv_comment(file, row)
 
-    matches: List[dt.datetime] = datefinder.find_dates(header_date)
-
-    if len(matches) == 1:
-        return matches[0].date().strftime('%Y-%m-%d')
-
-    return None
-
-
-def parse_time(file, config: sqlite3.Row):
-    header_time = parse_header_option(file, config[TIME_ROW])
-
-    matches: List[dt.datetime] = datefinder.find_dates(header_time)
-
-    if len(matches) == 1:
-        return matches[0].time().strftime('%H:%M:%S')
-
-    return None
+    try:
+        return dparser.parse(header_date, fuzzy=True)
+    except ParserError:
+        return None
 
 
 class SensorData:
@@ -149,13 +136,13 @@ class SensorData:
         return new
 
     def parse_model_config(self, file, config: sqlite3.Row):
-        self.metadata['date'] = parse_date(file, config)
-        self.metadata['time'] = parse_time(file, config)
+        self.metadata['date'] = parse_datetime(file, config[DATE_ROW]).date().strftime('%Y-%m-%d')
+        self.metadata['time'] = parse_datetime(file, config[TIME_ROW]).time().strftime('%H:%M:%S.%f')
 
         if config[SENSOR_ID_COLUMN] != -1:
-            self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW], config[SENSOR_ID_COLUMN])
+            self.metadata['sn'] = parse_csv_comment(file, config[SENSOR_ID_ROW], config[SENSOR_ID_COLUMN])
         else:
-            self.metadata['sn'] = parse_header_option(file, config[SENSOR_ID_ROW])
+            self.metadata['sn'] = parse_csv_comment(file, config[SENSOR_ID_ROW])
 
         self.metadata['names'] = parse_names(file, config[HEADERS_ROW])
         self.metadata[COMMENT_STYLE] = config[COMMENT_STYLE]
