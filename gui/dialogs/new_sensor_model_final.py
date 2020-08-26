@@ -38,14 +38,8 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
     def init(self):
         self.label_name.setText(str(self.model[MODEL_NAME]))
-        self.label_date_format.setText(str(self.model[DATE_FORMAT]))
         self.label_date_row.setText(str(self.model[DATE_ROW]))
-        self.label_date_column.setText(str(self.model[DATE_COLUMN]))
-        self.label_date_regex.setText(str(self.model[DATE_REGEX]))
-        self.label_time_format.setText(str(self.model[TIME_FORMAT]))
         self.label_time_row.setText(str(self.model[TIME_ROW]))
-        self.label_time_column.setText(str(self.model[TIME_COLUMN]))
-        self.label_time_regex.setText(str(self.model[TIME_REGEX]))
         self.label_id_row.setText(str(self.model[SENSOR_ID_ROW]))
         self.label_id_column.setText(str(self.model[SENSOR_ID_COLUMN]))
         self.label_id_regex.setText(str(self.model[SENSOR_ID_REGEX]))
@@ -60,15 +54,9 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         return {
             MODEL_NAME: existing_model[MODEL_NAME],
 
-            DATE_FORMAT: existing_model[DATE_FORMAT],
             DATE_ROW: existing_model[DATE_ROW],
-            DATE_COLUMN: existing_model[DATE_COLUMN],
-            DATE_REGEX: existing_model[DATE_REGEX],
 
-            TIME_FORMAT: existing_model[TIME_FORMAT],
             TIME_ROW: existing_model[TIME_ROW],
-            TIME_COLUMN: existing_model[TIME_COLUMN],
-            TIME_REGEX: existing_model[TIME_REGEX],
 
             SENSOR_ID_ROW: existing_model[SENSOR_ID_ROW],
             SENSOR_ID_COLUMN: existing_model[SENSOR_ID_COLUMN],
@@ -81,18 +69,6 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
     def convert_none_type(self):
         # Convert None to other types
-        self.model[DATE_COLUMN] = self.model[DATE_COLUMN] \
-            if self.model[DATE_COLUMN] is not None \
-            else -1
-        self.model[DATE_REGEX] = self.model[DATE_REGEX] \
-            if self.model[DATE_REGEX] is not None \
-            else ""
-        self.model[TIME_COLUMN] = self.model[TIME_COLUMN] \
-            if self.model[TIME_COLUMN] is not None \
-            else -1
-        self.model[TIME_REGEX] = self.model[TIME_REGEX] \
-            if self.model[TIME_REGEX] is not None \
-            else ""
         self.model[SENSOR_ID_COLUMN] = self.model[SENSOR_ID_COLUMN] \
             if self.model[SENSOR_ID_COLUMN] is not None \
             else -1
@@ -107,14 +83,8 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
             self.sensor_model_manager.update_sensor_model(
                 self.model_id,
                 self.model[MODEL_NAME],
-                self.model[DATE_FORMAT],
                 self.model[DATE_ROW],
-                self.model[DATE_COLUMN],
-                self.model[DATE_REGEX],
-                self.model[TIME_FORMAT],
                 self.model[TIME_ROW],
-                self.model[TIME_COLUMN],
-                self.model[TIME_REGEX],
                 self.model[SENSOR_ID_ROW],
                 self.model[SENSOR_ID_COLUMN],
                 self.model[SENSOR_ID_REGEX],
@@ -124,14 +94,8 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         else:
             self.sensor_model_manager.insert_sensor_model(
                 self.model[MODEL_NAME],
-                self.model[DATE_FORMAT],
                 self.model[DATE_ROW],
-                self.model[DATE_COLUMN],
-                self.model[DATE_REGEX],
-                self.model[TIME_FORMAT],
                 self.model[TIME_ROW],
-                self.model[TIME_COLUMN],
-                self.model[TIME_REGEX],
                 self.model[SENSOR_ID_ROW],
                 self.model[SENSOR_ID_COLUMN],
                 self.model[SENSOR_ID_REGEX],
