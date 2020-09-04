@@ -4,7 +4,6 @@ from typing import Optional
 import pandas as pd
 from PyQt5.QtCore import QDateTime
 from PyQt5.QtWidgets import QMessageBox
-from matplotlib.backend_bases import MouseButton
 from matplotlib.dates import date2num, num2date
 
 from data_import.label_data import LabelData
@@ -230,7 +229,7 @@ class Plot:
 
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
-            if event.button == MouseButton.LEFT:
+            if event.button == 1:
                 self.new_label = LabelSpecs(self.sensor_data_file.id_,
                                             self.label_manager,
                                             self.label_type_manager)
@@ -238,7 +237,7 @@ class Plot:
                 self.new_label.dateTimeEdit_start.setDateTime(xdata_qdt)
 
             # If the right mouse button is used, check if this is the first or second time
-            elif event.button == MouseButton.RIGHT:
+            elif event.button == 3:
                 if not self.labeling:
                     self.large_label = LabelSpecs(self.sensor_data_file.id_,
                                                   self.label_manager,

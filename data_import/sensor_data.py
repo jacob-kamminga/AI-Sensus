@@ -8,7 +8,7 @@ import dateutil.parser as dparser
 import pandas as pd
 
 import parse_function.custom_function_parser as parser
-from constants import DATE_ROW, DATE_COLUMN, TIME_ROW, TIME_COLUMN, SENSOR_ID_ROW, SENSOR_ID_COLUMN, HEADERS_ROW, \
+from constants import DATE_ROW, TIME_ROW, SENSOR_ID_ROW, SENSOR_ID_COLUMN, HEADERS_ROW, \
     COMMENT_STYLE
 from data_import import sensor as sens, column_metadata as cm
 from data_import.import_exception import ImportException
