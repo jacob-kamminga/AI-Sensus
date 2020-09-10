@@ -8,12 +8,13 @@ from project_settings import ProjectSettings
 
 class SensorModelHeadersDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model: {}, model_id=None, parent=None):
+    def __init__(self, settings: ProjectSettings, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings
-        self.parent = parent
         self.model_id = model_id
+        self.test_file = test_file
+        self.parent = parent
 
         self.model = model
         self.fill_existing_data()
@@ -27,12 +28,24 @@ class SensorModelHeadersDialog(QDialog, Ui_Dialog):
     def open_final_dialog(self):
         self.model[HEADERS_ROW] = self.spinBox_row.value()
 
-        dialog = SensorModelCommentStyleDialog(self.settings, self.model, self.model_id, self.parent)
+        dialog = SensorModelCommentStyleDialog(
+            self.settings,
+            self.model,
+            model_id=self.model_id,
+            test_file=self.test_file,
+            parent=self.parent
+        )
         self.close()
         dialog.exec()
 
     def open_previous_dialog(self):
         from gui.dialogs.new_sensor_model_id import SensorModelIdDialog
-        dialog = SensorModelIdDialog(self.settings, self.model, self.model_id, self.parent)
+        dialog = SensorModelIdDialog(
+            self.settings,
+            self.model,
+            model_id=self.model_id,
+            test_file=self.test_file,
+            parent=self.parent
+        )
         self.close()
         dialog.exec()

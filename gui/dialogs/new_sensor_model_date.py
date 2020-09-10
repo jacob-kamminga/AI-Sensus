@@ -8,12 +8,13 @@ from project_settings import ProjectSettings
 
 class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model: {}, model_id=None, parent=None):
+    def __init__(self, settings: ProjectSettings, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings
-        self.parent = parent
         self.model_id = model_id
+        self.test_file = test_file
+        self.parent = parent
 
         self.model = model
         self.fill_existing_data()
@@ -23,22 +24,34 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def fill_existing_data(self):
         if self.model[DATE_ROW] is not None and self.model[DATE_ROW] != -1:
-            self.spinBox_row.setValue(self.model[DATE_ROW])
+            self.spinBox_date_row.setValue(self.model[DATE_ROW])
 
         if self.model[TIME_ROW] is not None and self.model[TIME_ROW] != -1:
-            self.spinBox_column.setValue(self.model[TIME_ROW])
+            self.spinBox_time_row.setValue(self.model[TIME_ROW])
 
     def open_time_dialog(self):
         self.model[DATE_ROW] = self.spinBox_date_row.value()
         self.model[TIME_ROW] = self.spinBox_time_row.value()
 
-        dialog = SensorModelIdDialog(self.settings, self.model, self.model_id, self.parent)
+        dialog = SensorModelIdDialog(
+            self.settings,
+            self.model,
+            model_id=self.model_id,
+            test_file=self.test_file,
+            parent=self.parent
+        )
         self.close()
         dialog.exec()
 
     def open_previous_dialog(self):
         from gui.dialogs.new_sensor_model_name import SensorModelNameDialog
 
-        dialog = SensorModelNameDialog(self.settings, self.model, self.model_id, self.parent)
+        dialog = SensorModelNameDialog(
+            self.settings,
+            self.model,
+            model_id=self.model_id,
+            test_file=self.test_file,
+            parent=self.parent
+        )
         self.close()
         dialog.exec()

@@ -2,18 +2,19 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 
 from constants import *
 from database.sensor_model_manager import SensorModelManager
-from gui.designer.new_sensor_model_final_new import Ui_Dialog
+from gui.designer.new_sensor_model_final import Ui_Dialog
 from project_settings import ProjectSettings
 
 
 class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model: {} = None, model_id=None, parent=None):
+    def __init__(self, settings: ProjectSettings, model: {} = None, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings
-        self.parent = parent
         self.model_id = model_id
+        self.test_file = test_file
+        self.parent = parent
         self.sensor_model_manager = SensorModelManager(self.settings)
 
         if model is not None:
@@ -55,7 +56,6 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
             MODEL_NAME: existing_model[MODEL_NAME],
 
             DATE_ROW: existing_model[DATE_ROW],
-
             TIME_ROW: existing_model[TIME_ROW],
 
             SENSOR_ID_ROW: existing_model[SENSOR_ID_ROW],
@@ -111,14 +111,20 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
     def previous(self):
         from gui.dialogs.new_sensor_model_id import SensorModelIdDialog
 
-        dialog = SensorModelIdDialog(self.settings, self.model, self.model_id, self.parent)
+        dialog = SensorModelIdDialog(
+            self.settings,
+            self.model,
+            model_id=self.model_id,
+            test_file=self.test_file,
+            parent=self.parent
+        )
         self.close()
         dialog.exec()
 
     def edit(self):
         from gui.dialogs.new_sensor_model_name import SensorModelNameDialog
 
-        dialog = SensorModelNameDialog(self.settings, self.model, parent=self.parent)
+        dialog = SensorModelNameDialog(self.settings, self.model, test_file=self.test_file, parent=self.parent)
         self.close()
         dialog.exec()
 
