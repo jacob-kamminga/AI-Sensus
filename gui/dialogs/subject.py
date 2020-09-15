@@ -44,7 +44,7 @@ class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         self.comboBox.addItems(self.subjects.keys())
 
     def fill_subject_info(self, subject_name: str):
-        if subject_name != "":
+        if subject_name != "" and self.subjects:
             self.label_name_val.setText(subject_name)
             self.label_color_val.setText(self.subjects[subject_name]['color'])
             self.label_size_val.setText(self.subjects[subject_name]['size'])
@@ -64,9 +64,12 @@ class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         extra_info = dialog.new_subject_extra_info
 
         if dialog.accepted and dialog.new_subject_name is not None:
-            # Add new subject to combobox
-            self.comboBox.addItem(dialog.new_subject_name)
             # Add new subject to subject dictionary
             self.subjects[name] = {'color': color, 'size': size, 'extra_info': extra_info}
+
+            # Add new subject to combobox
+            self.comboBox.addItem(dialog.new_subject_name)
+
             # Select the new subject
             self.comboBox.setCurrentText(name)
+            self.fill_subject_info(name)

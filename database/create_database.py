@@ -99,14 +99,8 @@ CREATE_TABLE_SENSOR_MODEL = \
             constraint sensor_model_pk\
                 primary key autoincrement,\
         model_name       VARCHAR(50) not null,\
-        date_format      TEXT        not null,\
         date_row         INTEGER     not null,\
-        date_column      INTEGER,\
-        date_regex       TEXT,\
-        time_format      TEXT        not null,\
         time_row         INTEGER     not null,\
-        time_column      INTEGER,\
-        time_regex       TEXT,\
         sensor_id_row    INTEGER     not null,\
         sensor_id_column INTEGER,\
         sensor_id_regex  TEXT,\
