@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '..\..\gui\designer\gui.ui'
+# Form implementation generated from reading ui file 'gui.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #
@@ -284,6 +284,12 @@ class Ui_MainWindow(object):
         self.actionSensors.setObjectName("actionSensors")
         self.actionSensor_models = QtWidgets.QAction(MainWindow)
         self.actionSensor_models.setObjectName("actionSensor_models")
+        self.actionNew_Project = QtWidgets.QAction(MainWindow)
+        self.actionNew_Project.setObjectName("actionNew_Project")
+        self.actionOpen_Project = QtWidgets.QAction(MainWindow)
+        self.actionOpen_Project.setObjectName("actionOpen_Project")
+        self.menuFile.addAction(self.actionNew_Project)
+        self.menuFile.addAction(self.actionOpen_Project)
         self.menuFile.addAction(self.actionOpen_Video)
         self.menuFile.addAction(self.actionOpen_Sensor_Data)
         self.menuFile.addAction(self.actionExport_Sensor_Data)
@@ -338,5 +344,17 @@ class Ui_MainWindow(object):
         self.actionSubjects.setText(_translate("MainWindow", "Subjects"))
         self.actionSensors.setText(_translate("MainWindow", "Sensors"))
         self.actionSensor_models.setText(_translate("MainWindow", "Sensor models"))
+        self.actionNew_Project.setText(_translate("MainWindow", "New Project"))
+        self.actionOpen_Project.setText(_translate("MainWindow", "Open Project"))
 from PyQt5.QtMultimedia import QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())

@@ -69,6 +69,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_pause.activated.connect(self.video.toggle_play)
         self.shortcut_plus_10s.activated.connect(self.video.fast_forward_10s)
         self.shortcut_minus_10s.activated.connect(self.video.rewind_10s)
+        self.actionOpen_Project.triggered.connect(self.show_welcome_dialog)
         self.actionOpen_Video.triggered.connect(self.video.prompt_file)
         self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data_file.prompt_file)
         self.pushButton_delete_formula.clicked.connect(self.plot.delete_formula)

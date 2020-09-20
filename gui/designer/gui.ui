@@ -442,6 +442,8 @@
     <property name="title">
      <string>File</string>
     </property>
+    <addaction name="actionNew_Project"/>
+    <addaction name="actionOpen_Project"/>
     <addaction name="actionOpen_Video"/>
     <addaction name="actionOpen_Sensor_Data"/>
     <addaction name="actionExport_Sensor_Data"/>
@@ -539,6 +541,16 @@
   <action name="actionSensor_models">
    <property name="text">
     <string>Sensor models</string>
+   </property>
+  </action>
+  <action name="actionNew_Project">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionOpen_Project">
+   <property name="text">
+    <string>Open Project</string>
    </property>
   </action>
  </widget>
