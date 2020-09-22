@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
+from PyQt5.QtMultimedia import QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog, QFileDialog
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
@@ -242,7 +243,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         if project_dir:
             self.settings = ProjectSettings(Path(project_dir))
-            # reset video and sensor data
+            # reset gui components
             self.reset_gui_components()
             # Set project dir as most recent project dir
             self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
@@ -259,7 +260,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         # Make sure timer is stopped to prevent infinite error loops
         self.timer.stop()
-
+        self.mediaPlayer.setMedia(QMediaContent())
         if hasattr(self, 'plot'):
             self.plot.__init__(self)
         else:
