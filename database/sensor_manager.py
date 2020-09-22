@@ -8,7 +8,7 @@ SQL_INSERT_SENSOR = \
     "INSERT INTO sensor(name, model) " \
     "VALUES (?,?)"
 SQL_SELECT_ALL_SENSORS = \
-    "SELECT * " \
+    "SELECT id, name " \
     "FROM sensor"
 SQL_SELECT_ID = \
     "SELECT id " \
