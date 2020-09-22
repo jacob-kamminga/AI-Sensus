@@ -109,7 +109,7 @@ class Video:
             self.video_manager.update_camera(self.id_, camera_id)
 
     def update_labels_datetime(self):
-        video_hms = self.datetime.strftime("%H:%M:%S")
+        video_hms = self.datetime.strftime("%H:%M:%S")  # TODO: Add timezone
         video_date = self.datetime.strftime("%d-%B-%Y")
 
         if self.position is not None:

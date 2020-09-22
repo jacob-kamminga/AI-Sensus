@@ -30,14 +30,14 @@ if __name__ == '__main__':
     project = gui.GUI()
     project.show()
 
-    # # Override the except hook so it will print the traceback to stdout/stderr
-    # sys.excepthook = except_hook
-    #
-    # # Create the stderr handler and point stderr to it
-    # std_err_handler = StdErrHandler()
-    # sys.stderr = std_err_handler
-    #
-    # # Connect err_msg signal to message box method in main window
-    # std_err_handler.err_msg.connect(project.std_err_post)
+    # Override the except hook so it will print the traceback to stdout/stderr
+    sys.excepthook = except_hook
+
+    # Create the stderr handler and point stderr to it
+    std_err_handler = StdErrHandler()
+    sys.stderr = std_err_handler
+
+    # Connect err_msg signal to message box method in main window
+    std_err_handler.err_msg.connect(project.std_err_post)
 
     sys.exit(app.exec())
