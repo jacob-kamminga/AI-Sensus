@@ -220,8 +220,8 @@ class Video:
             self.pause()
         elif self.gui.mediaPlayer.state() == QMediaPlayer.PausedState:
             self.play()
-
-        # TODO: Handle more states. Video becomes unusuable when reaching end of playback
+        elif self.gui.mediaPlayer.state() == QMediaPlayer.StoppedState:
+            self.pause()
 
     def mute(self):
         if self.gui.mediaPlayer.media().isNull():

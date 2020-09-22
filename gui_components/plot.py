@@ -32,15 +32,18 @@ class Plot:
         self.settings: ProjectSettings = gui.settings
         self.sensor_data_file: SensorDataFile = gui.sensor_data_file
 
+        # self.reset()
         self.label_manager = LabelManager(self.settings)
         self.label_type_manager = LabelTypeManager(self.settings)
         self.label_data = LabelData(self.label_manager)
+        self.formulas = self.settings.get_setting('formulas')
+        self.plot_width = self.settings.get_setting('plot_width')
+        self.plot_height_factor = self.settings.get_setting('plot_height_factor')
 
         self.data_plot = None
         self.current_plot = None
         self.vertical_line = None
 
-        self.formulas = self.settings.get_setting('formulas')
         self.highlights = dict()
         self.label_types = dict()
 
@@ -52,14 +55,18 @@ class Plot:
         self.y_min = None
         self.y_max = None
 
-        self.plot_width = self.settings.get_setting('plot_width')
-        self.plot_height_factor = self.settings.get_setting('plot_height_factor')
-
         self.new_label: Optional[LabelSpecs] = None
         self.large_label = None
 
         # Initialize the boolean that keeps track if the user is labeling with the right-mouse button
         self.labeling = False
+
+    # def reset(self):
+    #     """
+    #     Part of init functionality is in reset_plot method, so that plot can be reset when changing project
+    #     :return:
+    #     """
+
 
     def new_plot(self):
         """
@@ -97,6 +104,8 @@ class Plot:
 
         self.y_min = self.sensor_data_file.df[self.current_plot].min()
         self.y_max = self.sensor_data_file.df[self.current_plot].max()
+        if self.y_min == self.y_max:
+            raise Exception("y_min cannot be equal to y_max. Select different function or axes to plot")
         self.draw_graph()
 
     def delete_formula(self):

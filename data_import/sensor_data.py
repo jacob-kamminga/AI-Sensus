@@ -52,16 +52,17 @@ def parse_csv_comment(file, row_nr, col_nr=-1):
 
                 return line_list[col_nr - 1]  # column numbers start at 1
             else:
-                return line[1:]
+                return line[1:]  # TODO: Implement usage of regular expression entered by user
         else:
             i += 1
 
 
-def parse_names(file, row_nr):
+def parse_names(file, row_nr, comment_style):  # TODO: Merge with parse_header_row function
     """
     Parses the names of the data columns using a row number. Raises an ImportException if the file is smaller than
     the given row number.
 
+    :param comment_style: character used to denote comments in csv
     :param file: file to be parsed
     :param row_nr: row number of names
     :return: list of column names
@@ -72,7 +73,11 @@ def parse_names(file, row_nr):
     i = 1
     for line in file:
         if i == row_nr:
-            return re.split(', *', line[1:-1])
+            # Check if headers are commented out
+            if line[len(line) - len(line.lstrip())] == comment_style:
+                return re.split(', *', line[1:-1])
+            else:
+                return re.split(', *', line[0:-1])
         else:
             i += 1
     # row_nr is higher than number of rows in file
@@ -87,6 +92,35 @@ def parse_datetime(file, row: int):
         return dparser.parse(header_date, fuzzy=True)
     except ParserError:
         return None
+
+
+def parse_header_row(file, header_row, comment_style):
+    """
+    Determines how the panda.read_csv function should use the headers row in file
+    :param comment_style: character used to denote comments in csv
+    :param file: file to be parsed
+    :param header_row: row number of header
+    :return: header :int, None
+    """
+    # return to start of file
+    file.seek(0)
+
+    i = 1
+    for line in file:
+        if i == header_row:
+            # Check if headers are commented out
+            if line[len(line) - len(line.lstrip())] == comment_style:
+                # Don't use headers when in comments
+                return None
+            else:
+                # Pandas header parameter ignores commented lines and empty lines if skip_blank_lines=True,
+                # so header=0 denotes the first line of data rather than the first line of the file.
+                return 0
+        else:
+            i += 1
+    # row_nr is higher than number of rows in file
+    raise ImportException("Given row number exceeds numbers of rows in file - given row number: "
+                          + str(header_row) + ", number of rows: " + str(i))
 
 
 class SensorData:
@@ -144,8 +178,10 @@ class SensorData:
         else:
             self.metadata['sn'] = parse_csv_comment(file, config[SENSOR_ID_ROW])
 
-        self.metadata['names'] = parse_names(file, config[HEADERS_ROW])
+        self.metadata['names'] = parse_names(file, config[HEADERS_ROW], config[COMMENT_STYLE])
         self.metadata[COMMENT_STYLE] = config[COMMENT_STYLE]
+
+        self.metadata[HEADERS_ROW] = config[HEADERS_ROW]
 
     def parse(self, settings_dict) -> pd.DataFrame:
         """
@@ -159,7 +195,7 @@ class SensorData:
             try:
                 sensor_model = self.sensor_model_manager.get_model_by_id(self.sensor_model_id)
                 self.parse_model_config(file, sensor_model)
-
+                pd_header_arg = parse_header_row(file, self.metadata[HEADERS_ROW], self.metadata[COMMENT_STYLE])
                 # Create datetime object from date and time and put it in metadata
                 self.metadata['datetime'] = dt.datetime.strptime(self.metadata['date'] + self.metadata['time'],
                                                                  '%Y-%m-%d%H:%M:%S.%f')
@@ -172,7 +208,8 @@ class SensorData:
 
         # Parse data from file
         data = pd.read_csv(self.file_path,
-                           header=None,
+                           header=pd_header_arg,
+                           skip_blank_lines=False,
                            names=self.metadata['names'],
                            comment=self.metadata[COMMENT_STYLE])
 

@@ -94,6 +94,8 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.lineEdit_function_regex.returnPressed.connect(self.plot.new_plot)
         self.doubleSpinBox_video_offset.valueChanged.connect(self.camera.change_offset)
+        self.doubleSpinBox_video_offset.setMaximum(43200)  # 12 hours range
+        self.doubleSpinBox_video_offset.setMinimum(-43200)
         self.doubleSpinBox_speed.valueChanged.connect(self.video.change_speed)
         self.doubleSpinBox_plot_width.valueChanged.connect(self.plot.change_plot_width)
         self.doubleSpinBox_plot_height.valueChanged.connect(self.plot.change_plot_height)
@@ -261,15 +263,17 @@ class GUI(QMainWindow, Ui_MainWindow):
         # Make sure timer is stopped to prevent infinite error loops
         self.timer.stop()
         self.mediaPlayer.setMedia(QMediaContent())
-        if hasattr(self, 'plot'):
-            self.plot.__init__(self)
-        else:
-            self.plot = None
 
         if hasattr(self, 'camera'):
             self.camera.__init__(self)
         else:
             self.camera = None
+
+        if hasattr(self, 'plot'):
+            # self.plot.reset()
+            self.plot.__init__(self)
+        else:
+            self.plot = None
 
         if hasattr(self, 'video'):
             self.video.__init__(self)
@@ -282,6 +286,8 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.sensor_data_file.open_previous_file()
         else:
             self.sensor_data_file = None
+
+        #  TODO: Reset dataplot, labels, spinboxes...
 
     def open_label_dialog(self):
         """

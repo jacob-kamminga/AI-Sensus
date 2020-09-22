@@ -170,8 +170,12 @@ class SensorDataFile:
         self.gui.plot.data_plot = self.gui.figure.add_subplot(1, 1, 1)
 
         # Determine the length of the y-axis and plot the graph with the specified width
-        self.gui.plot.y_min = self.df[self.gui.plot.current_plot].min()
-        self.gui.plot.y_max = self.df[self.gui.plot.current_plot].max()
+        if self.df[self.gui.plot.current_plot].min() == self.df[self.gui.plot.current_plot].max():
+            self.gui.plot.y_min = self.df[self.gui.plot.current_plot].min()
+            self.gui.plot.y_max = self.df[self.gui.plot.current_plot].max()+1
+        else:
+            self.gui.plot.y_min = self.df[self.gui.plot.current_plot].min()
+            self.gui.plot.y_max = self.df[self.gui.plot.current_plot].max()
 
         self.gui.plot.draw_graph()
 
