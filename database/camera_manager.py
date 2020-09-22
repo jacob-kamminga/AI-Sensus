@@ -69,7 +69,7 @@ class CameraManager:
         :return: The camera name of the camera if exists, else None
         """
         self._cur.execute(SQL_SELECT_CAMERA_NAME, (camera_id,))
-        return self._cur.fetchone()[0]
+        return self._cur.fetchone()[0] # TODO: Why is this subscripted? When returns None, an error is raised
 
     def get_camera_id(self, camera_name: str) -> int:
         """

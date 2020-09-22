@@ -121,7 +121,7 @@ class Plot:
                 self.gui.comboBox_functions.setCurrentIndex(0)
                 self.change_plot()
 
-    def change_plot_width(self, value):
+    def change_plot_width(self, value):  # TODO: An error occurs where there is an infinite loop of change_plot_width
         self.settings.set_setting('plot_width', value)
         self.plot_width = value
 

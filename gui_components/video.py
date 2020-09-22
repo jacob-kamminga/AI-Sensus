@@ -31,8 +31,10 @@ class Video:
         self.datetime: Optional[dt.datetime] = None
         self.position = None
         self.timezone = None
-        self.offset = None
+        self.offset = None  # TODO comment here which specific offset this is : offset between the video and sensor data ?
         self.offset_ms = None
+
+    # def reset(self, gui):
 
     def open_previous_file(self):
         previous_path = self.settings.get_setting('last_videofile')
@@ -41,6 +43,7 @@ class Video:
             if os.path.isfile(previous_path):
                 self.file_path = previous_path
                 self.open_file()
+        # else:
 
     def prompt_file(self):
         """
@@ -59,7 +62,6 @@ class Video:
 
         # Get the user input from a dialog window
         self.file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Video", path)
-
         self.open_file()
 
     def open_file(self):
@@ -86,7 +88,8 @@ class Video:
 
             # Video not yet in database
             if self.id_ == -1:
-                self.video_manager.insert_video(self.file_name, self.file_path, self.gui.camera.camera_id, self.datetime)
+                self.video_manager.insert_video(self.file_name, self.file_path, self.gui.camera.camera_id,
+                                                self.datetime)
             # Video already in database -> update file path
             else:
                 self.video_manager.update_file_path(self.file_name, self.file_path)
@@ -132,7 +135,7 @@ class Video:
 
             # The offset between the video and sensor data should be at most 12 hours
             # Otherwise an overflow can occur in the horizontal slider
-            if self.offset <= dt.timedelta(hours=12):
+            if dt.timedelta(hours=-12) <= self.offset <= dt.timedelta(hours=12):
                 self.gui.mediaPlayer.setPosition(self.position)
                 self.gui.horizontalSlider_time.setValue(int(self.position))
             else:
@@ -173,8 +176,11 @@ class Video:
 
         :param duration: The duration of the video.
         """
-        self.gui.horizontalSlider_time.setRange(0, duration)
-        self.gui.horizontalSlider_time.setValue(self.position)
+        try:
+            self.gui.horizontalSlider_time.setRange(0, duration)
+            self.gui.horizontalSlider_time.setValue(self.position)
+        except:
+            print("Could not update the range of the slider")
 
     # Media player controls
 
@@ -214,6 +220,8 @@ class Video:
             self.pause()
         elif self.gui.mediaPlayer.state() == QMediaPlayer.PausedState:
             self.play()
+
+        # TODO: Handle more states. Video becomes unusuable when reaching end of playback
 
     def mute(self):
         if self.gui.mediaPlayer.media().isNull():

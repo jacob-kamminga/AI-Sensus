@@ -1,3 +1,5 @@
+import json
+import sqlite3
 from datetime import datetime
 from datetime import timedelta
 from typing import Optional
@@ -7,13 +9,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog, QFileDialog
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
-
+from pathlib import Path
 from data_export import windowing as wd
 from database.sensor_usage_manager import SensorUsageManager
+from database.create_database import create_database
 from gui.designer.gui import Ui_MainWindow
 from gui.dialogs.camera_settings import CameraSettingsDialog
 from gui.dialogs.export import ExportDialog
@@ -25,12 +28,15 @@ from gui.dialogs.sensor_model import SensorModelDialog
 from gui.dialogs.subject import SubjectDialog
 from gui.dialogs.subject_sensor_map import SubjectSensorMapDialog
 from gui.dialogs.welcome import Welcome
+from gui.dialogs.new_project import NewProject
 from gui_components.camera import Camera
 from gui_components.plot import Plot
 from gui_components.sensor_data_file import SensorDataFile
 from gui_components.video import Video
 from machine_learning.classifier import Classifier, make_predictions
 from project_settings import ProjectSettings
+
+from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, PROJECT_DATABASE_FILE, APP_CONFIG_FILE
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -50,6 +56,8 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.settings: Optional[ProjectSettings] = None
 
+        self.app_config_file = Path.cwd().joinpath(APP_CONFIG_FILE)
+        self.app_config = {}
         self.show_welcome_dialog()
 
         # GUI components
@@ -69,7 +77,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_pause.activated.connect(self.video.toggle_play)
         self.shortcut_plus_10s.activated.connect(self.video.fast_forward_10s)
         self.shortcut_minus_10s.activated.connect(self.video.rewind_10s)
-        self.actionOpen_Project.triggered.connect(self.show_welcome_dialog)
+        self.actionOpen_Project.triggered.connect(self.open_existing_project_dialog)
+        self.actionNew_Project.triggered.connect(self.open_new_project_dialog)
         self.actionOpen_Video.triggered.connect(self.video.prompt_file)
         self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data_file.prompt_file)
         self.pushButton_delete_formula.clicked.connect(self.plot.delete_formula)
@@ -155,18 +164,123 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.err_box.setText('')
 
     def show_welcome_dialog(self):
+        """"
+        Open the welcome dialog. The welcome dialog first checks if a project was already used during previous session.
         """
-        Open the welcome dialog.
-        """
-        dialog = Welcome()
+        dialog = Welcome(self)  # pass self to access new and open project dialogs
 
         if dialog.settings is None:
             dialog.exec()
 
-        self.settings = dialog.settings
+        if self.settings is None and dialog.settings:  # A project was used during previous session
+            self.settings = dialog.settings
 
-        if self.settings is None:
+        if self.settings is None:  # error, this should not happen
             exit(0)
+
+    def open_new_project_dialog(self):
+        """
+        Open the new project name dialog.
+        """
+        new_project_dialog = NewProject()
+        new_project_dialog.exec()
+        project_name = new_project_dialog.project_name
+
+        if project_name:
+            project_dir = QFileDialog.getExistingDirectory(
+                self,
+                "Select new project directory... A folder will be created",
+                options=QFileDialog.ShowDirsOnly
+            )
+
+            if project_dir:
+                # Add project name to project directory
+                project_dir = Path(project_dir).joinpath(project_name)
+
+                self.settings = ProjectSettings(project_dir)
+
+                # Create database
+                try:
+                    conn = sqlite3.connect(project_dir.joinpath(PROJECT_DATABASE_FILE).as_posix())
+                    create_database(conn)
+                except sqlite3.Error as e:
+                    print(e)
+
+                # reset video and sensordata
+                self.reset_gui_components()
+
+                # Save project in app config
+                self.app_config.setdefault(PROJECTS, []).append({
+                    PROJECT_NAME: project_name,
+                    PROJECT_DIR: str(project_dir)
+                })
+                self.app_config[PREVIOUS_PROJECT_DIR] = str(project_dir)
+                self.save_app_config()
+
+                # self.close()
+
+    def save_app_config(self):
+        with self.app_config_file.open('w') as f:
+            json.dump(self.app_config, f)
+
+    def open_existing_project_dialog(self):
+        """
+        Open dialog for selecting an existing project.
+
+        """
+        if self.settings is not None:
+            old_dir = str(self.settings.project_dir)
+        else:
+            old_dir = ""
+
+        project_dir = QFileDialog.getExistingDirectory(
+            self,
+            "Select existing project directory...",
+            old_dir,
+            options=QFileDialog.ShowDirsOnly
+        )
+
+        if project_dir:
+            self.settings = ProjectSettings(Path(project_dir))
+            # reset video and sensor data
+            self.reset_gui_components()
+            # Set project dir as most recent project dir
+            self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
+            self.save_app_config()
+
+            # self.close()
+
+    def reset_gui_components(self):
+        """
+        When opening an existing or starting a new project, the gui components need to be reset to the new project
+        to connect the correct DB's
+        :return:
+        """
+
+        # Make sure timer is stopped to prevent infinite error loops
+        self.timer.stop()
+
+        if hasattr(self, 'plot'):
+            self.plot.__init__(self)
+        else:
+            self.plot = None
+
+        if hasattr(self, 'camera'):
+            self.camera.__init__(self)
+        else:
+            self.camera = None
+
+        if hasattr(self, 'video'):
+            self.video.__init__(self)
+            self.video.open_previous_file()
+        else:
+            self.video = None
+
+        if hasattr(self, 'sensor_data_file'):
+            self.sensor_data_file.__init__(self)
+            self.sensor_data_file.open_previous_file()
+        else:
+            self.sensor_data_file = None
 
     def open_label_dialog(self):
         """
