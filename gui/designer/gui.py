@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
-        MainWindow.setObjectName("MainWindow") # TODO: Add project name
+        MainWindow.setObjectName("MainWindow")
         MainWindow.resize(693, 735)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
@@ -105,6 +105,23 @@ class Ui_MainWindow(object):
         self.verticalLayout_settings.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
         self.verticalLayout_settings.setContentsMargins(0, 0, 0, 0)
         self.verticalLayout_settings.setObjectName("verticalLayout_settings")
+        self.label_2 = QtWidgets.QLabel(self.layoutWidget2)
+        font = QtGui.QFont()
+        font.setPointSize(11)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_2.setFont(font)
+        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_2.setObjectName("label_2")
+        self.verticalLayout_settings.addWidget(self.label_2)
+        self.label_project_name_value = QtWidgets.QLabel(self.layoutWidget2)
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        self.label_project_name_value.setFont(font)
+        self.label_project_name_value.setText("")
+        self.label_project_name_value.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_project_name_value.setObjectName("label_project_name_value")
+        self.verticalLayout_settings.addWidget(self.label_project_name_value)
         self.label_video_date = QtWidgets.QLabel(self.layoutWidget2)
         font = QtGui.QFont()
         font.setPointSize(11)
@@ -312,10 +329,11 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Labeling Application UTwente"))
         self.label_video.setText(_translate("MainWindow", "Video"))
         self.label_duration.setText(_translate("MainWindow", "00:00:00"))
         self.label_sensor_data.setText(_translate("MainWindow", "Sensor Data"))
+        self.label_2.setText(_translate("MainWindow", "Project"))
         self.label_video_date.setText(_translate("MainWindow", "Date"))
         self.label_video_time.setText(_translate("MainWindow", "Time"))
         self.label_camera_name.setText(_translate("MainWindow", "Camera name"))

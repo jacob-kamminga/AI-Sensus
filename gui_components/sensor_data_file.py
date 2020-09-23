@@ -150,7 +150,7 @@ class SensorDataFile:
                 self.init_functions()
                 self.draw_graph()
                 self.update_camera_text()
-
+                self.gui.update_camera_sensor_offset()
                 self.gui.video.sync_with_sensor_data()
 
     def init_functions(self):

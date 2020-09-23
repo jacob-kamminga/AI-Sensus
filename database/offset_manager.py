@@ -12,6 +12,8 @@ SQL_CREATE_TABLE = "create table offset \
   constraint offset_pk \
     unique (camera, sensor) \
 );"
+# TODO: SQL_CREATE_TABLE is not used, should it be? It is currently handled in create_database.py
+
 SQL_INSERT_OFFSET = "INSERT INTO offset(camera, sensor, offset, added) VALUES (?, ?, ?, ?)"
 SQL_SELECT_OFFSET_DATE = "SELECT offset FROM offset WHERE camera = ? AND sensor = ? AND added = ?"
 SQL_SELECT_OFFSET_NO_DATE = "SELECT offset FROM offset WHERE camera = ? AND sensor = ? ORDER BY added DESC"
@@ -66,8 +68,8 @@ class OffsetManager:
 
         # Camera-Sensor combination known
         res = results[0]
-        c.execute(SQL_UPDATE_OFFSET, (res, camera_id, sensor_id, added))
-        self._conn.commit()
+        # c.execute(SQL_UPDATE_OFFSET, (res, camera_id, sensor_id, added))
+        # self._conn.commit()
         return res
 
     def set_offset(self, camera_id: str, sensor_id: str, offset: float, added: date) -> None:
@@ -79,5 +81,14 @@ class OffsetManager:
         :param offset: The new offset value
         :param added: The date that the offset was added
         """
-        self._cur.execute(SQL_UPDATE_OFFSET, (offset, camera_id, sensor_id, added))
+        # First check if this offset combination exists
+        c = self._cur
+        # Check if this offset and date are known
+        c.execute(SQL_SELECT_OFFSET_DATE, (camera_id, sensor_id, added))
+        results = c.fetchall()
+        if len(results) == 0:
+            # New offset so insert
+            c.execute(SQL_INSERT_OFFSET, (camera_id, sensor_id, offset, added))
+        else:
+            c.execute(SQL_UPDATE_OFFSET, (offset, camera_id, sensor_id, added))
         self._conn.commit()

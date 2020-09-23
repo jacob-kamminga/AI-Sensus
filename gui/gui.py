@@ -16,6 +16,7 @@ from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 from pathlib import Path
 from data_export import windowing as wd
+from database.offset_manager import OffsetManager
 from database.sensor_usage_manager import SensorUsageManager
 from database.create_database import create_database
 from gui.designer.gui import Ui_MainWindow
@@ -93,7 +94,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionExit.triggered.connect(exit)
 
         self.lineEdit_function_regex.returnPressed.connect(self.plot.new_plot)
-        self.doubleSpinBox_video_offset.valueChanged.connect(self.camera.change_offset)
+        self.doubleSpinBox_video_offset.valueChanged.connect(self.change_offset)
         self.doubleSpinBox_video_offset.setMaximum(43200)  # 12 hours range
         self.doubleSpinBox_video_offset.setMinimum(-43200)
         self.doubleSpinBox_speed.valueChanged.connect(self.video.change_speed)
@@ -141,9 +142,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.ml_used_columns = []
         self.ml_classifier = Classifier(self.ml_classifier_engine)
 
+        # Manager for offset DB operations
+        self.offset_manager = OffsetManager(self.settings)
+
         # Open the last opened files
         self.video.open_previous_file()
         self.sensor_data_file.open_previous_file()
+
+        self.label_project_name_value.setText(self.settings.get_setting('project_name'))
 
     def std_err_post(self, msg):
         """
@@ -177,7 +183,6 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         if self.settings is None and dialog.settings:  # A project was used during previous session
             self.settings = dialog.settings
-
         if self.settings is None:  # error, this should not happen
             exit(0)
 
@@ -201,6 +206,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                 project_dir = Path(project_dir).joinpath(project_name)
 
                 self.settings = ProjectSettings(project_dir)
+                self.settings.set_setting('project_name', project_name)
 
                 # Create database
                 try:
@@ -260,8 +266,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         :return:
         """
 
-        # Make sure timer is stopped to prevent infinite error loops
-        self.timer.stop()
         self.mediaPlayer.setMedia(QMediaContent())
 
         if hasattr(self, 'camera'):
@@ -287,7 +291,28 @@ class GUI(QMainWindow, Ui_MainWindow):
         else:
             self.sensor_data_file = None
 
+        self.label_project_name_value.setText(self.settings.get_setting('project_name'))
         #  TODO: Reset dataplot, labels, spinboxes...
+
+    def change_offset(self, offset: float):
+        """
+        Updates the offset in the database.
+        """
+        date = self.sensor_data_file.datetime.date()
+
+        if self.sensor_data_file.sensor_id is not None:
+            self.offset_manager.set_offset(self.camera.camera_id,
+                                           self.sensor_data_file.sensor_id,
+                                           offset,
+                                           date)
+
+    def update_camera_sensor_offset(self):
+        if self.sensor_data_file.sensor_id is not None and self.camera.camera_id is not None:
+            offset = self.offset_manager.get_offset(self.camera.camera_id,
+                                                    self.sensor_data_file.sensor_id,
+                                                    self.sensor_data_file.datetime)  # TODO: verify that this datetime usage is correct
+
+            self.doubleSpinBox_video_offset.setValue(offset)
 
     def open_label_dialog(self):
         """

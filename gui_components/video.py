@@ -129,7 +129,7 @@ class Video:
         Synchronizes the start time of the video with the sensor data.
         """
         if self.datetime is not None and self.gui.plot.x_min_dt is not None:
-            self.offset = self.gui.plot.x_min_dt - self.datetime
+            self.offset = self.gui.plot.x_min_dt - self.datetime  # TODO: comment what offset is meant here
             self.offset_ms = self.offset / dt.timedelta(milliseconds=1)
             self.position = self.offset_ms
 

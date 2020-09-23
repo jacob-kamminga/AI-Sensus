@@ -48,15 +48,27 @@ CREATE_UINDEX_LABEL_TYPE = \
     "create unique index label_type_activity_uindex\
         on label_type (activity);"
 
+# CREATE_TABLE_OFFSET = \
+#     "create table offset\
+#     (\
+#         camera    INTEGER not null,\
+#         sensor    INTEGER not null,\
+#         offset    DOUBLE  not null,\
+#         added     DATE    not null,\
+#         constraint offset_pk\
+#             unique (camera, sensor)\
+#     );"
+
 CREATE_TABLE_OFFSET = \
     "create table offset\
     (\
+        id          INTEGER not null\
+             constraint offset_pk\
+                 primary key autoincrement,\
         camera    INTEGER not null,\
         sensor    INTEGER not null,\
         offset    DOUBLE  not null,\
-        added     DATE    not null,\
-        constraint offset_pk\
-            unique (camera, sensor)\
+        added     DATE    not null\
     );"
 
 CREATE_TABLE_SENSOR_DATA_FILE = \
@@ -178,9 +190,9 @@ def create_database(conn: Connection):
     cur.execute(CREATE_UINDEX_SUBJECT)
     cur.execute(CREATE_TABLE_SENSOR_USAGE)
     cur.execute(CREATE_UINDEX_SENSOR_USAGE)
-    cur.execute(CREATE_TABLE_OFFSET)
     cur.execute(CREATE_TABLE_LABEL_TYPE)
     cur.execute(CREATE_UINDEX_LABEL_TYPE)
     cur.execute(CREATE_TABLE_LABEL)
     cur.execute(CREATE_UINDEX_LABEL)
+    cur.execute(CREATE_TABLE_OFFSET)
     conn.commit()

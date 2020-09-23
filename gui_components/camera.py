@@ -12,7 +12,6 @@ class Camera:
         self.settings: ProjectSettings = gui.settings
 
         self.camera_manager = CameraManager(self.settings)
-        self.offset_manager = OffsetManager(self.settings)
 
         self.camera_id = None
         self.camera_name = None
@@ -29,24 +28,7 @@ class Camera:
         self.update_timezone(timezone)
 
         # Update offset between camera and sensor data
-        if self.gui.sensor_data_file.sensor_id is not None:
-            offset = self.offset_manager.get_offset(self.camera_id,
-                                                    self.gui.sensor_data_file.sensor_id,
-                                                    self.gui.sensor_data_file.datetime)
-
-            self.gui.doubleSpinBox_video_offset.setValue(offset)
-
-    def change_offset(self, offset: float):
-        """
-        Updates the offset in the database.
-        """
-        date = self.gui.sensor_data_file.datetime.date()
-
-        if self.gui.sensor_data_file.sensor_id is not None:
-            self.offset_manager.set_offset(self.camera_id,
-                                           self.gui.sensor_data_file.sensor_id,
-                                           offset,
-                                           date)
+        self.gui.update_camera_sensor_offset()
 
     def update_timezone(self, timezone: pytz.timezone):
         self.timezone = timezone
