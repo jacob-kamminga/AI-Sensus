@@ -161,8 +161,12 @@ class SensorDataFile:
         for column in self.df.columns:
             self.gui.comboBox_functions.addItem(column)
 
-        self.gui.comboBox_functions.removeItem(0)
-        self.gui.plot.current_plot = self.gui.comboBox_functions.currentText()
+        # self.gui.comboBox_functions.removeItem(0)
+        if self.settings.get_setting("current_plot"):
+            self.gui.plot.current_plot = self.settings.get_setting("current_plot")
+            self.gui.comboBox_functions.setCurrentText(self.gui.plot.current_plot)
+        else:
+            self.gui.plot.current_plot = self.gui.comboBox_functions.currentText()
 
     def draw_graph(self):
         # Reset the figure and add a new subplot to it
@@ -172,7 +176,7 @@ class SensorDataFile:
         # Determine the length of the y-axis and plot the graph with the specified width
         if self.df[self.gui.plot.current_plot].min() == self.df[self.gui.plot.current_plot].max():
             self.gui.plot.y_min = self.df[self.gui.plot.current_plot].min()
-            self.gui.plot.y_max = self.df[self.gui.plot.current_plot].max()+1
+            self.gui.plot.y_max = self.df[self.gui.plot.current_plot].max() + 1
         else:
             self.gui.plot.y_min = self.df[self.gui.plot.current_plot].min()
             self.gui.plot.y_max = self.df[self.gui.plot.current_plot].max()

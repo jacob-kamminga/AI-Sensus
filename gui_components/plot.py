@@ -105,8 +105,9 @@ class Plot:
         self.y_min = self.sensor_data_file.df[self.current_plot].min()
         self.y_max = self.sensor_data_file.df[self.current_plot].max()
         if self.y_min == self.y_max:
-            raise Exception("y_min cannot be equal to y_max. Select different function or axes to plot")
+            self.y_max = self.y_max+1
         self.draw_graph()
+        self.settings.set_setting("current_plot", self.current_plot)
 
     def delete_formula(self):
         selected_plot = self.gui.comboBox_functions.currentText()
