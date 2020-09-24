@@ -307,8 +307,10 @@ class Ui_MainWindow(object):
         self.actionOpen_Project.setObjectName("actionOpen_Project")
         self.menuFile.addAction(self.actionNew_Project)
         self.menuFile.addAction(self.actionOpen_Project)
+        self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionOpen_Video)
         self.menuFile.addAction(self.actionOpen_Sensor_Data)
+        self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExport_Sensor_Data)
         self.menuFile.addAction(self.actionExit)
         self.menuSubject.addAction(self.actionSubjects)
@@ -329,7 +331,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Labeling Application UTwente"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Labeling Application"))
         self.label_video.setText(_translate("MainWindow", "Video"))
         self.label_duration.setText(_translate("MainWindow", "00:00:00"))
         self.label_sensor_data.setText(_translate("MainWindow", "Sensor Data"))

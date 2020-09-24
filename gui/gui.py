@@ -113,6 +113,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.canvas.mpl_connect('button_release_event', self.plot.onrelease)
 
         # Connect the QMediaPlayer to the right widget
+        # self.videoWidget_player.mediaPlayer = QtWidgetsQmediaPlayer()
         self.mediaPlayer.setVideoOutput(self.videoWidget_player)
 
         # Connect some events that QMediaPlayer generates to their appropriate helper functions
@@ -148,6 +149,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         # Open the last opened files
         self.video.open_previous_file()
         self.sensor_data_file.open_previous_file()
+
 
         self.label_project_name_value.setText(self.settings.get_setting('project_name'))
 
@@ -282,6 +284,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         if hasattr(self, 'video'):
             self.video.__init__(self)
             self.video.open_previous_file()
+
         else:
             self.video = None
 
@@ -310,7 +313,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.sensor_data_file.sensor_id is not None and self.camera.camera_id is not None:
             offset = self.offset_manager.get_offset(self.camera.camera_id,
                                                     self.sensor_data_file.sensor_id,
-                                                    self.sensor_data_file.datetime)  # TODO: verify that this datetime usage is correct
+                                                    self.sensor_data_file.datetime.date())
 
             self.doubleSpinBox_video_offset.setValue(offset)
 

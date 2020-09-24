@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Labeling Application UTwente</string>
+   <string>Labeling Application</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -476,8 +476,10 @@
     </property>
     <addaction name="actionNew_Project"/>
     <addaction name="actionOpen_Project"/>
+    <addaction name="separator"/>
     <addaction name="actionOpen_Video"/>
     <addaction name="actionOpen_Sensor_Data"/>
+    <addaction name="separator"/>
     <addaction name="actionExport_Sensor_Data"/>
     <addaction name="actionExit"/>
    </widget>

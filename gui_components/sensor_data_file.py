@@ -56,6 +56,8 @@ class SensorDataFile:
             if previous_path.is_file():
                 self.file_path = previous_path
                 self.open_file()
+                if hasattr(self.gui, 'video'):
+                    self.gui.video.set_position(0)
 
     def prompt_file(self):
         """
@@ -149,7 +151,7 @@ class SensorDataFile:
 
                 self.init_functions()
                 self.draw_graph()
-                self.update_camera_text()
+                # self.update_camera_text()
                 self.gui.update_camera_sensor_offset()
                 self.gui.video.sync_with_sensor_data()
 
@@ -213,4 +215,4 @@ class SensorDataFile:
                 self.offset_manager.get_offset(
                     camera_id,
                     self.sensor_id,
-                    self.datetime))
+                    self.datetime.date()))

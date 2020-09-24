@@ -50,6 +50,7 @@ class OffsetManager:
         """
         c = self._cur
         c.execute(SQL_SELECT_OFFSET_DATE, (camera_id, sensor_id, added))
+        # result = c.fetchall()
         results = [x[0] for x in c.fetchall()]
 
         # If there is a known offset, return it
