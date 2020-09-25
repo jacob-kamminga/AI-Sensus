@@ -114,6 +114,8 @@ class Video:
         self.set_position(0)
 
     def update_labels_datetime(self):
+        if self.datetime is None:
+            return
         video_hms = self.datetime.strftime("%H:%M:%S")  # TODO: Add timezone
         video_date = self.datetime.strftime("%d-%B-%Y")
 

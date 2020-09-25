@@ -13,10 +13,11 @@ CAMERA_TIMEZONE_INDEX = 2
 
 class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, camera: Camera):
+    def __init__(self, gui):
         super().__init__()
         self.setupUi(self)
-        self.camera = camera
+        self.camera = gui.camera
+        self.video_manager = gui.video.video_manager
         self.selected_camera_id = None
 
         # Fill camera dictionary and add camera names to combobox
@@ -76,7 +77,11 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         ).exec()
 
         if res == QMessageBox.Ok:
-            self.camera.camera_manager.delete_camera(self.camera.camera_manager.get_camera_id(selected_camera_name))
+            camera_id = self.camera.camera_manager.get_camera_id(selected_camera_name)
+            # First delete all videos that assigned this camera to it
+            self.video_manager.delete_video(camera_id)
+            # Delete camera
+            self.camera.camera_manager.delete_camera(camera_id)
             self.comboBox_camera.removeItem(self.comboBox_camera.findText(selected_camera_name))
 
     def toggle_add_camera_pushbutton(self):

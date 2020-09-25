@@ -340,7 +340,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Opens the select camera dialog window.
         """
-        dialog = SelectCameraDialog(self.camera)
+        dialog = SelectCameraDialog(self)
         if self.video.file_name is not None:
             dialog.setWindowTitle(self.video.file_name)
 
