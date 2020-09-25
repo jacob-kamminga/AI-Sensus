@@ -25,6 +25,7 @@ from gui.dialogs.export import ExportDialog
 from gui.dialogs.label import LabelSpecs
 from gui.dialogs.label_settings import LabelSettingsDialog
 from gui.dialogs.machine_learning import MachineLearningDialog
+from gui.dialogs.select_camera import SelectCameraDialog
 from gui.dialogs.sensor import SensorDialog
 from gui.dialogs.sensor_model import SensorModelDialog
 from gui.dialogs.subject import SubjectDialog
@@ -85,7 +86,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data_file.prompt_file)
         self.pushButton_delete_formula.clicked.connect(self.plot.delete_formula)
 
-        self.actionCamera_Settings.triggered.connect(self.open_camera_settings_dialog)
+        self.actionCamera_Settings.triggered.connect(self.open_select_camera_dialog)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
         self.actionSensors.triggered.connect(self.open_sensor_dialog)
         self.actionSensor_models.triggered.connect(self.open_sensor_model_dialog)
@@ -335,12 +336,11 @@ class GUI(QMainWindow, Ui_MainWindow):
                                          dialog.selected_label.end,
                                          dialog.selected_label.label)
 
-    def open_camera_settings_dialog(self):
+    def open_select_camera_dialog(self):
         """
-        Opens the camera settings_dict dialog window.
+        Opens the select camera dialog window.
         """
-        dialog = CameraSettingsDialog(self.video.camera_manager)
-
+        dialog = SelectCameraDialog(self.camera)
         if self.video.file_name is not None:
             dialog.setWindowTitle(self.video.file_name)
 

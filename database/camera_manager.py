@@ -24,6 +24,7 @@ SQL_SELECT_CAMERA_ID = "SELECT id FROM camera WHERE name = ?"
 SQL_SELECT_CAMERA_NAME = "SELECT name FROM camera WHERE id = ?"
 SQL_SELECT_TIMEZONE = "SELECT timezone FROM camera WHERE id = ?"
 SQL_UPDATE_TIMEZONE = "UPDATE camera SET timezone = ? WHERE id = ?"
+SQL_UPDATE_CAMERA = "UPDATE camera SET name = ?,  timezone = ? WHERE id = ?"
 
 
 class CameraManager:
@@ -103,4 +104,15 @@ class CameraManager:
         :param timezone: The timezone that has been set on the camera
         """
         self._cur.execute(SQL_UPDATE_TIMEZONE, (timezone, camera_id))
+        self._conn.commit()
+
+    def update_camera(self, camera_id: int, camera_name: str, timezone: str):
+        """
+        Updates the name and timezone of a camera. The camera is selected by camera_id.
+
+        :param camera_id: The ID of the camera
+        :param camera_name: The name of the camera
+        :param timezone: The timezone that has been set on the camera
+        """
+        self._cur.execute(SQL_UPDATE_CAMERA, (camera_name, timezone, camera_id))
         self._conn.commit()
