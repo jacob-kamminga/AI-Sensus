@@ -111,6 +111,7 @@ class Video:
         if self.id_ is not None:
             self.video_manager.update_camera(self.id_, camera_id)
         self.sync_with_sensor_data()
+        self.set_position(0)
 
     def update_labels_datetime(self):
         video_hms = self.datetime.strftime("%H:%M:%S")  # TODO: Add timezone

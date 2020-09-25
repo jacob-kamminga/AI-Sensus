@@ -34,11 +34,12 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def add_camera(self):
         new_camera_name = self.lineEdit_new_camera_name.text()
-        if new_camera_name is not '':
+        if new_camera_name != '':
             self.camera.camera_manager.add_camera(self.lineEdit_new_camera_name.text())
             self.comboBox_camera.addItem(new_camera_name)
             self.comboBox_camera.setCurrentText(new_camera_name)
             self.edit_camera()
+            self.lineEdit_new_camera_name.clear()
 
     def use_camera(self):
         selected_camera_name = self.comboBox_camera.currentText()
@@ -70,16 +71,16 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         res = QMessageBox(
             QMessageBox.Warning,
             'Heads up!',
-            'Are you sure you want to delete ' + self.selected_camera_id,
+            'Are you sure you want to delete ' + selected_camera_name + '?',
             QMessageBox.Ok | QMessageBox.Cancel
         ).exec()
 
-        if res:
-            self.camera.camera_manager.delete_camera(self.selected_camera_id)
+        if res == QMessageBox.Ok:
+            self.camera.camera_manager.delete_camera(self.camera.camera_manager.get_camera_id(selected_camera_name))
             self.comboBox_camera.removeItem(self.comboBox_camera.findText(selected_camera_name))
 
     def toggle_add_camera_pushbutton(self):
-        if self.lineEdit_new_camera_name.text() is '':
+        if self.lineEdit_new_camera_name.text() == '':
             self.pushButton_new_camera.setEnabled(False)
         else:
             self.pushButton_new_camera.setEnabled(True)
