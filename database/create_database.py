@@ -1,5 +1,7 @@
 from sqlite3 import Connection
 
+from constants import *
+
 CREATE_TABLE_CAMERA = "create table camera\
 (\
   name     TEXT    not null,\
@@ -110,14 +112,18 @@ CREATE_TABLE_SENSOR_MODEL = \
         id               INTEGER\
             constraint sensor_model_pk\
                 primary key autoincrement,\
-        model_name       VARCHAR(50) not null,\
-        date_row         INTEGER     not null,\
-        time_row         INTEGER     not null,\
-        sensor_id_row    INTEGER     not null,\
-        sensor_id_column INTEGER,\
-        sensor_id_regex  TEXT,\
-        headers_row      INTEGER     not null,\
-        comment_style    TEXT        not null\
+        model_name              VARCHAR(50) not null,\
+        " + DATE_ROW + "            INTEGER,\
+        " + TIME_ROW + "            INTEGER,\
+        " + TIMESTAMP_COLUMN + "    INTEGER,\
+        " + RELATIVE_ABSOLUTE + "   VARCHAR(50), \
+        " + TIMESTAMP_UNIT + "      VARCHAR(50),\
+        " + FORMAT_STRING + "       TEXT,\
+        " + SENSOR_ID_ROW + "       INTEGER ,\
+        " + SENSOR_ID_COLUMN + "    INTEGER,\
+        " + SENSOR_ID_REGEX + "     TEXT,\
+        " + HEADERS_ROW + "         INTEGER,\
+        " + COMMENT_STYLE + "       TEXT\
     );"
 
 CREATE_UINDEX_SENSOR_MODEL = \

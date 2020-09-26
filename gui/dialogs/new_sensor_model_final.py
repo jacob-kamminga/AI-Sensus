@@ -57,6 +57,10 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
             DATE_ROW: existing_model[DATE_ROW],
             TIME_ROW: existing_model[TIME_ROW],
+            TIMESTAMP_COLUMN: existing_model[TIMESTAMP_COLUMN],
+            RELATIVE_ABSOLUTE: existing_model[RELATIVE_ABSOLUTE],
+            TIMESTAMP_UNIT: existing_model[TIMESTAMP_UNIT],
+            FORMAT_STRING: existing_model[FORMAT_STRING],
 
             SENSOR_ID_ROW: existing_model[SENSOR_ID_ROW],
             SENSOR_ID_COLUMN: existing_model[SENSOR_ID_COLUMN],
@@ -85,6 +89,10 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
                 self.model[MODEL_NAME],
                 self.model[DATE_ROW],
                 self.model[TIME_ROW],
+                self.model[TIMESTAMP_COLUMN],
+                self.model[RELATIVE_ABSOLUTE],
+                self.model[TIMESTAMP_UNIT],
+                self.model[FORMAT_STRING],
                 self.model[SENSOR_ID_ROW],
                 self.model[SENSOR_ID_COLUMN],
                 self.model[SENSOR_ID_REGEX],
@@ -96,6 +104,10 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
                 self.model[MODEL_NAME],
                 self.model[DATE_ROW],
                 self.model[TIME_ROW],
+                self.model[TIMESTAMP_COLUMN],
+                self.model[RELATIVE_ABSOLUTE],
+                self.model[TIMESTAMP_UNIT],
+                self.model[FORMAT_STRING],
                 self.model[SENSOR_ID_ROW],
                 self.model[SENSOR_ID_COLUMN],
                 self.model[SENSOR_ID_REGEX],
@@ -124,7 +136,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
     def edit(self):
         from gui.dialogs.new_sensor_model_name import SensorModelNameDialog
 
-        dialog = SensorModelNameDialog(self.settings, self.model, test_file=self.test_file, parent=self.parent)
+        dialog = SensorModelNameDialog(self.settings, model=self.model, model_id=self.model_id, test_file=self.test_file, parent=self.parent)
         self.close()
         dialog.exec()
 
