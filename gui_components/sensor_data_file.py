@@ -16,7 +16,7 @@ from database.sensor_manager import SensorManager
 from database.sensor_data_file_manager import SensorDataFileManager
 from database.sensor_model_manager import SensorModelManager
 from gui.dialogs.sensor_model import SensorModelDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorDataFile:
@@ -26,7 +26,7 @@ class SensorDataFile:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettings = gui.settings
+        self.settings: ProjectSettingsDialog = gui.settings
         self.file_path: Optional[Path] = None
 
         self.sensor_manager = SensorManager(self.settings)

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QMessageBox
 from database.sensor_manager import SensorManager
 from gui.designer.sensor import Ui_Dialog
 from gui.dialogs.edit_sensor import EditSensorDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 INDEX_SENSOR_ID = 0
 INDEX_SENSOR_NAME = 1
@@ -12,7 +12,7 @@ INDEX_SENSOR_NAME = 1
 
 class SensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         super().__init__()
         self.setupUi(self)
 
@@ -23,6 +23,7 @@ class SensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
         self.create_table()
 
+        self.listWidget.itemDoubleClicked.connect(self.open_edit_sensor_dialog)
         self.pushButton_edit_sensor.clicked.connect(self.open_edit_sensor_dialog)
         self.pushButton_remove_sensor.clicked.connect(self.open_remove_sensor_msg)
 

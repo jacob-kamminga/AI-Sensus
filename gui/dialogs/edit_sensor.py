@@ -35,11 +35,11 @@ class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.comboBox_timezone.addItems(pytz.common_timezones)
 
         # Fill the fields with the sensor that is currently selected
-        self.set_current_sensor()
+        self.load_sensor()
 
         self.buttonBox.accepted.connect(self.save_to_db)
 
-    def set_current_sensor(self):
+    def load_sensor(self):
         sensor_id = self.sensors_dict[self.sensor_id]
         timezone = self.sensor_manager.get_timezone_by_id(self.sensor_id)
 

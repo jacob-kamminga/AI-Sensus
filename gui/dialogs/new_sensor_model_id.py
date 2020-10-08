@@ -3,12 +3,12 @@ from PyQt5.QtWidgets import QDialog
 from constants import SENSOR_ID_ROW, SENSOR_ID_COLUMN, SENSOR_ID_REGEX
 from gui.designer.new_sensor_model_sensor_id import Ui_Dialog
 from gui.dialogs.new_sensor_model_headers import SensorModelHeadersDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorModelIdDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model: {}, model_id=None, test_file=None, parent=None):
+    def __init__(self, settings: ProjectSettingsDialog, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings

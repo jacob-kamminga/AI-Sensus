@@ -20,7 +20,7 @@ INIT_PROJECT_CONFIG = {
 }
 
 
-class ProjectSettings(QDialog, Ui_Dialog):
+class ProjectSettingsDialog(QDialog, Ui_Dialog):
 
     def __init__(self, project_dir: Path, new_project=False):
         """

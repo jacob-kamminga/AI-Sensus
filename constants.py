@@ -10,8 +10,17 @@ ID = 'id'
 MODEL_NAME = 'model_name'
 
 DATE_ROW = 'date_row'
-
 TIME_ROW = 'time_row'
+TIMESTAMP_COLUMN = 'timestamp_column'
+RELATIVE_ABSOLUTE = 'relative_absolute'
+TIMESTAMP_UNIT = 'timestamp_unit'
+FORMAT_STRING = 'format_string'
+
+ABSOLUTE_ITEM = 'absolute'
+RELATIVE_METADATA_ITEM = 'relative to metadata timestamp'
+RELATIVE_OTHER_ITEM = 'relative to other time'
+FORMAT_STRING_ITEM = 'formatted string'
+
 
 SENSOR_ID_ROW = 'sensor_id_row'
 SENSOR_ID_COLUMN = 'sensor_id_column'

@@ -3,12 +3,12 @@ from PyQt5.QtWidgets import QDialog
 from constants import HEADERS_ROW
 from gui.designer.new_sensor_model_headers import Ui_Dialog
 from gui.dialogs.new_sensor_model_comment_style import SensorModelCommentStyleDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorModelHeadersDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model: {}, model_id=None, test_file=None, parent=None):
+    def __init__(self, settings: ProjectSettingsDialog, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings

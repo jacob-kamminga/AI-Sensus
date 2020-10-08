@@ -2,14 +2,14 @@ import pytz
 
 from database.camera_manager import CameraManager
 from database.offset_manager import OffsetManager
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class Camera:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettings = gui.settings
+        self.settings: ProjectSettingsDialog = gui.settings
 
         self.camera_manager = CameraManager(self.settings)
 

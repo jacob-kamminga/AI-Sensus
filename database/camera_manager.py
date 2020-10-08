@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import pytz
 
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE = "create table camera \
 ( \
@@ -23,12 +23,13 @@ SQL_SELECT_ALL_CAMERAS = "SELECT id, name, timezone FROM camera"
 SQL_SELECT_CAMERA_ID = "SELECT id FROM camera WHERE name = ?"
 SQL_SELECT_CAMERA_NAME = "SELECT name FROM camera WHERE id = ?"
 SQL_SELECT_TIMEZONE = "SELECT timezone FROM camera WHERE id = ?"
-SQL_UPDATE_TIMEZONE = "UPDATE camera SET timezone = ? WHERE name = ?"
+SQL_UPDATE_TIMEZONE = "UPDATE camera SET timezone = ? WHERE id = ?"
+SQL_UPDATE_CAMERA = "UPDATE camera SET name = ?,  timezone = ? WHERE id = ?"
 
 
 class CameraManager:
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         self._conn = sqlite3.connect(
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
@@ -69,7 +70,7 @@ class CameraManager:
         :return: The camera name of the camera if exists, else None
         """
         self._cur.execute(SQL_SELECT_CAMERA_NAME, (camera_id,))
-        return self._cur.fetchone()[0] # TODO: Why is this subscripted? When returns None, an error is raised
+        return self._cur.fetchone()[0]  # TODO: Why is this subscripted? When returns None, an error is raised
 
     def get_camera_id(self, camera_name: str) -> int:
         """
@@ -95,12 +96,23 @@ class CameraManager:
 
         return pytz.timezone(timezone_str)
 
-    def update_timezone(self, camera_name: str, timezone: str):
+    def update_timezone(self, camera_id: int, timezone: str):
         """
         Updates the timezone of a camera.
 
         :param camera_id: The ID of the camera
         :param timezone: The timezone that has been set on the camera
         """
-        self._cur.execute(SQL_UPDATE_TIMEZONE, (timezone, camera_name))
+        self._cur.execute(SQL_UPDATE_TIMEZONE, (timezone, camera_id))
+        self._conn.commit()
+
+    def update_camera(self, camera_id: int, camera_name: str, timezone: str):
+        """
+        Updates the name and timezone of a camera. The camera is selected by camera_id.
+
+        :param camera_id: The ID of the camera
+        :param camera_name: The name of the camera
+        :param timezone: The timezone that has been set on the camera
+        """
+        self._cur.execute(SQL_UPDATE_CAMERA, (camera_name, timezone, camera_id))
         self._conn.commit()

@@ -1,5 +1,6 @@
 import re
 import datetime as dt
+import pytz
 import sqlite3
 from parser import ParserError
 from pathlib import Path
@@ -13,9 +14,10 @@ from constants import DATE_ROW, TIME_ROW, SENSOR_ID_ROW, SENSOR_ID_COLUMN, HEADE
 from data_import import sensor as sens, column_metadata as cm
 from data_import.import_exception import ImportException
 from database.sensor_model_manager import SensorModelManager
+from date_utils import naive_to_utc_dt
 from parse_function.parse_exception import ParseException
 from machine_learning.classifier import CLASSIFIER_NAN
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1
@@ -89,6 +91,7 @@ def parse_datetime(file, row: int):
     header_date = parse_csv_comment(file, row)
 
     try:
+        # Automatically parse datetime string using dateutil.parser
         return dparser.parse(header_date, fuzzy=True)
     except ParserError:
         return None
@@ -125,7 +128,7 @@ def parse_header_row(file, header_row, comment_style):
 
 class SensorData:
 
-    def __init__(self, file_path: Path, settings: ProjectSettings, sensor_model_id):
+    def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id):
         """
         The SensorData starts parsing as soon as it's constructed. Only SensorData.get_data() needs to
         be called in order to get the parsed data. SensorData.metadata contains the metadata.
@@ -158,6 +161,7 @@ class SensorData:
         self.sensor_model_id = sensor_model_id
         self.metadata = dict()
         self.col_metadata = dict()
+        self.timezone = pytz.timezone(settings.get_setting('timezone'))
 
         # Parse metadata and data
         self._settings_dict = settings.settings_dict
@@ -196,9 +200,15 @@ class SensorData:
                 sensor_model = self.sensor_model_manager.get_model_by_id(self.sensor_model_id)
                 self.parse_model_config(file, sensor_model)
                 pd_header_arg = parse_header_row(file, self.metadata[HEADERS_ROW], self.metadata[COMMENT_STYLE])
-                # Create datetime object from date and time and put it in metadata
-                self.metadata['datetime'] = dt.datetime.strptime(self.metadata['date'] + self.metadata['time'],
-                                                                 '%Y-%m-%d%H:%M:%S.%f')
+
+                # Create datetime object from date and time
+                naive_dt = dt.datetime.strptime(
+                    self.metadata['date'] + self.metadata['time'],
+                    '%Y-%m-%d%H:%M:%S.%f'
+                )
+
+                # Store UTC datetime in metadata
+                self.metadata['datetime'] = naive_to_utc_dt(naive_dt, self.timezone)
             except ImportException:
                 # Pass ImportException
                 raise

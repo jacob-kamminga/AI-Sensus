@@ -6,12 +6,12 @@ from PyQt5.QtWidgets import QDialog, QErrorMessage, QFileDialog
 from constants import *
 from gui.designer.new_sensor_model_name import Ui_Dialog
 from gui.dialogs.new_sensor_model_date import SensorModelDateDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorModelNameDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model=None, model_id=None, test_file=None, parent=None):
+    def __init__(self, settings: ProjectSettingsDialog, model=None, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings
@@ -34,6 +34,10 @@ class SensorModelNameDialog(QDialog, Ui_Dialog):
 
                 DATE_ROW: existing_model[DATE_ROW],
                 TIME_ROW: existing_model[TIME_ROW],
+                TIMESTAMP_COLUMN: existing_model[TIMESTAMP_COLUMN],
+                RELATIVE_ABSOLUTE: existing_model[RELATIVE_ABSOLUTE],
+                TIMESTAMP_UNIT: existing_model[TIMESTAMP_UNIT],
+                FORMAT_STRING: existing_model[FORMAT_STRING],
 
                 SENSOR_ID_ROW: existing_model[SENSOR_ID_ROW],
                 SENSOR_ID_COLUMN: existing_model[SENSOR_ID_COLUMN],
@@ -51,6 +55,10 @@ class SensorModelNameDialog(QDialog, Ui_Dialog):
 
                 DATE_ROW: -1,
                 TIME_ROW: -1,
+                TIMESTAMP_COLUMN: -1,
+                RELATIVE_ABSOLUTE: '',
+                TIMESTAMP_UNIT: '',
+                FORMAT_STRING: '',
 
                 SENSOR_ID_ROW: -1,
                 SENSOR_ID_COLUMN: -1,

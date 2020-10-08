@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Tuple, Dict
 
 from constants import PROJECT_DATABASE_FILE
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE_LABEL_TYPE = \
     "create table label_type\
@@ -47,7 +47,7 @@ SQL_UPDATE_COLOR = \
 
 class LabelTypeManager:
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         self._conn = sqlite3.connect(
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES

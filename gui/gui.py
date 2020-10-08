@@ -25,6 +25,7 @@ from gui.dialogs.export import ExportDialog
 from gui.dialogs.label import LabelSpecs
 from gui.dialogs.label_settings import LabelSettingsDialog
 from gui.dialogs.machine_learning import MachineLearningDialog
+from gui.dialogs.select_camera import SelectCameraDialog
 from gui.dialogs.sensor import SensorDialog
 from gui.dialogs.sensor_model import SensorModelDialog
 from gui.dialogs.subject import SubjectDialog
@@ -36,7 +37,7 @@ from gui_components.plot import Plot
 from gui_components.sensor_data_file import SensorDataFile
 from gui_components.video import Video
 from machine_learning.classifier import Classifier, make_predictions
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, PROJECT_DATABASE_FILE, APP_CONFIG_FILE
 
@@ -56,7 +57,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         # To avoid creating multiple error boxes
         self.err_box = None
 
-        self.settings: Optional[ProjectSettings] = None
+        self.settings: Optional[ProjectSettingsDialog] = None
 
         self.app_config_file = Path.cwd().joinpath(APP_CONFIG_FILE)
         self.app_config = {}
@@ -85,7 +86,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionOpen_Sensor_Data.triggered.connect(self.sensor_data_file.prompt_file)
         self.pushButton_delete_formula.clicked.connect(self.plot.delete_formula)
 
-        self.actionCamera_Settings.triggered.connect(self.open_camera_settings_dialog)
+        self.actionCamera_Settings.triggered.connect(self.open_select_camera_dialog)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
         self.actionSensors.triggered.connect(self.open_sensor_dialog)
         self.actionSensor_models.triggered.connect(self.open_sensor_model_dialog)
@@ -207,7 +208,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                 # Add project name to project directory
                 project_dir = Path(project_dir).joinpath(project_name)
 
-                self.settings = ProjectSettings(project_dir)
+                self.settings = ProjectSettingsDialog(project_dir)
                 self.settings.set_setting('project_name', project_name)
 
                 self.settings.exec()
@@ -252,7 +253,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         )
 
         if project_dir:
-            self.settings = ProjectSettings(Path(project_dir))
+            self.settings = ProjectSettingsDialog(Path(project_dir))
             # Reset gui components
             self.reset_gui_components()
             # Set project dir as most recent project dir
@@ -335,12 +336,11 @@ class GUI(QMainWindow, Ui_MainWindow):
                                          dialog.selected_label.end,
                                          dialog.selected_label.label)
 
-    def open_camera_settings_dialog(self):
+    def open_select_camera_dialog(self):
         """
-        Opens the camera settings_dict dialog window.
+        Opens the select camera dialog window.
         """
-        dialog = CameraSettingsDialog(self.video.camera_manager)
-
+        dialog = SelectCameraDialog(self)
         if self.video.file_name is not None:
             dialog.setWindowTitle(self.video.file_name)
 

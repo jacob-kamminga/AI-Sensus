@@ -11,7 +11,7 @@ from database.label_manager import LabelManager
 from database.label_type_manager import LabelTypeManager
 from gui.dialogs.label import LabelSpecs
 from gui_components.sensor_data_file import SensorDataFile
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1
@@ -29,7 +29,7 @@ class Plot:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettings = gui.settings
+        self.settings: ProjectSettingsDialog = gui.settings
         self.sensor_data_file: SensorDataFile = gui.sensor_data_file
 
         # self.reset()

@@ -14,7 +14,7 @@ from database.sensor_data_file_manager import SensorDataFileManager
 from database.subject_manager import SubjectManager
 from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.export_new import Ui_Dialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -23,7 +23,7 @@ COL_TIMESTAMP = 'Timestamp'
 
 class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, datetime: dt.datetime = None):
+    def __init__(self, settings: ProjectSettingsDialog, datetime: dt.datetime = None):
         super().__init__()
         self.setupUi(self)
 

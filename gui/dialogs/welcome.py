@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QDialog
 
 from constants import PREVIOUS_PROJECT_DIR, PROJECTS
 from gui.designer.welcome import Ui_Dialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 INIT_APP_CONFIG = {
     PREVIOUS_PROJECT_DIR: "",
@@ -21,7 +21,7 @@ class Welcome(QDialog, Ui_Dialog):
         self.setupUi(self)
         self.gui = gui
 
-        self.settings: Optional[ProjectSettings] = None
+        self.settings: Optional[ProjectSettingsDialog] = None
         self.load_settings()
 
         self.pushButton_new_project.pressed.connect(gui.open_new_project_dialog)
@@ -40,7 +40,7 @@ class Welcome(QDialog, Ui_Dialog):
 
                 # Check if previous project directory exists
                 if prev_project_dir.is_dir():
-                    self.settings = ProjectSettings(prev_project_dir)
+                    self.settings = ProjectSettingsDialog(prev_project_dir)
 
         else:
             # Create empty application config file

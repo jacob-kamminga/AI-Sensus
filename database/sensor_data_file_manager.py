@@ -2,7 +2,7 @@ import datetime as dt
 import sqlite3
 from typing import List
 
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 SQL_INSERT_FILE = (
@@ -62,7 +62,7 @@ SQL_UPDATE_FILE_PATH = (
 
 class SensorDataFileManager:
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         self._conn = sqlite3.connect(
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES

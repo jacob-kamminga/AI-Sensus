@@ -1,7 +1,7 @@
 import sqlite3
 from typing import List
 
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE = "create table subject\
 (\
@@ -31,7 +31,7 @@ INDEX_SUBJECT_EXTRA_INFO = 4
 
 class SubjectManager:
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         self._conn = sqlite3.connect(
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES

@@ -3,7 +3,7 @@ import sqlite3
 from typing import List, Tuple
 
 from exceptions import VideoDoesNotExist
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE = "create table video\
 (\
@@ -20,9 +20,11 @@ SQL_CREATE_TABLE = "create table video\
 create unique index video_file_file_name_uindex\
   on video (file_name);"
 
-SQL_DELETE_VIDEO = "DELETE FROM video WHERE file_name = ?"
+SQL_DELETE_VIDEO_FILENAME = "DELETE FROM video WHERE file_name = ?"
+SQL_DELETE_VIDEO_CAMERA_ID = "DELETE FROM video WHERE camera_id = ?"
 
 SQL_INSERT_VIDEO = "INSERT INTO video(file_name, file_path, camera_id, datetime) VALUES (?, ?, ?, ?)"
+
 
 SQL_SELECT_ALL_VIDEOS = "SELECT file_name, datetime, camera_id FROM video"
 SQL_SELECT_CAMERA = "SELECT camera_id FROM video WHERE video.file_name = ?"
@@ -35,7 +37,7 @@ SQL_UPDATE_FILE_PATH = "UPDATE video SET file_path = ? WHERE file_name = ?"
 
 class VideoManager:
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         self._conn = sqlite3.connect(
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
@@ -71,13 +73,20 @@ class VideoManager:
         self._cur.execute(SQL_INSERT_VIDEO, (file_name, file_path, camera_id, datetime))
         self._conn.commit()
 
-    def delete_video(self, file_name: str) -> None:
+    def delete_video(self, video_id) -> None:
         """
         Deletes a video from the database.
 
-        :param file_name: The file name of the video
+        :param video_id: Either the filename or camera_id
         """
-        self._cur.execute(SQL_DELETE_VIDEO, (file_name,))
+        if isinstance(video_id, str):
+            # Delete based on filename
+            self._cur.execute(SQL_DELETE_VIDEO_FILENAME, (video_id,))
+        elif isinstance(video_id, int):
+            # Delete based on camera_id
+            self._cur.execute(SQL_DELETE_VIDEO_CAMERA_ID, (video_id,))
+        else:
+            return
         self._conn.commit()
 
     def get_all_videos(self) -> List[Tuple[str, str]]:

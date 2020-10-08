@@ -11,8 +11,9 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox
 import video_metadata
 from database.camera_manager import CameraManager
 from database.video_manager import VideoManager
+from date_utils import utc_to_local_dt
 from exceptions import VideoDoesNotExist
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 from utils import get_hms_sum, ms_to_hms
 
 
@@ -20,7 +21,7 @@ class Video:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettings = gui.settings
+        self.settings: ProjectSettingsDialog = gui.settings
         self.file_name = None
         self.file_path = None
 
@@ -28,7 +29,7 @@ class Video:
         self.camera_manager = CameraManager(self.settings)
 
         self.id_: Optional[int] = None
-        self.datetime: Optional[dt.datetime] = None
+        self.utc_dt: Optional[dt.datetime] = None
         self.position = None
         self.timezone = None
         self.offset = None  # TODO comment here which specific offset this is : offset between the video and sensor data ?
@@ -55,6 +56,7 @@ class Video:
         if path is None:
             path = ""
         elif not os.path.isfile(path):
+            # Split path to obtain the base path
             path = path.rsplit('/', 1)[0]
 
             if not os.path.isdir(path):
@@ -79,7 +81,7 @@ class Video:
                 camera_id = self.video_manager.get_camera(self.file_name)
                 self.gui.camera.change_camera(camera_id)
             except VideoDoesNotExist:
-                self.gui.open_camera_settings_dialog()
+                self.gui.open_select_camera_dialog()
 
             self.update_datetime()
 
@@ -89,7 +91,7 @@ class Video:
             # Video not yet in database
             if self.id_ == -1:
                 self.video_manager.insert_video(self.file_name, self.file_path, self.gui.camera.camera_id,
-                                                self.datetime)
+                                                self.utc_dt)
             # Video already in database -> update file path
             else:
                 self.video_manager.update_file_path(self.file_name, self.file_path)
@@ -104,20 +106,26 @@ class Video:
             self.unmute()
 
     def update_datetime(self):
-        self.datetime = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera.timezone)
+        self.utc_dt = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera.timezone)
         self.update_labels_datetime()
 
     def update_camera(self, camera_id: int):
         if self.id_ is not None:
             self.video_manager.update_camera(self.id_, camera_id)
 
+        self.sync_with_sensor_data()
+        self.set_position(0)
+
     def update_labels_datetime(self):
-        video_hms = self.datetime.strftime("%H:%M:%S")  # TODO: Add timezone
-        video_date = self.datetime.strftime("%d-%B-%Y")
+        if self.utc_dt is None:
+            return
+
+        video_hms = utc_to_local_dt(self.utc_dt, self.settings).strftime("%H:%M:%S")  # TODO: Add timezone
+        video_date = self.utc_dt.strftime("%d-%B-%Y")
 
         if self.position is not None:
             current_video_time = get_hms_sum(video_hms, ms_to_hms(self.position))
-            current_video_date = (self.datetime + dt.timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
+            current_video_date = (self.utc_dt + dt.timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
             self.gui.label_video_time_value.setText(current_video_time)
             self.gui.label_video_date_value.setText(current_video_date)
         else:
@@ -128,11 +136,11 @@ class Video:
         """
         Synchronizes the start time of the video with the sensor data.
         """
-        if self.datetime is not None and self.gui.plot.x_min_dt is not None:
+        if self.utc_dt is not None and self.gui.plot.x_min_dt is not None:
             # first update plot according to offset value
             self.gui.plot.update_plot_axis()
 
-            self.offset = self.gui.plot.x_min_dt - self.datetime  # TODO: comment what offset is meant here
+            self.offset = self.gui.plot.x_min_dt - self.utc_dt  # TODO: comment what offset is meant here
             self.offset_ms = self.offset / dt.timedelta(milliseconds=1)
             self.position = self.offset_ms
 
