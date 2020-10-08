@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>398</width>
-    <height>160</height>
+    <height>208</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>120</y>
+     <y>170</y>
      <width>381</width>
      <height>32</height>
     </rect>
@@ -29,11 +29,11 @@
     <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
    </property>
   </widget>
-  <widget class="QLabel" name="label_subject">
+  <widget class="QLabel" name="label_sensor_id">
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>50</y>
+     <y>70</y>
      <width>101</width>
      <height>16</height>
     </rect>
@@ -45,29 +45,10 @@
     </font>
    </property>
    <property name="text">
-    <string>Old sensor ID</string>
+    <string>Sensor ID</string>
    </property>
   </widget>
-  <widget class="QLabel" name="label_sensor">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>80</y>
-     <width>101</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="text">
-    <string>New sensor ID</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_new_map">
+  <widget class="QLabel" name="label_title">
    <property name="geometry">
     <rect>
      <x>130</x>
@@ -90,21 +71,11 @@
     <set>Qt::AlignCenter</set>
    </property>
   </widget>
-  <widget class="QLineEdit" name="lineEdit_new_id_val">
+  <widget class="QLabel" name="label_sensor_id_val">
    <property name="geometry">
     <rect>
      <x>130</x>
-     <y>80</y>
-     <width>251</width>
-     <height>20</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_old_id_val">
-   <property name="geometry">
-    <rect>
-     <x>130</x>
-     <y>50</y>
+     <y>70</y>
      <width>251</width>
      <height>16</height>
     </rect>
@@ -114,6 +85,35 @@
    </property>
    <property name="textInteractionFlags">
     <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_timezone">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>110</y>
+     <width>101</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string>Timezone</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="comboBox_timezone">
+   <property name="geometry">
+    <rect>
+     <x>132</x>
+     <y>110</y>
+     <width>251</width>
+     <height>22</height>
+    </rect>
    </property>
   </widget>
  </widget>

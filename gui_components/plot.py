@@ -67,7 +67,6 @@ class Plot:
     #     :return:
     #     """
 
-
     def new_plot(self):
         """
         Adds a function to the DataFrame as new column.

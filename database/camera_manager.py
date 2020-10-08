@@ -23,7 +23,7 @@ SQL_SELECT_ALL_CAMERAS = "SELECT id, name, timezone FROM camera"
 SQL_SELECT_CAMERA_ID = "SELECT id FROM camera WHERE name = ?"
 SQL_SELECT_CAMERA_NAME = "SELECT name FROM camera WHERE id = ?"
 SQL_SELECT_TIMEZONE = "SELECT timezone FROM camera WHERE id = ?"
-SQL_UPDATE_TIMEZONE = "UPDATE camera SET timezone = ? WHERE id = ?"
+SQL_UPDATE_TIMEZONE = "UPDATE camera SET timezone = ? WHERE name = ?"
 
 
 class CameraManager:
@@ -95,12 +95,12 @@ class CameraManager:
 
         return pytz.timezone(timezone_str)
 
-    def update_timezone(self, camera_id: int, timezone: str):
+    def update_timezone(self, camera_name: str, timezone: str):
         """
         Updates the timezone of a camera.
 
         :param camera_id: The ID of the camera
         :param timezone: The timezone that has been set on the camera
         """
-        self._cur.execute(SQL_UPDATE_TIMEZONE, (timezone, camera_id))
+        self._cur.execute(SQL_UPDATE_TIMEZONE, (timezone, camera_name))
         self._conn.commit()

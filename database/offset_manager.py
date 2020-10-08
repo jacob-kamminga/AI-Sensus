@@ -73,7 +73,7 @@ class OffsetManager:
         # self._conn.commit()
         return res
 
-    def set_offset(self, camera_id: str, sensor_id: str, offset: float, added: date) -> None:
+    def set_offset(self, camera_id: int, sensor_id: int, offset: float, added: date) -> None:
         """
         Changes the offset between a camera and sensor.
 

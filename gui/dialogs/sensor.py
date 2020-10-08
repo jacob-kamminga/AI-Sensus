@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 

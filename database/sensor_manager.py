@@ -4,27 +4,43 @@ from typing import List
 from project_settings import ProjectSettings
 
 
-SQL_INSERT_SENSOR = \
-    "INSERT INTO sensor(name, model) " \
+SQL_INSERT_SENSOR = (
+    "INSERT INTO sensor(name, model) "
     "VALUES (?,?)"
-SQL_SELECT_ALL_SENSORS = \
-    "SELECT id, name " \
+)
+SQL_SELECT_ALL_SENSORS = (
+    "SELECT id, name "
     "FROM sensor"
-SQL_SELECT_ID = \
-    "SELECT id " \
-    "FROM sensor " \
+)
+SQL_SELECT_ID = (
+    "SELECT id "
+    "FROM sensor "
     "WHERE name = ?"
-SQL_SELECT_SENSOR_NAME = \
-    "SELECT name " \
-    "FROM sensor " \
+)
+SQL_SELECT_SENSOR_NAME = (
+    "SELECT name "
+    "FROM sensor "
     "WHERE id = ?"
-SQL_UPDATE_NAME_BY_ID = \
-    "UPDATE sensor " \
-    "SET name = ? " \
+)
+SQL_SELECT_TIMEZONE = (
+    "SELECT timezone "
+    "FROM sensor "
     "WHERE id = ?"
-SQL_DELETE_SENSOR_BY_ID = \
-    "DELETE FROM sensor " \
+)
+SQL_UPDATE_NAME_BY_ID = (
+    "UPDATE sensor "
+    "SET name = ? "
     "WHERE id = ?"
+)
+SQL_UPDATE_TIMEZONE_BY_ID = (
+    "UPDATE sensor "
+    "SET timezone = ? "
+    "WHERE id = ?"
+)
+SQL_DELETE_SENSOR_BY_ID = (
+    "DELETE FROM sensor "
+    "WHERE id = ?"
+)
 
 
 class SensorManager:
@@ -62,6 +78,13 @@ class SensorManager:
         except sqlite3.Error:
             return ""
 
+    def get_timezone_by_id(self, id_: int) -> str:
+        try:
+            self._cur.execute(SQL_SELECT_TIMEZONE, (id_,))
+            return self._cur.fetchone()[0]
+        except sqlite3.Error:
+            return ""
+
     def insert_sensor(self, sensor_name: str, model_id) -> int:
         try:
             self._cur.execute(SQL_INSERT_SENSOR, (sensor_name, model_id))
@@ -74,6 +97,14 @@ class SensorManager:
     def update_name_by_id(self, sensor_id, sensor_name):
         try:
             self._cur.execute(SQL_UPDATE_NAME_BY_ID, (sensor_name, sensor_id))
+            self._conn.commit()
+            return True
+        except sqlite3.Error:
+            return False
+
+    def update_timezone_by_id(self, sensor_id, timezone):
+        try:
+            self._cur.execute(SQL_UPDATE_TIMEZONE_BY_ID, (timezone, sensor_id))
             self._conn.commit()
             return True
         except sqlite3.Error:

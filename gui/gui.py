@@ -210,6 +210,8 @@ class GUI(QMainWindow, Ui_MainWindow):
                 self.settings = ProjectSettings(project_dir)
                 self.settings.set_setting('project_name', project_name)
 
+                self.settings.exec()
+
                 # Create database
                 try:
                     conn = sqlite3.connect(project_dir.joinpath(PROJECT_DATABASE_FILE).as_posix())
@@ -217,7 +219,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                 except sqlite3.Error as e:
                     print(e)
 
-                # reset video and sensordata
+                # Reset video and sensordata
                 self.reset_gui_components()
 
                 # Save project in app config
@@ -227,8 +229,6 @@ class GUI(QMainWindow, Ui_MainWindow):
                 })
                 self.app_config[PREVIOUS_PROJECT_DIR] = str(project_dir)
                 self.save_app_config()
-
-                # self.close()
 
     def save_app_config(self):
         with self.app_config_file.open('w') as f:
@@ -253,7 +253,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         if project_dir:
             self.settings = ProjectSettings(Path(project_dir))
-            # reset gui components
+            # Reset gui components
             self.reset_gui_components()
             # Set project dir as most recent project dir
             self.app_config[PREVIOUS_PROJECT_DIR] = project_dir

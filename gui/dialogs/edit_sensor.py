@@ -1,3 +1,4 @@
+import pytz
 from PyQt5 import QtWidgets
 
 from database.sensor_manager import SensorManager
@@ -28,20 +29,27 @@ class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.sensor_id = sensor_id
 
         self.sensor_edited = False
-        self.old_sensor_name = None
+        self.old_timezone = None
 
+        # Fill the combobox with timezones
+        self.comboBox_timezone.addItems(pytz.common_timezones)
+
+        # Fill the fields with the sensor that is currently selected
         self.set_current_sensor()
 
-        self.buttonBox.accepted.connect(self.edit)
+        self.buttonBox.accepted.connect(self.save_to_db)
 
     def set_current_sensor(self):
-        sensor_name = self.sensors_dict[self.sensor_id]
-        self.label_old_id_val.setText(sensor_name)
-        self.old_sensor_name = sensor_name
+        sensor_id = self.sensors_dict[self.sensor_id]
+        timezone = self.sensor_manager.get_timezone_by_id(self.sensor_id)
 
-    def edit(self):
-        sensor_name = self.lineEdit_new_id_val.text()
+        self.label_sensor_id_val.setText(sensor_id)
+        self.old_timezone = timezone
+        self.comboBox_timezone.setCurrentText(timezone)
 
-        if sensor_name != self.old_sensor_name:
-            self.sensor_manager.update_name_by_id(self.sensor_id, sensor_name)
+    def save_to_db(self):
+        timezone = self.comboBox_timezone.currentText()
+
+        if timezone != self.old_timezone:
+            self.sensor_manager.update_timezone_by_id(self.sensor_id, timezone)
             self.sensor_edited = True
