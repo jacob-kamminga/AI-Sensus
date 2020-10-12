@@ -1,4 +1,5 @@
 import json
+# import jsonpickle
 from pathlib import Path
 from typing import Any
 
@@ -7,6 +8,7 @@ from PyQt5.QtWidgets import QDialog
 
 from constants import PROJECT_CONFIG_FILE, PREVIOUS_SENSOR_DATA_FILE, PLOT_HEIGHT_FACTOR, PROJECT_DATABASE_FILE
 from gui.designer.project_settings import Ui_Dialog
+# from project_settings_obj import ProjectSettings
 
 INIT_PROJECT_CONFIG = {
     'subj_map': {},
@@ -32,6 +34,7 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
         self.project_dir = project_dir
         self.config_file = project_dir.joinpath(PROJECT_CONFIG_FILE)
         self.database_file = project_dir.joinpath(PROJECT_DATABASE_FILE)
+        # self.project_settings = None
         self.settings_dict = {}
 
         # Fill timezone combobox
@@ -54,6 +57,7 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
 
         # Create new settings_dict dictionary
         self.settings_dict = INIT_PROJECT_CONFIG
+        # self.project_settings = ProjectSettings()
         self.save()
 
         self.load_timezone()
@@ -68,6 +72,8 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
         """Loads the saved setting dictionary back into this class from a file"""
         with self.config_file.open('r') as f:
             self.settings_dict = json.load(f)
+            # frozen = json.load(f)
+            # self.project_settings = jsonpickle.decode(frozen)
 
             self.load_timezone()
 
@@ -75,6 +81,7 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
         """Saves the current settings_dict dictionary to a file"""
         with self.config_file.open('w') as f:
             json.dump(self.settings_dict, f)
+            # json.dump(jsonpickle.encode(self.project_settings), f)
 
     def set_setting(self, setting: str, new_value: Any) -> None:
         """

@@ -79,7 +79,12 @@ class CameraManager:
         :return: The camera name of the camera if exists, else None
         """
         self._cur.execute(SQL_SELECT_CAMERA_ID, (camera_name,))
-        return self._cur.fetchone()[0]
+        res = self._cur.fetchone()
+
+        if res is not None:
+            return res[0]
+        else:
+            return -1
 
     def get_all_cameras(self) -> List[Tuple[str, str, str]]:
         """

@@ -3,6 +3,7 @@ import ntpath
 import os
 from typing import Optional
 
+import pytz
 from PyQt5 import QtGui
 from PyQt5.QtCore import QUrl, QDir
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
@@ -11,7 +12,7 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox
 import video_metadata
 from database.camera_manager import CameraManager
 from database.video_manager import VideoManager
-from date_utils import utc_to_local_dt
+from date_utils import utc_to_local
 from exceptions import VideoDoesNotExist
 from project_settings import ProjectSettingsDialog
 from utils import get_hms_sum, ms_to_hms
@@ -30,6 +31,7 @@ class Video:
 
         self.id_: Optional[int] = None
         self.utc_dt: Optional[dt.datetime] = None
+        self.local_dt: Optional[dt.datetime] = None
         self.position = None
         self.timezone = None
         self.offset = None  # TODO comment here which specific offset this is : offset between the video and sensor data ?
@@ -83,31 +85,36 @@ class Video:
             except VideoDoesNotExist:
                 self.gui.open_select_camera_dialog()
 
-            self.update_datetime()
+            if self.gui.camera.camera_id is not None:
+                self.update_datetime()
 
-            # Save file mapping to database if not exists
-            self.id_ = self.video_manager.get_video_id(self.file_name)
+                # Save file mapping to database if not exists
+                self.id_ = self.video_manager.get_video_id(self.file_name)
 
-            # Video not yet in database
-            if self.id_ == -1:
-                self.video_manager.insert_video(self.file_name, self.file_path, self.gui.camera.camera_id,
-                                                self.utc_dt)
-            # Video already in database -> update file path
-            else:
-                self.video_manager.update_file_path(self.file_name, self.file_path)
+                # Video not yet in database
+                if self.id_ == -1:
+                    self.video_manager.insert_video(self.file_name, self.file_path, self.gui.camera.camera_id,
+                                                    self.utc_dt)
+                # Video already in database -> update file path
+                else:
+                    self.video_manager.update_file_path(self.file_name, self.file_path)
 
-            # Play the video in the QMediaPlayer and activate the associated widgets
-            self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
-            self.gui.pushButton_play.setEnabled(True)
-            self.gui.horizontalSlider_time.setEnabled(True)
+                # Play the video in the QMediaPlayer and activate the associated widgets
+                self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
+                self.gui.pushButton_play.setEnabled(True)
+                self.gui.horizontalSlider_time.setEnabled(True)
 
-            self.sync_with_sensor_data()
-            self.pause()
-            self.unmute()
+                self.sync_with_sensor_data()
+                self.pause()
+                self.unmute()
 
     def update_datetime(self):
         self.utc_dt = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera.timezone)
         self.update_labels_datetime()
+
+    def update_timezone(self):
+        if self.utc_dt is not None:
+            self.local_dt = utc_to_local(self.utc_dt, pytz.timezone(self.settings.get_setting('timezone')))
 
     def update_camera(self, camera_id: int):
         if self.id_ is not None:
@@ -117,15 +124,12 @@ class Video:
         self.set_position(0)
 
     def update_labels_datetime(self):
-        if self.utc_dt is None:
-            return
-
-        video_hms = utc_to_local_dt(self.utc_dt, self.settings).strftime("%H:%M:%S")  # TODO: Add timezone
-        video_date = self.utc_dt.strftime("%d-%B-%Y")
+        video_hms = self.local_dt.strftime("%H:%M:%S")
+        video_date = self.local_dt.strftime("%d-%B-%Y")
 
         if self.position is not None:
             current_video_time = get_hms_sum(video_hms, ms_to_hms(self.position))
-            current_video_date = (self.utc_dt + dt.timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
+            current_video_date = (self.local_dt + dt.timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
             self.gui.label_video_time_value.setText(current_video_time)
             self.gui.label_video_date_value.setText(current_video_date)
         else:
@@ -137,10 +141,10 @@ class Video:
         Synchronizes the start time of the video with the sensor data.
         """
         if self.utc_dt is not None and self.gui.plot.x_min_dt is not None:
-            # first update plot according to offset value
+            # First update plot according to offset value
             self.gui.plot.update_plot_axis()
 
-            self.offset = self.gui.plot.x_min_dt - self.utc_dt  # TODO: comment what offset is meant here
+            self.offset = self.gui.plot.x_min_dt - self.utc_dt
             self.offset_ms = self.offset / dt.timedelta(milliseconds=1)
             self.position = self.offset_ms
 

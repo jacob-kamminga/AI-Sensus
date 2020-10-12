@@ -103,8 +103,10 @@ class Plot:
 
         self.y_min = self.sensor_data_file.df[self.current_plot].min()
         self.y_max = self.sensor_data_file.df[self.current_plot].max()
+
         if self.y_min == self.y_max:
             self.y_max = self.y_max+1
+
         self.draw_graph()
         self.settings.set_setting("current_plot", self.current_plot)
 
@@ -172,7 +174,7 @@ class Plot:
 
         self.data_plot.clear()
 
-        time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]
+        time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]  # TODO: Replace hardcoded column with user setting
         self.sensor_data_file.df['clock_time'] = self.sensor_data_file.datetime + pd.to_timedelta(time, unit='s')
 
         self.x_min_dt = self.sensor_data_file.df['clock_time'].min()

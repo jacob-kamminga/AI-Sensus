@@ -5,7 +5,7 @@ from datetime import timedelta
 
 import pytz
 
-from date_utils import naive_to_utc_dt
+from date_utils import naive_to_utc
 
 VIDEO_DT_FORMAT = '%Y-%m-%dT%H:%M:%S.000000Z\n'
 
@@ -70,7 +70,7 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     ffprobe_output = subprocess.check_output(args).decode('utf-8')
 
     naive_dt = datetime.datetime.strptime(ffprobe_output, VIDEO_DT_FORMAT)
-    return naive_to_utc_dt(naive_dt, timezone)
+    return naive_to_utc(naive_dt, timezone)
 
 
 def datetime_with_tz_to_string(utc_dt, format_str, timezone=pytz.utc):

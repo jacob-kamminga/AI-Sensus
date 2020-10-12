@@ -14,7 +14,7 @@ from constants import DATE_ROW, TIME_ROW, SENSOR_ID_ROW, SENSOR_ID_COLUMN, HEADE
 from data_import import sensor as sens, column_metadata as cm
 from data_import.import_exception import ImportException
 from database.sensor_model_manager import SensorModelManager
-from date_utils import naive_to_utc_dt
+from date_utils import naive_to_utc
 from parse_function.parse_exception import ParseException
 from machine_learning.classifier import CLASSIFIER_NAN
 from project_settings import ProjectSettingsDialog
@@ -208,7 +208,7 @@ class SensorData:
                 )
 
                 # Store UTC datetime in metadata
-                self.metadata['datetime'] = naive_to_utc_dt(naive_dt, self.timezone)
+                self.metadata['datetime'] = naive_to_utc(naive_dt, self.timezone)
             except ImportException:
                 # Pass ImportException
                 raise

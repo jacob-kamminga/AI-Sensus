@@ -1,4 +1,4 @@
-class ProjectSettings:
+class ProjectSettingsObj:
 
     def __init__(
             self,
@@ -11,6 +11,7 @@ class ProjectSettings:
     ):
         if subject_map is None:
             subject_map = {}
+
         self.subject_map = subject_map
         self.next_column = next_column
         self.formulas = formulas
