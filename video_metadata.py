@@ -1,17 +1,27 @@
 import datetime
+import json
 import os
+import shlex
 import subprocess
+# import dateutil.parser as dparser
 from datetime import timedelta
 
 import pytz
 
 
-VIDEO_DT_FORMAT = '%Y-%m-%dT%H:%M:%S.000000Z\n'
+# MP4_VIDEO_DT_FORMAT = '%Y-%m-%dT%H:%M:%S.000000Z\n'
 
 
 class FileNotFoundException(Exception):
     pass
 
+
+class StartTimeNotFoundException(Exception):
+    pass
+
+
+class StartTimeNotParsedException(Exception):
+    pass
 
 def parse_video_frame_rate(file_path):
     """
@@ -47,7 +57,8 @@ def parse_video_duration(file_path):
     if not os.path.isfile(file_path):
         raise FileNotFoundException(file_path)
 
-    args = 'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{}"'.format(file_path)
+    args = 'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "{}"'.format(
+        file_path)
     ffprobe_output = subprocess.check_output(args).decode('utf-8')
 
     return float(ffprobe_output)
@@ -64,14 +75,53 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     if file_path is None or not os.path.isfile(file_path):
         raise FileNotFoundException(file_path)
 
-    args = 'ffprobe -v error -select_streams v:0 -show_entries stream_tags=creation_time ' \
-           '-of default=noprint_wrappers=1:nokey=1 "{}"'.format(file_path)
-    ffprobe_output = subprocess.check_output(args).decode('utf-8')
+    # List tags to obtain from videofile. Note that different cameras may use different tags
+    tags = ['DateTimeOriginal', 'CreateDate', 'TrackCreateDate', 'MediaCreateDate']
+    # 'TimeStamp', 'SonyDateTime', 'DateTime', 'GPSDateStamp'
+    cmd = "exiftool -j -DateTimeOriginal " \
+          "-CreateDate -TrackCreateDate -MediaCreateDate -TimeStamp -SonyDateTime -DateTime -GPSDateStamp"
+    #  TODO automate the install of the config file. The config file is required to be able to parse large files for
+    #  TODO CreateDate tags or use relative path from project dir to config and to bin
+    args = shlex.split(cmd)
+    args.append(file_path)
+    # run the exiftool process, decode stdout into utf-8 & convert to JSON
+    exiftool_output = subprocess.check_output(args).decode('utf-8')
+    exiftool_output = json.loads(exiftool_output)
 
-    naive_dt = datetime.datetime.strptime(ffprobe_output, VIDEO_DT_FORMAT)
-    local_dt = timezone.localize(naive_dt)
+    for tag in tags:
+        dt = exiftool_output[0].get(tag)
+        if dt != '' and dt is not None:
+            break
+    if dt == '' or dt is None:
+        # TODO handle case where no start time for video was found
+        raise StartTimeNotFoundException
+
+    # Loop over known datetime string formats used as tags to find the correct format to be parsed. When reading,
+    # ExifTool converts all date and time information to standard EXIF format, so this is also the way it is
+    # specified when writing. The standard EXIF date/time format is "YYYY:mm:dd HH:MM:SS", and some meta information
+    # formats such as XMP also allow sub-seconds and a timezone to be specified. The timezone format is "+HH:MM",
+    # "-HH:MM" or "Z". For example:
+    datetime_formats = ['%Y:%m:%d %H:%M:%S', '%Y:%m:%d %H:%M:%S%z DST', '%Y:%m:%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S',
+                        '%Y:%m:%d %H:%M:%SZ', '%Y-%m-%dT%H:%M:%S.000000Z\n']
+    for str_format in datetime_formats:
+        try:
+            naive_dt = datetime.datetime.strptime(dt, str_format)
+        except:
+            naive_dt = None
+        finally:
+            if naive_dt is not None:
+                break
+
+    if naive_dt is None:
+        # TODO handle case where no start time for video was found
+        raise StartTimeNotParsedException
+
+    if naive_dt.tzinfo is None:
+        local_dt = timezone.localize(naive_dt)
+    else:
+        local_dt = naive_dt
+
     utc_dt = local_dt.astimezone(pytz.utc).replace(tzinfo=None)
-
     return utc_dt
 
 
