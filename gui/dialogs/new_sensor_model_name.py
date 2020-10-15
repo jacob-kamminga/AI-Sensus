@@ -6,12 +6,12 @@ from PyQt5.QtWidgets import QDialog, QErrorMessage, QFileDialog
 from constants import *
 from gui.designer.new_sensor_model_name import Ui_Dialog
 from gui.dialogs.new_sensor_model_date import SensorModelDateDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorModelNameDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model=None, model_id=None, test_file=None, parent=None):
+    def __init__(self, settings: ProjectSettingsDialog, model=None, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings

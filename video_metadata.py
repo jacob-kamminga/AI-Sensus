@@ -8,6 +8,7 @@ from datetime import timedelta
 
 import pytz
 
+from date_utils import naive_to_utc
 
 # MP4_VIDEO_DT_FORMAT = '%Y-%m-%dT%H:%M:%S.000000Z\n'
 
@@ -122,7 +123,8 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
         local_dt = naive_dt
 
     utc_dt = local_dt.astimezone(pytz.utc).replace(tzinfo=None)
-    return utc_dt
+
+    return naive_to_utc(naive_dt, timezone) # todo update to check when dt is naive (as in lines directly above)
 
 
 def datetime_with_tz_to_string(utc_dt, format_str, timezone=pytz.utc):

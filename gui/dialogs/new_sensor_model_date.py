@@ -3,12 +3,12 @@ from PyQt5 import QtWidgets
 from constants import *
 from gui.designer.new_sensor_model_date import Ui_Dialog
 from gui.dialogs.new_sensor_model_id import SensorModelIdDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model: {}, model_id=None, test_file=None, parent=None):
+    def __init__(self, settings: ProjectSettingsDialog, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings

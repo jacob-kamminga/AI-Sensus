@@ -3,7 +3,7 @@ from typing import List
 
 from constants import *
 from exceptions import SensorModelDoesNotExist
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 SQL_INSERT_MODEL = (
@@ -78,7 +78,7 @@ SQL_DELETE_MODEL_BY_ID = (
 
 class SensorModelManager:
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         self._conn = sqlite3.connect(
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES

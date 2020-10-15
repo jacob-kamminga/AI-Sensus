@@ -99,7 +99,8 @@ CREATE_TABLE_SENSOR = \
       name  TEXT    not null,\
       model INTEGER not null\
           references sensor_model\
-              on update cascade on delete cascade\
+              on update cascade on delete cascade,\
+      timezone TEXT default 'UTC' not null\
     );"
 
 CREATE_UINDEX_SENSOR = \

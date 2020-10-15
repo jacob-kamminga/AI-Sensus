@@ -5,7 +5,7 @@ from PyQt5 import QtWidgets
 from database.subject_manager import SubjectManager
 from gui.designer.subject import Ui_Dialog
 from gui.dialogs.new_subject import NewSubjectDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 SUBJECT_NAME_INDEX = 1
 SUBJECT_COLOR_INDEX = 2
@@ -15,7 +15,7 @@ SUBJECT_EXTRA_INFO_INDEX = 4
 
 class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         super().__init__()
         self.setupUi(self)
 

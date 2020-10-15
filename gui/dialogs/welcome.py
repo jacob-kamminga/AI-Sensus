@@ -1,15 +1,12 @@
 import json
-
 from pathlib import Path
 from typing import Optional
 
-from PyQt5.QtWidgets import QDialog, QFileDialog
+from PyQt5.QtWidgets import QDialog
 
-from constants import APP_CONFIG_FILE, PREVIOUS_PROJECT_DIR, PROJECTS
+from constants import PREVIOUS_PROJECT_DIR, PROJECTS
 from gui.designer.welcome import Ui_Dialog
-
-from gui.dialogs.new_project import NewProject
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 INIT_APP_CONFIG = {
     PREVIOUS_PROJECT_DIR: "",
@@ -22,13 +19,9 @@ class Welcome(QDialog, Ui_Dialog):
     def __init__(self, gui):
         super().__init__()
         self.setupUi(self)
+        self.gui = gui
 
-        self.settings: Optional[ProjectSettings] = None
-        # self.app_config_file = Path.cwd().joinpath(APP_CONFIG_FILE)
-        # self.app_config = {}
-        self.app_config_file = gui.app_config_file
-        self.app_config = gui.app_config
-
+        self.settings: Optional[ProjectSettingsDialog] = None
         self.load_settings()
 
         self.pushButton_new_project.pressed.connect(gui.open_new_project_dialog)
@@ -38,22 +31,22 @@ class Welcome(QDialog, Ui_Dialog):
 
     def load_settings(self):
         # Check if application config file exists
-        if self.app_config_file.is_file():
-            with self.app_config_file.open() as f:
-                self.app_config = json.load(f)
+        if self.gui.app_config_file.is_file():
+            with self.gui.app_config_file.open() as f:
+                self.gui.app_config = json.load(f)
 
-            if self.app_config.get(PREVIOUS_PROJECT_DIR):
-                prev_project_dir = Path(self.app_config.get(PREVIOUS_PROJECT_DIR))
+            if self.gui.app_config.get(PREVIOUS_PROJECT_DIR):
+                prev_project_dir = Path(self.gui.app_config.get(PREVIOUS_PROJECT_DIR))
 
                 # Check if previous project directory exists
                 if prev_project_dir.is_dir():
-                    self.settings = ProjectSettings(prev_project_dir)
+                    self.settings = ProjectSettingsDialog(prev_project_dir)
 
         else:
             # Create empty application config file
-            self.app_config_file.touch()
+            self.gui.app_config_file.touch()
 
-            with self.app_config_file.open('w') as f:
+            with self.gui.app_config_file.open('w') as f:
                 json.dump(INIT_APP_CONFIG, f)
 
     # def save_app_config(self):

@@ -1,3 +1,5 @@
+import sqlite3
+
 import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
@@ -44,14 +46,17 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def use_camera(self):
         selected_camera_name = self.comboBox_camera.currentText()
-        self.selected_camera_id = self.camera.camera_manager.get_camera_id(selected_camera_name)
-        self.close()
+
+        if selected_camera_name:
+            self.selected_camera_id = self.camera.camera_manager.get_camera_id(selected_camera_name)
+            self.close()
 
     def edit_camera(self):
-        dialog = CameraSettingsDialog(self.camera.camera_manager, self.comboBox_camera.currentText())
-        dialog.exec()
-        dialog.show()
-        self.load_cameras(dialog.camera_name)
+        if self.comboBox_camera.currentText():
+            dialog = CameraSettingsDialog(self.camera.camera_manager, self.comboBox_camera.currentText())
+            dialog.exec()
+            dialog.show()
+            self.load_cameras(dialog.camera_name)
 
     def load_cameras(self, selected_camera_name):
         self.comboBox_camera.clear()
@@ -69,20 +74,22 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def delete_camera(self):
         selected_camera_name = self.comboBox_camera.currentText()
-        res = QMessageBox(
-            QMessageBox.Warning,
-            'Heads up!',
-            'Are you sure you want to delete ' + selected_camera_name + '?',
-            QMessageBox.Ok | QMessageBox.Cancel
-        ).exec()
 
-        if res == QMessageBox.Ok:
-            camera_id = self.camera.camera_manager.get_camera_id(selected_camera_name)
-            # First delete all videos that assigned this camera to it
-            self.video_manager.delete_video(camera_id)
-            # Delete camera
-            self.camera.camera_manager.delete_camera(camera_id)
-            self.comboBox_camera.removeItem(self.comboBox_camera.findText(selected_camera_name))
+        if selected_camera_name:
+            res = QMessageBox(
+                QMessageBox.Warning,
+                'Heads up!',
+                'Are you sure you want to delete ' + selected_camera_name + '?',
+                QMessageBox.Ok | QMessageBox.Cancel
+            ).exec()
+
+            if res == QMessageBox.Ok:
+                camera_id = self.camera.camera_manager.get_camera_id(selected_camera_name)
+                # First delete all videos that assigned this camera to it
+                self.video_manager.delete_video(camera_id)
+                # Delete camera
+                self.camera.camera_manager.delete_camera(camera_id)
+                self.comboBox_camera.removeItem(self.comboBox_camera.findText(selected_camera_name))
 
     def toggle_add_camera_pushbutton(self):
         if self.lineEdit_new_camera_name.text() == '':

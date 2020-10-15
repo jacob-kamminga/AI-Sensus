@@ -37,7 +37,7 @@ from gui_components.plot import Plot
 from gui_components.sensor_data_file import SensorDataFile
 from gui_components.video import Video
 from machine_learning.classifier import Classifier, make_predictions
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, PROJECT_DATABASE_FILE, APP_CONFIG_FILE
 
@@ -57,7 +57,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         # To avoid creating multiple error boxes
         self.err_box = None
 
-        self.settings: Optional[ProjectSettings] = None
+        self.settings: Optional[ProjectSettingsDialog] = None
 
         self.app_config_file = Path.cwd().joinpath(APP_CONFIG_FILE)
         self.app_config = {}
@@ -208,8 +208,10 @@ class GUI(QMainWindow, Ui_MainWindow):
                 # Add project name to project directory
                 project_dir = Path(project_dir).joinpath(project_name)
 
-                self.settings = ProjectSettings(project_dir)
+                self.settings = ProjectSettingsDialog(project_dir)
                 self.settings.set_setting('project_name', project_name)
+
+                self.settings.exec()
 
                 # Create database
                 try:
@@ -218,7 +220,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                 except sqlite3.Error as e:
                     print(e)
 
-                # reset video and sensordata
+                # Reset video and sensordata
                 self.reset_gui_components()
 
                 # Save project in app config
@@ -228,8 +230,6 @@ class GUI(QMainWindow, Ui_MainWindow):
                 })
                 self.app_config[PREVIOUS_PROJECT_DIR] = str(project_dir)
                 self.save_app_config()
-
-                # self.close()
 
     def save_app_config(self):
         with self.app_config_file.open('w') as f:
@@ -253,8 +253,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         )
 
         if project_dir:
-            self.settings = ProjectSettings(Path(project_dir))
-            # reset gui components
+            self.settings = ProjectSettingsDialog(Path(project_dir))
+            # Reset gui components
             self.reset_gui_components()
             # Set project dir as most recent project dir
             self.app_config[PREVIOUS_PROJECT_DIR] = project_dir

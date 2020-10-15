@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import pandas as pd
+import pytz
 from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QFileDialog
 
@@ -15,8 +16,9 @@ from database.offset_manager import OffsetManager
 from database.sensor_manager import SensorManager
 from database.sensor_data_file_manager import SensorDataFileManager
 from database.sensor_model_manager import SensorModelManager
+from gui.dialogs.edit_sensor import EditSensorDialog
 from gui.dialogs.sensor_model import SensorModelDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorDataFile:
@@ -26,7 +28,7 @@ class SensorDataFile:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettings = gui.settings
+        self.settings: ProjectSettingsDialog = gui.settings
         self.file_path: Optional[Path] = None
 
         self.sensor_manager = SensorManager(self.settings)
@@ -113,10 +115,27 @@ class SensorDataFile:
                 self.sensor_data = SensorData(self.file_path, self.settings, self.model_id)
                 sensor_name = self.sensor_data.metadata['sn']
 
+                # If sensor not in DB yet, insert it
                 self.sensor_id = self.sensor_manager.get_id_by_name(sensor_name)
 
                 if self.sensor_id == -1:
                     self.sensor_id = self.sensor_manager.insert_sensor(sensor_name, self.model_id)
+
+                    # Prompt user for timezone of sensor
+                    dialog = EditSensorDialog(self.sensor_manager, self.sensor_id, sensor_name)
+                    dialog.exec()
+
+                    if dialog.sensor_edited:
+                        sensor_timezone = pytz.timezone(dialog.new_timezone)
+                        self.sensor_data.set_sensor_timezone(sensor_timezone)
+                    else:
+                        return
+                else:
+                    sensor_timezone = pytz.timezone(self.sensor_manager.get_timezone_by_id(self.sensor_id))
+                    self.sensor_data.set_sensor_timezone(sensor_timezone)
+
+                # Parse the local datetime of the sensor data
+                self.sensor_data.parse_local_datetime()
 
                 # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary
                 stored_formulas = self.settings.get_setting('formulas')
@@ -215,4 +234,6 @@ class SensorDataFile:
                 self.offset_manager.get_offset(
                     camera_id,
                     self.sensor_id,
-                    self.datetime.date()))
+                    self.datetime.date()
+                )
+            )

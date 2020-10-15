@@ -3,12 +3,12 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from constants import *
 from database.sensor_model_manager import SensorModelManager
 from gui.designer.new_sensor_model_final import Ui_Dialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings, model: {} = None, model_id=None, test_file=None, parent=None):
+    def __init__(self, settings: ProjectSettingsDialog, model: {} = None, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
         self.settings = settings

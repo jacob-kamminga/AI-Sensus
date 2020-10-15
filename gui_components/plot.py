@@ -11,7 +11,7 @@ from database.label_manager import LabelManager
 from database.label_type_manager import LabelTypeManager
 from gui.dialogs.label import LabelSpecs
 from gui_components.sensor_data_file import SensorDataFile
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1
@@ -29,7 +29,7 @@ class Plot:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettings = gui.settings
+        self.settings: ProjectSettingsDialog = gui.settings
         self.sensor_data_file: SensorDataFile = gui.sensor_data_file
 
         # self.reset()
@@ -67,18 +67,27 @@ class Plot:
     #     :return:
     #     """
 
-
     def new_plot(self):
         """
         Adds a function to the DataFrame as new column.
         """
         try:
+            # If no function is selected, raise an exception
             if not self.gui.lineEdit_function_name.text():
                 raise Exception
-            self.sensor_data_file.sensor_data.add_column_from_func(self.gui.lineEdit_function_name.text(),
-                                                                   self.gui.lineEdit_function_regex.text())
+
+            # Add a column to the sensor data, based on the selected function
+            self.sensor_data_file.sensor_data.add_column_from_func(
+                self.gui.lineEdit_function_name.text(),
+                self.gui.lineEdit_function_regex.text()
+            )
+
+            # Get the dataframe
             self.sensor_data_file.df = self.sensor_data_file.sensor_data.get_data()
+
+            # Add the new function to the combobox
             self.gui.comboBox_functions.addItem(self.gui.lineEdit_function_name.text())
+
             self.formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
             stored_formulas = self.settings.get_setting("formulas")
             stored_formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
@@ -104,8 +113,10 @@ class Plot:
 
         self.y_min = self.sensor_data_file.df[self.current_plot].min()
         self.y_max = self.sensor_data_file.df[self.current_plot].max()
+
         if self.y_min == self.y_max:
             self.y_max = self.y_max+1
+
         self.draw_graph()
         self.settings.set_setting("current_plot", self.current_plot)
 
@@ -146,7 +157,7 @@ class Plot:
         """
         Every time the timer calls this function, the axis of the graph is updated.
         """
-        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)
+        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)  # TODO: Fix bug when starting new project
         new_position_dt = position_dt if position == -1.0 else position
 
         plot_width_delta = dt.timedelta(seconds=(self.plot_width / 2))
@@ -173,7 +184,7 @@ class Plot:
 
         self.data_plot.clear()
 
-        time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]
+        time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]  # TODO: Replace hardcoded column with user setting
         self.sensor_data_file.df['clock_time'] = self.sensor_data_file.datetime + pd.to_timedelta(time, unit='s')
 
         self.x_min_dt = self.sensor_data_file.df['clock_time'].min()

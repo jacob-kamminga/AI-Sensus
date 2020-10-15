@@ -1,7 +1,7 @@
 import datetime as dt
 import sqlite3
 
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 SQL_SELECT_LABELS_BY_DATES = "SELECT start_time, end_time, activity " \
                              "FROM label, label_type " \
@@ -13,7 +13,7 @@ SQL_SELECT_LABELS_BY_DATES = "SELECT start_time, end_time, activity " \
 
 class ExportManager:
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         self._conn = sqlite3.connect(
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES

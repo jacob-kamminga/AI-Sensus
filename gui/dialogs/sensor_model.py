@@ -5,12 +5,12 @@ from database.sensor_model_manager import SensorModelManager
 from gui.designer.sensor_model_list import Ui_Dialog
 from gui.dialogs.new_sensor_model_final import SensorModelFinalDialog
 from gui.dialogs.new_sensor_model_name import SensorModelNameDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class SensorModelDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         super().__init__()
         self.setupUi(self)
         self.settings = settings

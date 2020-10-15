@@ -149,6 +149,11 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_model_name</tabstop>
+  <tabstop>pushButton_next</tabstop>
+  <tabstop>pushButton_choose_file</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

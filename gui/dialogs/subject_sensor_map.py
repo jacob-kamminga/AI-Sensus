@@ -9,7 +9,7 @@ from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.subject_sensor_map import Ui_Dialog
 from gui.dialogs.edit_subject_sensor_map import EditSubjectSensorMapDialog
 from gui.dialogs.new_subject_sensor_map import NewSubjectSensorMapDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 INDEX_MAP_ID = 0
 INDEX_MAP_SUBJECT = 1
@@ -20,7 +20,7 @@ INDEX_MAP_END = 4
 
 class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         super().__init__()
         self.setupUi(self)
 

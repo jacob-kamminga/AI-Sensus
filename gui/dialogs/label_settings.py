@@ -2,12 +2,12 @@ from PyQt5 import QtWidgets
 
 from database.label_type_manager import LabelTypeManager
 from gui.designer.label_settings import Ui_Dialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 
 class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, label_type_manager: LabelTypeManager, settings: ProjectSettings):
+    def __init__(self, label_type_manager: LabelTypeManager, settings: ProjectSettingsDialog):
         super().__init__()
         self.setupUi(self)
         self.label_type_manager = label_type_manager

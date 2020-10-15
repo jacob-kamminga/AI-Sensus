@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import date
 
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE = "create table offset \
 ( \
@@ -22,7 +22,7 @@ SQL_UPDATE_OFFSET = "UPDATE offset SET offset = ? WHERE camera = ? AND sensor = 
 
 class OffsetManager:
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         self._conn = sqlite3.connect(
             settings.database_file.as_posix(),
             detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
@@ -73,7 +73,7 @@ class OffsetManager:
         # self._conn.commit()
         return res
 
-    def set_offset(self, camera_id: str, sensor_id: str, offset: float, added: date) -> None:
+    def set_offset(self, camera_id: int, sensor_id: int, offset: float, added: date) -> None:
         """
         Changes the offset between a camera and sensor.
 

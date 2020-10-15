@@ -1,12 +1,10 @@
-from pathlib import Path
-
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
 from database.sensor_manager import SensorManager
 from gui.designer.sensor import Ui_Dialog
 from gui.dialogs.edit_sensor import EditSensorDialog
-from project_settings import ProjectSettings
+from project_settings import ProjectSettingsDialog
 
 INDEX_SENSOR_ID = 0
 INDEX_SENSOR_NAME = 1
@@ -14,7 +12,7 @@ INDEX_SENSOR_NAME = 1
 
 class SensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettings):
+    def __init__(self, settings: ProjectSettingsDialog):
         super().__init__()
         self.setupUi(self)
 
@@ -25,6 +23,7 @@ class SensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
         self.create_table()
 
+        self.listWidget.itemDoubleClicked.connect(self.open_edit_sensor_dialog)
         self.pushButton_edit_sensor.clicked.connect(self.open_edit_sensor_dialog)
         self.pushButton_remove_sensor.clicked.connect(self.open_remove_sensor_msg)
 
@@ -44,12 +43,12 @@ class SensorDialog(QtWidgets.QDialog, Ui_Dialog):
         indices = self.listWidget.selectionModel().selectedRows()
 
         if len(indices) > 0:
+            # Get the sensor ID and name of the selected row
             row = indices[0].row()
             id_ = int(self.all_sensors[row][INDEX_SENSOR_ID])
+            name = self.all_sensors[row][INDEX_SENSOR_NAME]
 
-            dialog = EditSensorDialog(self.sensor_manager,
-                                      self.sensors_dict,
-                                      id_)
+            dialog = EditSensorDialog(self.sensor_manager, id_, name)
 
             dialog.exec()
 
