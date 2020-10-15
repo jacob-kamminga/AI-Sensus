@@ -1,7 +1,6 @@
 import pytz
 
 from database.camera_manager import CameraManager
-from database.offset_manager import OffsetManager
 from project_settings import ProjectSettingsDialog
 
 
@@ -24,15 +23,11 @@ class Camera:
         self.gui.label_camera_name_value.setText(self.camera_name)
 
         # Update timezone and datetime labels
-        timezone = self.camera_manager.get_timezone(self.camera_id)
-        self.update_timezone(timezone)
+        self.timezone = self.camera_manager.get_timezone(self.camera_id)
+        self.gui.video.update_datetime()
 
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()
-
-    def update_timezone(self, timezone: pytz.timezone):
-        self.timezone = timezone
-        self.gui.video.update_datetime()
 
     # def delete_camera(self):
     #     """

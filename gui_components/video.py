@@ -31,7 +31,7 @@ class Video:
 
         self.id_: Optional[int] = None
         self.utc_dt: Optional[dt.datetime] = None
-        self.local_dt: Optional[dt.datetime] = None
+        self.project_dt: Optional[dt.datetime] = None
         self.position = None
         self.timezone = None
         self.offset = None  # TODO comment here which specific offset this is : offset between the video and sensor data ?
@@ -110,26 +110,29 @@ class Video:
 
     def update_datetime(self):
         self.utc_dt = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera.timezone)
+        self.update_timezone()
         self.update_labels_datetime()
 
     def update_timezone(self):
         if self.utc_dt is not None:
-            self.local_dt = utc_to_local(self.utc_dt, pytz.timezone(self.settings.get_setting('timezone')))
+            self.project_dt = utc_to_local(self.utc_dt, pytz.timezone(self.settings.get_setting('timezone')))
 
     def update_camera(self, camera_id: int):
         if self.id_ is not None:
             self.video_manager.update_camera(self.id_, camera_id)
 
+        self.gui.camera.change_camera(camera_id)
+        self.update_datetime()
         self.sync_with_sensor_data()
         self.set_position(0)
 
     def update_labels_datetime(self):
-        video_hms = self.local_dt.strftime("%H:%M:%S")
-        video_date = self.local_dt.strftime("%d-%B-%Y")
+        video_hms = self.project_dt.strftime("%H:%M:%S")
+        video_date = self.project_dt.strftime("%d-%B-%Y")
 
         if self.position is not None:
             current_video_time = get_hms_sum(video_hms, ms_to_hms(self.position))
-            current_video_date = (self.local_dt + dt.timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
+            current_video_date = (self.project_dt + dt.timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
             self.gui.label_video_time_value.setText(current_video_time)
             self.gui.label_video_date_value.setText(current_video_date)
         else:
@@ -140,11 +143,11 @@ class Video:
         """
         Synchronizes the start time of the video with the sensor data.
         """
-        if self.utc_dt is not None and self.gui.plot.x_min_dt is not None:
+        if self.project_dt is not None and self.gui.plot.x_min_dt is not None:
             # First update plot according to offset value
             self.gui.plot.update_plot_axis()
 
-            self.offset = self.gui.plot.x_min_dt - self.utc_dt
+            self.offset = self.gui.plot.x_min_dt - self.project_dt
             self.offset_ms = self.offset / dt.timedelta(milliseconds=1)
             self.position = self.offset_ms
 
@@ -155,7 +158,7 @@ class Video:
                 self.gui.horizontalSlider_time.setValue(int(self.position))
             else:
                 print(f'offset: {self.offset}')
-                res = QMessageBox(
+                QMessageBox(
                     QMessageBox.Warning,
                     'Sync error',
                     'Cannot synchronize the video with the sensor data. The datetime of the video and sensor data have '

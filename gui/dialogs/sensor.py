@@ -43,12 +43,12 @@ class SensorDialog(QtWidgets.QDialog, Ui_Dialog):
         indices = self.listWidget.selectionModel().selectedRows()
 
         if len(indices) > 0:
+            # Get the sensor ID and name of the selected row
             row = indices[0].row()
             id_ = int(self.all_sensors[row][INDEX_SENSOR_ID])
+            name = self.all_sensors[row][INDEX_SENSOR_NAME]
 
-            dialog = EditSensorDialog(self.sensor_manager,
-                                      self.sensors_dict,
-                                      id_)
+            dialog = EditSensorDialog(self.sensor_manager, id_, name)
 
             dialog.exec()
 

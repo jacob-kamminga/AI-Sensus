@@ -14,7 +14,7 @@ from constants import DATE_ROW, TIME_ROW, SENSOR_ID_ROW, SENSOR_ID_COLUMN, HEADE
 from data_import import sensor as sens, column_metadata as cm
 from data_import.import_exception import ImportException
 from database.sensor_model_manager import SensorModelManager
-from date_utils import naive_to_utc
+from date_utils import naive_to_utc, utc_to_local
 from parse_function.parse_exception import ParseException
 from machine_learning.classifier import CLASSIFIER_NAN
 from project_settings import ProjectSettingsDialog
@@ -128,7 +128,7 @@ def parse_header_row(file, header_row, comment_style):
 
 class SensorData:
 
-    def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id):
+    def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id, sensor_timezone=None):
         """
         The SensorData starts parsing as soon as it's constructed. Only SensorData.get_data() needs to
         be called in order to get the parsed data. SensorData.metadata contains the metadata.
@@ -161,15 +161,19 @@ class SensorData:
         self.sensor_model_id = sensor_model_id
         self.metadata = dict()
         self.col_metadata = dict()
-        self.timezone = pytz.timezone(settings.get_setting('timezone'))
+        self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
+        self.sensor_timezone = sensor_timezone
 
         # Parse metadata and data
         self._settings_dict = settings.settings_dict
-        self._data = self.parse(self._settings_dict)
+        self._data = self.parse()
         """ The sensor data as a DataFrame. """
 
+        if self.sensor_timezone is not None:
+            self.parse_local_datetime()
+
     def __copy__(self):
-        new = type(self)(self.file_path, self.settings, self.sensor_model_id)
+        new = type(self)(self.file_path, self.settings, self.sensor_model_id, self.sensor_timezone)
         new.__dict__.update(self.__dict__)
         return new
 
@@ -187,11 +191,23 @@ class SensorData:
 
         self.metadata[HEADERS_ROW] = config[HEADERS_ROW]
 
-    def parse(self, settings_dict) -> pd.DataFrame:
+    def parse_local_datetime(self):
+        # Create datetime object from date and time
+        naive_dt = dt.datetime.strptime(
+            self.metadata['date'] + self.metadata['time'],
+            '%Y-%m-%d%H:%M:%S.%f'
+        )
+
+        # Convert naive datetime to UTC
+        utc = naive_to_utc(naive_dt, self.sensor_timezone)
+
+        # Convert UTC to local datetime
+        self.metadata['datetime'] = utc_to_local(utc, self.project_timezone)
+
+    def parse(self) -> pd.DataFrame:
         """
         Parses a csv file to get metadata and data.
 
-        :param settings_dict: contains the metadata
         :return: the parsed data as a DataFrame
         """
         # Parse metadata from headers
@@ -200,21 +216,12 @@ class SensorData:
                 sensor_model = self.sensor_model_manager.get_model_by_id(self.sensor_model_id)
                 self.parse_model_config(file, sensor_model)
                 pd_header_arg = parse_header_row(file, self.metadata[HEADERS_ROW], self.metadata[COMMENT_STYLE])
-
-                # Create datetime object from date and time
-                naive_dt = dt.datetime.strptime(
-                    self.metadata['date'] + self.metadata['time'],
-                    '%Y-%m-%d%H:%M:%S.%f'
-                )
-
-                # Store UTC datetime in metadata
-                self.metadata['datetime'] = naive_to_utc(naive_dt, self.timezone)
             except ImportException:
                 # Pass ImportException
                 raise
 
         # set column metadata
-        self.set_column_metadata(settings_dict)
+        self.set_column_metadata(self._settings_dict)
 
         # Parse data from file
         data = pd.read_csv(self.file_path,
@@ -244,6 +251,9 @@ class SensorData:
             # Pass ParseException
             raise
         return data
+
+    def set_sensor_timezone(self, sensor_timezone):
+        self.sensor_timezone = sensor_timezone
 
     def set_column_metadata(self, settings):
         """
@@ -305,7 +315,9 @@ class SensorData:
         :param time_col: The name of the column that contains the recorded time.
         :param time_unit: The time unit of the time column.
         """
-        self._data[COLUMN_TIMESTAMP] = pd.to_timedelta(self._data[time_col], unit=time_unit) + self.metadata['datetime']
+        self._data[COLUMN_TIMESTAMP] = \
+            pd.to_timedelta(self._data[time_col], unit=time_unit) + \
+            utc_to_local(self.metadata['datetime'], self.project_timezone)
 
     def add_labels_ml(self, label_data: [], label_col: str):
         """

@@ -1,12 +1,14 @@
 import sqlite3
 from typing import List
 
+import pytz
+
 from project_settings import ProjectSettingsDialog
 
 
 SQL_INSERT_SENSOR = (
-    "INSERT INTO sensor(name, model) "
-    "VALUES (?,?)"
+    "INSERT INTO sensor(name, model, timezone) "
+    "VALUES (?,?,?)"
 )
 SQL_SELECT_ALL_SENSORS = (
     "SELECT id, name "
@@ -85,9 +87,9 @@ class SensorManager:
         except sqlite3.Error:
             return ""
 
-    def insert_sensor(self, sensor_name: str, model_id) -> int:
+    def insert_sensor(self, sensor_name: str, model_id: int, timezone=pytz.utc) -> int:
         try:
-            self._cur.execute(SQL_INSERT_SENSOR, (sensor_name, model_id))
+            self._cur.execute(SQL_INSERT_SENSOR, (sensor_name, model_id, timezone))
             self._conn.commit()
             return self.get_id_by_name(sensor_name)
         except sqlite3.Error:

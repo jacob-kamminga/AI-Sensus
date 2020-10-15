@@ -48,6 +48,11 @@ SQL_SELECT_SENSOR_IDS = (
     "SELECT sensor_id "
     "FROM sensor_data_file"
 )
+SQL_SELECT_SENSOR_BY_ID = (
+    "SELECT sensor_id "
+    "FROM sensor_data_file "
+    "WHERE id = ?"
+)
 SQL_SELECT_FILE_PATH_BY_FILE_NAME = (
     "SELECT file_path "
     "FROM sensor_data_file "
@@ -168,3 +173,18 @@ class SensorDataFileManager:
         """
         self._cur.execute(SQL_SELECT_SENSOR_IDS)
         return [x[0] for x in self._cur.fetchall()]
+
+    def get_sensor_by_id(self, id_: int) -> int:
+        """
+        Returns the ID of the associated sensor.
+
+        :param id_: The ID of the sensor data file
+        :return: The ID of the sensor
+        """
+        self._cur.execute(SQL_SELECT_SENSOR_BY_ID, (id_,))
+        res = self._cur.fetchone()
+
+        if res is not None:
+            return res[0]
+
+        return -1

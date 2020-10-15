@@ -72,12 +72,22 @@ class Plot:
         Adds a function to the DataFrame as new column.
         """
         try:
+            # If no function is selected, raise an exception
             if not self.gui.lineEdit_function_name.text():
                 raise Exception
-            self.sensor_data_file.sensor_data.add_column_from_func(self.gui.lineEdit_function_name.text(),
-                                                                   self.gui.lineEdit_function_regex.text())
+
+            # Add a column to the sensor data, based on the selected function
+            self.sensor_data_file.sensor_data.add_column_from_func(
+                self.gui.lineEdit_function_name.text(),
+                self.gui.lineEdit_function_regex.text()
+            )
+
+            # Get the dataframe
             self.sensor_data_file.df = self.sensor_data_file.sensor_data.get_data()
+
+            # Add the new function to the combobox
             self.gui.comboBox_functions.addItem(self.gui.lineEdit_function_name.text())
+
             self.formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
             stored_formulas = self.settings.get_setting("formulas")
             stored_formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
@@ -147,7 +157,7 @@ class Plot:
         """
         Every time the timer calls this function, the axis of the graph is updated.
         """
-        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)
+        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)  # TODO: Fix bug when starting new project
         new_position_dt = position_dt if position == -1.0 else position
 
         plot_width_delta = dt.timedelta(seconds=(self.plot_width / 2))

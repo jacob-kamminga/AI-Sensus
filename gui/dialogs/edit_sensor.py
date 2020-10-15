@@ -18,18 +18,19 @@ class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
     def __init__(
             self,
             sensor_manager: SensorManager,
-            sensors_dict: dict,
-            sensor_id: int
+            sensor_id: int,
+            sensor_name: str
     ):
         super().__init__()
         self.setupUi(self)
 
         self.sensor_manager = sensor_manager
-        self.sensors_dict = sensors_dict
         self.sensor_id = sensor_id
+        self.sensor_name = sensor_name
 
         self.sensor_edited = False
         self.old_timezone = None
+        self.new_timezone = None
 
         # Fill the combobox with timezones
         self.comboBox_timezone.addItems(pytz.common_timezones)
@@ -40,16 +41,15 @@ class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.accepted.connect(self.save_to_db)
 
     def load_sensor(self):
-        sensor_id = self.sensors_dict[self.sensor_id]
-        timezone = self.sensor_manager.get_timezone_by_id(self.sensor_id)
+        timezone = self.sensor_manager.get_timezone_by_id(self.sensor_id)  # TODO: Fix bug when opening sensor data file
 
-        self.label_sensor_id_val.setText(sensor_id)
+        self.label_sensor_id_val.setText(self.sensor_name)
         self.old_timezone = timezone
         self.comboBox_timezone.setCurrentText(timezone)
 
     def save_to_db(self):
-        timezone = self.comboBox_timezone.currentText()
+        self.new_timezone = self.comboBox_timezone.currentText()
 
-        if timezone != self.old_timezone:
-            self.sensor_manager.update_timezone_by_id(self.sensor_id, timezone)
+        if self.new_timezone != self.old_timezone:
+            self.sensor_manager.update_timezone_by_id(self.sensor_id, self.new_timezone)
             self.sensor_edited = True

@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 import pandas as pd
+import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime, QDir, Qt
 from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton
@@ -11,6 +12,7 @@ from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton
 from data_import.sensor_data import SensorData
 from database.export_manager import ExportManager
 from database.sensor_data_file_manager import SensorDataFileManager
+from database.sensor_manager import SensorManager
 from database.subject_manager import SubjectManager
 from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.export_new import Ui_Dialog
@@ -32,6 +34,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         self.subject_manager = SubjectManager(settings)
         self.map_manager = SensorUsageManager(settings)
         self.sensor_data_file_manager = SensorDataFileManager(settings)
+        self.sensor_manager = SensorManager(settings)
         self.settings_dict = settings.settings_dict
 
         self.subject_dict = self.subject_manager.get_all_subjects_name_id()
@@ -75,9 +78,11 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
     def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
         file_path = self.get_file_path(sensor_data_file_id)
         model_id = self.sensor_data_file_manager.get_sensor_model_by_id(sensor_data_file_id)
+        sensor_id = self.sensor_data_file_manager.get_sensor_by_id(sensor_data_file_id)
 
-        if model_id >= 0:
-            sensor_data = SensorData(Path(file_path), self.settings, model_id)
+        if model_id >= 0 and sensor_id >= 0:
+            sensor_timezone = pytz.timezone(self.sensor_manager.get_timezone_by_id(sensor_id))
+            sensor_data = SensorData(Path(file_path), self.settings, model_id, sensor_timezone)
         # Sensor model unknown
         else:
             sensor_data = None
