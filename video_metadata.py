@@ -24,6 +24,7 @@ class StartTimeNotFoundException(Exception):
 class StartTimeNotParsedException(Exception):
     pass
 
+
 def parse_video_frame_rate(file_path):
     """
     Parses the frame rate of video files.
@@ -117,14 +118,14 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
         # TODO handle case where no start time for video was found
         raise StartTimeNotParsedException
 
+    # Verify if naive_dt is really naive. THere are cases when the parsed time is not naive
     if naive_dt.tzinfo is None:
-        local_dt = timezone.localize(naive_dt)
+        ret = naive_to_utc(naive_dt, timezone)
     else:
-        local_dt = naive_dt
+        # return UTC time
+        ret = naive_dt.astimezone(pytz.utc).replace(tzinfo=None)
 
-    utc_dt = local_dt.astimezone(pytz.utc).replace(tzinfo=None)
-
-    return naive_to_utc(naive_dt, timezone) # todo update to check when dt is naive (as in lines directly above)
+    return ret  # todo update dateutils to check when dt is naive
 
 
 def datetime_with_tz_to_string(utc_dt, format_str, timezone=pytz.utc):
