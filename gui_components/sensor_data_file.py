@@ -45,7 +45,7 @@ class SensorDataFile:
         """ The data_import.SensorData object. """
         self.df: Optional[pd.DataFrame] = None
         """ The pandas DataFrame. """
-        self.datetime: Optional[dt.datetime] = None
+        self.utc_dt: Optional[dt.datetime] = None
         """ The datetime of the sensor data. """
         self.model_id: Optional[int] = None
         """ The model ID. """
@@ -113,7 +113,7 @@ class SensorDataFile:
             if self.model_id != -1:
                 # Retrieve the SensorData object that parses the sensor data file
                 self.sensor_data = SensorData(self.file_path, self.settings, self.model_id)
-                sensor_name = self.sensor_data.metadata['sn']
+                sensor_name = self.sensor_data.metadata.sensor_id
 
                 # If sensor not in DB yet, insert it
                 self.sensor_id = self.sensor_manager.get_id_by_name(sensor_name)
@@ -127,15 +127,15 @@ class SensorDataFile:
 
                     if dialog.sensor_edited:
                         sensor_timezone = pytz.timezone(dialog.new_timezone)
-                        self.sensor_data.set_sensor_timezone(sensor_timezone)
+                        self.sensor_data.metadata.sensor_timezone = sensor_timezone
                     else:
                         return
                 else:
                     sensor_timezone = pytz.timezone(self.sensor_manager.get_timezone_by_id(self.sensor_id))
-                    self.sensor_data.set_sensor_timezone(sensor_timezone)
+                    self.sensor_data.metadata.sensor_timezone = sensor_timezone
 
-                # Parse the local datetime of the sensor data
-                self.sensor_data.parse_local_datetime()
+                # Parse the utc datetime of the sensor data
+                self.sensor_data.metadata.parse_datetime()
 
                 # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary
                 stored_formulas = self.settings.get_setting('formulas')
@@ -151,7 +151,7 @@ class SensorDataFile:
                 self.df = self.sensor_data.get_data()
 
                 # Save the starting time of the sensor data in a DateTime object
-                self.datetime = self.sensor_data.metadata['datetime']
+                self.utc_dt = self.sensor_data.metadata.utc_dt
 
                 # Check if the sensor data file is already in the label database, if not add it
                 self.id_ = self.sensor_data_file_manager.get_id_by_file_name(file_name)
@@ -162,7 +162,7 @@ class SensorDataFile:
                         file_name,
                         self.file_path.as_posix(),
                         self.sensor_id,
-                        self.datetime
+                        self.utc_dt
                     )
 
                 if self.sensor_data_file_manager.get_file_path_by_id(self.id_) != self.file_path:
@@ -234,6 +234,6 @@ class SensorDataFile:
                 self.offset_manager.get_offset(
                     camera_id,
                     self.sensor_id,
-                    self.datetime.date()
+                    self.utc_dt.date()
                 )
             )

@@ -21,6 +21,7 @@ class SensorModelDialog(QDialog, Ui_Dialog):
 
         self.init()
 
+        self.listWidget_models.itemDoubleClicked.connect(self.edit_sensor_model_name_dialog)
         self.pushButton_new.pressed.connect(self.new_sensor_model_name_dialog)
         self.pushButton_settings.pressed.connect(self.edit_sensor_model_name_dialog)
         self.buttonBox.accepted.connect(self.set_selected_model)

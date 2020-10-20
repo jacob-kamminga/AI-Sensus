@@ -3,6 +3,7 @@ from typing import List
 
 from constants import *
 from exceptions import SensorModelDoesNotExist
+from models.sensor_model import SensorModel
 from project_settings import ProjectSettingsDialog
 
 
@@ -28,7 +29,7 @@ SQL_UPDATE_MODEL = (
 # model_name = ?, "
 # "date_row = ?, time_row = ?, "
 # "sensor_id_row = ?, sensor_id_column = ?, sensor_id_regex = ?, "
-# "headers_row = ?, "
+# "col_names_row = ?, "
 # "comment_style = ? "
 
 SQL_SELECT_ALL_MODELS = (
@@ -66,7 +67,7 @@ SQL_SELECT_SENSOR_CONFIG = (
     "WHERE id = ?"
 )
 SQL_SELECT_HEADERS_CONFIG = (
-    "SELECT headers_row "
+    "SELECT col_names_row "
     "FROM sensor_model "
     "WHERE id = ?"
 )
@@ -78,11 +79,18 @@ SQL_DELETE_MODEL_BY_ID = (
 
 class SensorModelManager:
 
-    def __init__(self, settings: ProjectSettingsDialog):
-        self._conn = sqlite3.connect(
-            settings.database_file.as_posix(),
-            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
-        )
+    def __init__(self, settings=None, database_file=None):
+        if database_file:
+            self._conn = sqlite3.connect(
+                database_file,
+                detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
+            )
+        else:
+            self._conn = sqlite3.connect(
+                settings.database_file.as_posix(),
+                detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
+            )
+
         # Enable Sqlite foreign key support
         self._conn.execute("PRAGMA foreign_keys = 1")
 
@@ -108,7 +116,8 @@ class SensorModelManager:
     def get_model_by_id(self, model_id):
         try:
             self._cur.execute(SQL_SELECT_MODEL_BY_ID, (model_id,))
-            return self._cur.fetchone()
+            row = self._cur.fetchone()
+            return SensorModel(*row)
         except sqlite3.Error:
             return None
 

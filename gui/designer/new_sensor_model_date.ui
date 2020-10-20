@@ -67,7 +67,7 @@
      <property name="title">
       <string>Date and time in metadata</string>
      </property>
-     <widget class="QWidget" name="">
+     <widget class="QWidget" name="layoutWidget">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -286,7 +286,7 @@
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>319</width>
+        <width>352</width>
         <height>151</height>
        </rect>
       </property>
@@ -480,6 +480,19 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>checkBox_datetime_metadata</tabstop>
+  <tabstop>spinBox_date_row</tabstop>
+  <tabstop>spinBox_time_row</tabstop>
+  <tabstop>checkBox_timestamp_column</tabstop>
+  <tabstop>spinBox_timestamp_column</tabstop>
+  <tabstop>comboBox_relative_absolute</tabstop>
+  <tabstop>comboBox_timestamp_unit</tabstop>
+  <tabstop>lineEdit_timestamp_formatstring</tabstop>
+  <tabstop>pushButton_next</tabstop>
+  <tabstop>pushButton_test</tabstop>
+  <tabstop>pushButton_previous</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -28,12 +28,12 @@ def export(data: [], label_col: str, timestamp_col: str, file_path: str, comment
     # collist.remove(timestamp_col)
 
     # # Window over data per DataFrame
-    # for df in data:
-    #     new_df = w.windowing_fast(df, collist, label_col, timestamp_col)
+    # for _df in data:
+    #     new_df = w.windowing_fast(_df, collist, label_col, timestamp_col)
     #     res.append(new_df)
 
     # # Turn list into one DataFrame
-    # df = pd.concat(res)
+    # _df = pd.concat(res)
 
     df = pd.concat(data)
 

@@ -302,7 +302,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Updates the offset in the database.
         """
-        date = self.sensor_data_file.datetime.date()
+        date = self.sensor_data_file.utc_dt.date()
 
         if self.sensor_data_file.sensor_id is not None:
             self.offset_manager.set_offset(self.camera.camera_id,
@@ -314,7 +314,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.sensor_data_file.sensor_id is not None and self.camera.camera_id is not None:
             offset = self.offset_manager.get_offset(self.camera.camera_id,
                                                     self.sensor_data_file.sensor_id,
-                                                    self.sensor_data_file.datetime.date())
+                                                    self.sensor_data_file.utc_dt.date())
 
             self.doubleSpinBox_video_offset.setValue(offset)
 
@@ -402,7 +402,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         dialog = ExportDialog(
             self.settings,
-            self.sensor_data_file.datetime
+            self.sensor_data_file.utc_dt
         )
         dialog.exec()
         dialog.show()
@@ -459,7 +459,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.ml_dataframe = self.sensor_data_file.sensor_data.__copy__()
             self.ml_dataframe.add_timestamp_column(COL_TIME, COL_TIMESTAMP)
             labels = self.plot.label_manager.get_labels_by_file_and_date(self.sensor_data_file.sensor_id,
-                                                                         self.sensor_data_file.datetime.date())
+                                                                         self.sensor_data_file.utc_dt.date())
             self.ml_dataframe.add_labels_ml(labels, COL_LABEL, COL_TIMESTAMP)
             raw_data = self.ml_dataframe.get_data()
 
@@ -480,8 +480,8 @@ class GUI(QMainWindow, Ui_MainWindow):
                 label, start_dt, end_dt = prediction['label'], datetime.fromisoformat(prediction['begin']), \
                                           datetime.fromisoformat(prediction['end'])
                 # convert datetime times to time in seconds, which is used on the x-axis of the data-plot
-                start = (start_dt - self.sensor_data_file.datetime).total_seconds()
-                end = (end_dt - self.sensor_data_file.datetime).total_seconds()
+                start = (start_dt - self.sensor_data_file.utc_dt).total_seconds()
+                end = (end_dt - self.sensor_data_file.utc_dt).total_seconds()
 
                 # add highlight to data-plot and play video in a loop
                 span, text = self.add_suggestion_highlight(start, end, label)

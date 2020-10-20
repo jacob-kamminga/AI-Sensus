@@ -71,7 +71,7 @@ def windowing_test():
     wrapped = wrapper(w.windowing, df.head(6000), collist, 'Label', 'Timestamp',
                       mean=np.mean, std=np.std, max=np.max, min=np.min)
     print('windowing average of %s:' % n, timeit(wrapped, number=n) / n)
-    # return w.windowing(df, ['Ax', 'Ay', 'Az'], 'Label', 'Timestamp', mean=np.mean, std=np.std)
+    # return w.windowing(_df, ['Ax', 'Ay', 'Az'], 'Label', 'Timestamp', mean=np.mean, std=np.std)
 
 
 def windowing_fast_test():
@@ -89,7 +89,7 @@ def windowing_fast_test():
     wrapped = wrapper(w.windowing_fast, df.head(6000), collist)
     print('windowing_fast average of %s:' % n, timeit(wrapped, number=n) / n)
 
-    # return w.windowing_fast(df, ['Ax', 'Ay', 'Az'])
+    # return w.windowing_fast(_df, ['Ax', 'Ay', 'Az'])
 
 
 def export_test():

@@ -1,22 +1,16 @@
-import re
 import datetime as dt
-import pytz
-import sqlite3
-from parser import ParserError
 from pathlib import Path
 
-import dateutil.parser as dparser
 import pandas as pd
+import pytz
 
 import parse_function.custom_function_parser as parser
-from constants import DATE_ROW, TIME_ROW, SENSOR_ID_ROW, SENSOR_ID_COLUMN, HEADERS_ROW, \
-    COMMENT_STYLE
 from data_import import sensor as sens, column_metadata as cm
-from data_import.import_exception import ImportException
 from database.sensor_model_manager import SensorModelManager
-from date_utils import naive_to_utc, utc_to_local
-from parse_function.parse_exception import ParseException
+from date_utils import utc_to_local
 from machine_learning.classifier import CLASSIFIER_NAN
+from models.sensor_metadata import Metadata
+from parse_function.parse_exception import ParseException
 from project_settings import ProjectSettingsDialog
 
 START_TIME_INDEX = 0
@@ -25,110 +19,9 @@ LABEL_INDEX = 2
 COLUMN_TIMESTAMP = "Timestamp"
 
 
-def parse_csv_comment(file, row_nr, col_nr=-1):
-    """
-    Parses a specific part of the header with a line number and a column number. Raises an ImportException if the file
-    is smaller than the given row number or if the line is smaller than the given column number.
-
-    :param file: file to be parsed
-    :param row_nr: row number of header
-    :param col_nr: column number of header data
-    :return: data on row and column number
-    """
-    # return to start of file
-    file.seek(0)
-
-    i = 1  # row numbers start at 1
-
-    for line in file:
-        if i == row_nr:
-
-            if col_nr != -1:
-                # Turn line into list of columns
-                line_list = re.split(', *', line[1:-1])
-
-                # If col_nr is larger than number of columns, raise ImportException
-                if col_nr - 1 >= len(line_list):
-                    raise ImportException(f"Given column number exceeds number of columns in line - given column "
-                                          f"number: {str(col_nr)}, number of columns: {str(len(line_list))}")
-
-                return line_list[col_nr - 1]  # column numbers start at 1
-            else:
-                return line[1:]  # TODO: Implement usage of regular expression entered by user
-        else:
-            i += 1
-
-
-def parse_names(file, row_nr, comment_style):  # TODO: Merge with parse_header_row function
-    """
-    Parses the names of the data columns using a row number. Raises an ImportException if the file is smaller than
-    the given row number.
-
-    :param comment_style: character used to denote comments in csv
-    :param file: file to be parsed
-    :param row_nr: row number of names
-    :return: list of column names
-    """
-    # return to start of file
-    file.seek(0)
-
-    i = 1
-    for line in file:
-        if i == row_nr:
-            # Check if headers are commented out
-            if line[len(line) - len(line.lstrip())] == comment_style:
-                return re.split(', *', line[1:-1])
-            else:
-                return re.split(', *', line[0:-1])
-        else:
-            i += 1
-    # row_nr is higher than number of rows in file
-    raise ImportException("Given row number exceeds numbers of rows in file - given row number: "
-                          + str(row_nr) + ", number of rows: " + str(i))
-
-
-def parse_datetime(file, row: int):
-    header_date = parse_csv_comment(file, row)
-
-    try:
-        # Automatically parse datetime string using dateutil.parser
-        return dparser.parse(header_date, fuzzy=True)
-    except ParserError:
-        return None
-
-
-def parse_header_row(file, header_row, comment_style):
-    """
-    Determines how the panda.read_csv function should use the headers row in file
-    :param comment_style: character used to denote comments in csv
-    :param file: file to be parsed
-    :param header_row: row number of header
-    :return: header :int, None
-    """
-    # return to start of file
-    file.seek(0)
-
-    i = 1
-    for line in file:
-        if i == header_row:
-            # Check if headers are commented out
-            if line[len(line) - len(line.lstrip())] == comment_style:
-                # Don't use headers when in comments
-                return None
-            else:
-                # Pandas header parameter ignores commented lines and empty lines if skip_blank_lines=True,
-                # so header=0 denotes the first line of data rather than the first line of the file.
-                return 0
-        else:
-            i += 1
-    # row_nr is higher than number of rows in file
-    raise ImportException("Given row number exceeds numbers of rows in file - given row number: "
-                          + str(header_row) + ", number of rows: " + str(i))
-
-
 class SensorData:
 
-    def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id, sensor_timezone=None):
+    def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id, sensor_timezone=pytz.utc):
         """
         The SensorData starts parsing as soon as it's constructed. Only SensorData.get_data() needs to
         be called in order to get the parsed data. SensorData.metadata contains the metadata.
@@ -158,51 +51,23 @@ class SensorData:
         self.settings = settings
         self.sensor_model_manager = SensorModelManager(self.settings)
         self.file_path = file_path
+
         self.sensor_model_id = sensor_model_id
-        self.metadata = dict()
+        self.sensor_model = self.sensor_model_manager.get_model_by_id(sensor_model_id)
+        self.metadata = Metadata(self.file_path, self.sensor_model)
         self.col_metadata = dict()
         self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
         self.sensor_timezone = sensor_timezone
 
         # Parse metadata and data
         self._settings_dict = settings.settings_dict
-        self._data = self.parse()
+        self._df = self.parse()
         """ The sensor data as a DataFrame. """
-
-        if self.sensor_timezone is not None:
-            self.parse_local_datetime()
 
     def __copy__(self):
         new = type(self)(self.file_path, self.settings, self.sensor_model_id, self.sensor_timezone)
         new.__dict__.update(self.__dict__)
         return new
-
-    def parse_model_config(self, file, config: sqlite3.Row):
-        self.metadata['date'] = parse_datetime(file, config[DATE_ROW]).date().strftime('%Y-%m-%d')
-        self.metadata['time'] = parse_datetime(file, config[TIME_ROW]).time().strftime('%H:%M:%S.%f')
-
-        if config[SENSOR_ID_COLUMN] != -1:
-            self.metadata['sn'] = parse_csv_comment(file, config[SENSOR_ID_ROW], config[SENSOR_ID_COLUMN])
-        else:
-            self.metadata['sn'] = parse_csv_comment(file, config[SENSOR_ID_ROW])
-
-        self.metadata['names'] = parse_names(file, config[HEADERS_ROW], config[COMMENT_STYLE])
-        self.metadata[COMMENT_STYLE] = config[COMMENT_STYLE]
-
-        self.metadata[HEADERS_ROW] = config[HEADERS_ROW]
-
-    def parse_local_datetime(self):
-        # Create datetime object from date and time
-        naive_dt = dt.datetime.strptime(
-            self.metadata['date'] + self.metadata['time'],
-            '%Y-%m-%d%H:%M:%S.%f'
-        )
-
-        # Convert naive datetime to UTC
-        utc = naive_to_utc(naive_dt, self.sensor_timezone)
-
-        # Convert UTC to local datetime
-        self.metadata['datetime'] = utc_to_local(utc, self.project_timezone)
 
     def parse(self) -> pd.DataFrame:
         """
@@ -210,31 +75,24 @@ class SensorData:
 
         :return: the parsed data as a DataFrame
         """
-        # Parse metadata from headers
-        with self.file_path.open() as file:
-            try:
-                sensor_model = self.sensor_model_manager.get_model_by_id(self.sensor_model_id)
-                self.parse_model_config(file, sensor_model)
-                pd_header_arg = parse_header_row(file, self.metadata[HEADERS_ROW], self.metadata[COMMENT_STYLE])
-            except ImportException:
-                # Pass ImportException
-                raise
-
-        # set column metadata
-        self.set_column_metadata(self._settings_dict)
+        self.metadata.load_values()
 
         # Parse data from file
-        data = pd.read_csv(self.file_path,
-                           header=pd_header_arg,
-                           skip_blank_lines=False,
-                           names=self.metadata['names'],
-                           comment=self.metadata[COMMENT_STYLE])
+        df = pd.read_csv(self.file_path,
+                         names=self.metadata.col_names,
+                         skip_blank_lines=False,
+                         skiprows=self.sensor_model.col_names_row,
+                         comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
+        df.columns = df.columns.str.strip()
 
-        # Pass parse exceptions on
+        columns = df.columns.values.tolist()
+
+        # set column metadata
+        self.set_column_metadata(columns)
+
         try:
             # Convert sensor data to correct unit
-            for name in self.metadata['names']:
-
+            for name in columns:
                 # Retrieve conversion rate from column metadata
                 conversion = self.col_metadata[name].sensor.conversion
 
@@ -246,40 +104,38 @@ class SensorData:
                 parsed_expr = parser.parse(conversion)
 
                 # Apply parsed expression to the data
-                data.eval(name + " = " + parsed_expr, inplace=True)
+                df.eval(name + " = " + parsed_expr, inplace=True)
         except ParseException:
             # Pass ParseException
             raise
-        return data
 
-    def set_sensor_timezone(self, sensor_timezone):
-        self.sensor_timezone = sensor_timezone
+        return df
 
-    def set_column_metadata(self, settings):
+    def set_column_metadata(self, columns):
         """
         Sets the metadata for every column using the settings_dict.
         """
-        for name in self.metadata['names']:
+        for name in columns:
             # parse data_type
-            data_type = (settings[name + "_data_type"]
-                         if name + "_data_type" in settings.keys() else None)
+            data_type = (self._settings_dict[name + "_data_type"]
+                         if name + "_data_type" in self._settings_dict.keys() else None)
 
             # parse sensor:
             # sensor name
-            sensor_name = (settings[name + "_sensor_name"]
-                           if name + "_sensor_name" in settings.keys() else None)
+            sensor_name = (self._settings_dict[name + "_sensor_name"]
+                           if name + "_sensor_name" in self._settings_dict.keys() else None)
 
             # sampling rate
-            sr = (settings[name + "_sampling_rate"]
-                  if name + "_sampling_rate" in settings.keys() else None)
+            sr = (self._settings_dict[name + "_sampling_rate"]
+                  if name + "_sampling_rate" in self._settings_dict.keys() else None)
 
             # unit of measurement
-            unit = (settings[name + "_unit"]
-                    if name + "unit" in settings.keys() else None)
+            unit = (self._settings_dict[name + "_unit"]
+                    if name + "unit" in self._settings_dict.keys() else None)
 
             # conversion rate
-            conversion = (settings[name + "_conversion"]
-                          if name + "_conversion" in settings.keys() else None)
+            conversion = (self._settings_dict[name + "_conversion"]
+                          if name + "_conversion" in self._settings_dict.keys() else None)
 
             # construct sensor
             sensor = sens.Sensor(sensor_name, sr, unit, conversion)
@@ -288,7 +144,7 @@ class SensorData:
             self.col_metadata[name] = cm.ColumnMetadata(name, data_type, sensor)
 
     def get_data(self):
-        return self._data.copy()
+        return self._df.copy()
 
     def add_column_from_func(self, name: str, func: str):
         """
@@ -303,7 +159,7 @@ class SensorData:
             parsed_expr = parser.parse(func)
 
             # Apply parsed expression to data to create new column
-            self._data.eval(name + " = " + parsed_expr, inplace=True)
+            self._df.eval(name + " = " + parsed_expr, inplace=True)
         except ParseException:
             # Pass ParseException
             raise
@@ -315,9 +171,9 @@ class SensorData:
         :param time_col: The name of the column that contains the recorded time.
         :param time_unit: The time unit of the time column.
         """
-        self._data[COLUMN_TIMESTAMP] = \
-            pd.to_timedelta(self._data[time_col], unit=time_unit) + \
-            utc_to_local(self.metadata['datetime'], self.project_timezone)
+        self._df[COLUMN_TIMESTAMP] = \
+            pd.to_timedelta(self._df[time_col], unit=time_unit) + \
+            utc_to_local(self.metadata.utc_dt, self.project_timezone)
 
     def add_labels_ml(self, label_data: [], label_col: str):
         """
@@ -329,7 +185,7 @@ class SensorData:
         :return:
         """
         # Add Label column to the DataFrame and initialize it to NaN
-        self._data[label_col] = CLASSIFIER_NAN
+        self._df[label_col] = CLASSIFIER_NAN
 
         for label_entry in label_data:
             start_time = label_entry[START_TIME_INDEX]
@@ -337,13 +193,13 @@ class SensorData:
             label = label_entry[LABEL_INDEX]
 
             # Add label to the corresponding rows in the sensor data
-            self._data.loc[
-                (self._data[COLUMN_TIMESTAMP] >= start_time) & (self._data[COLUMN_TIMESTAMP] < stop_time),
+            self._df.loc[
+                (self._df[COLUMN_TIMESTAMP] >= start_time) & (self._df[COLUMN_TIMESTAMP] < stop_time),
                 label_col
             ] = label
 
     def filter_between_dates(self, start: dt.datetime, end: dt.datetime):
-        self._data = self._data[(self._data[COLUMN_TIMESTAMP] >= start) & (self._data[COLUMN_TIMESTAMP] < end)]
+        self._df = self._df[(self._df[COLUMN_TIMESTAMP] >= start) & (self._df[COLUMN_TIMESTAMP] < end)]
 
     def add_labels(self, labels):
         """
@@ -352,14 +208,14 @@ class SensorData:
         :param labels:
         :return:
         """
-        self._data["Label"] = ""
+        self._df["Label"] = ""
 
         for label in labels:
             start = label["start"]
             end = label["end"]
             activity = label["activity"]
 
-            self._data.loc[
-                (self._data[COLUMN_TIMESTAMP] >= start) & (self._data[COLUMN_TIMESTAMP] < end),
+            self._df.loc[
+                (self._df[COLUMN_TIMESTAMP] >= start) & (self._df[COLUMN_TIMESTAMP] < end),
                 "Label"
             ] = activity

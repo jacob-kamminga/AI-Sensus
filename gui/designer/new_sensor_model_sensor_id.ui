@@ -214,6 +214,16 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>spinBox_row</tabstop>
+  <tabstop>checkBox_column</tabstop>
+  <tabstop>spinBox_column</tabstop>
+  <tabstop>checkBox_regex</tabstop>
+  <tabstop>lineEdit_regex</tabstop>
+  <tabstop>pushButton_next</tabstop>
+  <tabstop>pushButton</tabstop>
+  <tabstop>pushButton_previous</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

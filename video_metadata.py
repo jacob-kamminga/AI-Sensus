@@ -96,7 +96,6 @@ def parse_camera_name(file_path):
 def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     """
     Parses the start time of video files.
-
     :param file_path: The path of the video
     :param timezone: The timezone that should be used
     :return: datetime: The begin UTC datetime of the video (without tzinfo)
@@ -108,7 +107,8 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     create_datetime_tags = ['DateTimeOriginal', 'CreateDate', 'TrackCreateDate', 'MediaCreateDate']
     # 'TimeStamp', 'SonyDateTime', 'DateTime', 'GPSDateStamp'
     cmd = "exiftool -j -DateTimeOriginal " \
-          "-CreateDate -TrackCreateDate -MediaCreateDate -TimeStamp -SonyDateTime -DateTime -GPSDateStamp"
+          "-CreateDate -TrackCreateDate -MediaCreateDate -TimeStamp -SonyDateTime -DateTime -GPSDateStamp " \
+          "-api largefilesupport=1"
     #  TODO automate the install of the config file. The config file is required to be able to parse large files for
     #  TODO CreateDate tags or use relative path from project dir to config and to bin
     args = shlex.split(cmd)

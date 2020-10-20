@@ -41,7 +41,7 @@ class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.accepted.connect(self.save_to_db)
 
     def load_sensor(self):
-        timezone = self.sensor_manager.get_timezone_by_id(self.sensor_id)  # TODO: Fix bug when opening sensor data file
+        timezone = self.sensor_manager.get_timezone_by_id(self.sensor_id)
 
         self.label_sensor_id_val.setText(self.sensor_name)
         self.old_timezone = timezone
