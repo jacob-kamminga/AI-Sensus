@@ -9,6 +9,7 @@ from matplotlib.dates import date2num, num2date
 from data_import.label_data import LabelData
 from database.label_manager import LabelManager
 from database.label_type_manager import LabelTypeManager
+from date_utils import utc_to_local
 from gui.dialogs.label import LabelSpecs
 from gui_components.sensor_data_file import SensorDataFile
 from project_settings import ProjectSettingsDialog
@@ -185,7 +186,9 @@ class Plot:
         self.data_plot.clear()
 
         time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]  # TODO: Replace hardcoded column with user setting
-        self.sensor_data_file.df['clock_time'] = self.sensor_data_file.datetime + pd.to_timedelta(time, unit='s')
+        self.sensor_data_file.df['clock_time'] = \
+            utc_to_local(self.sensor_data_file.utc_dt, self.sensor_data_file.sensor_data.metadata.sensor_timezone) \
+            + pd.to_timedelta(time, unit='s')
 
         self.x_min_dt = self.sensor_data_file.df['clock_time'].min()
         self.x_max_dt = self.sensor_data_file.df['clock_time'].max()

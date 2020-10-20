@@ -26,7 +26,7 @@ SENSOR_ID_ROW = 'sensor_id_row'
 SENSOR_ID_COLUMN = 'sensor_id_column'
 SENSOR_ID_REGEX = 'sensor_id_regex'
 
-HEADERS_ROW = 'headers_row'
+HEADERS_ROW = 'col_names_row'
 
 COMMENT_STYLE = 'comment_style'
 

@@ -111,7 +111,7 @@ class Classifier:
         if self.classifier is None:
             raise ValueError('self.classifier is None')
         if self.df is None:
-            raise ValueError('self.df is None')
+            raise ValueError('self._df is None')
         if self.features is None:
             raise ValueError('self.features is None')
 

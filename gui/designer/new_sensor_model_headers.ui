@@ -133,6 +133,11 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>spinBox_row</tabstop>
+  <tabstop>pushButton_next</tabstop>
+  <tabstop>pushButton_previous</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

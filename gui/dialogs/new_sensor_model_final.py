@@ -53,22 +53,22 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         existing_model = sensor_model_manager.get_model_by_id(self.model_id)
 
         return {
-            MODEL_NAME: existing_model[MODEL_NAME],
+            MODEL_NAME: existing_model.name,
 
-            DATE_ROW: existing_model[DATE_ROW],
-            TIME_ROW: existing_model[TIME_ROW],
-            TIMESTAMP_COLUMN: existing_model[TIMESTAMP_COLUMN],
-            RELATIVE_ABSOLUTE: existing_model[RELATIVE_ABSOLUTE],
-            TIMESTAMP_UNIT: existing_model[TIMESTAMP_UNIT],
-            FORMAT_STRING: existing_model[FORMAT_STRING],
+            DATE_ROW: existing_model.date_row,
+            TIME_ROW: existing_model.time_row,
+            TIMESTAMP_COLUMN: existing_model.timestamp_column,
+            RELATIVE_ABSOLUTE: existing_model.relative_absolute,
+            TIMESTAMP_UNIT: existing_model.timestamp_unit,
+            FORMAT_STRING: existing_model.format_string,
 
-            SENSOR_ID_ROW: existing_model[SENSOR_ID_ROW],
-            SENSOR_ID_COLUMN: existing_model[SENSOR_ID_COLUMN],
-            SENSOR_ID_REGEX: existing_model[SENSOR_ID_REGEX],
+            SENSOR_ID_ROW: existing_model.sensor_id_row,
+            SENSOR_ID_COLUMN: existing_model.sensor_id_col,
+            SENSOR_ID_REGEX: existing_model.sensor_id_regex,
 
-            HEADERS_ROW: existing_model[HEADERS_ROW],
+            HEADERS_ROW: existing_model.col_names_row,
 
-            COMMENT_STYLE: existing_model[COMMENT_STYLE]
+            COMMENT_STYLE: existing_model.comment_style
         }
 
     def convert_none_type(self):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'new_sensor_model_date.ui'
+# Form implementation generated from reading ui file '..\..\gui\designer\new_sensor_model_date.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #
@@ -36,17 +36,17 @@ class Ui_Dialog(object):
         self.groupBox_date_time_row.setSizePolicy(sizePolicy)
         self.groupBox_date_time_row.setMinimumSize(QtCore.QSize(0, 150))
         self.groupBox_date_time_row.setObjectName("groupBox_date_time_row")
-        self.widget = QtWidgets.QWidget(self.groupBox_date_time_row)
-        self.widget.setGeometry(QtCore.QRect(10, 10, 380, 131))
-        self.widget.setObjectName("widget")
-        self.gridLayout_date_time_row = QtWidgets.QGridLayout(self.widget)
+        self.layoutWidget = QtWidgets.QWidget(self.groupBox_date_time_row)
+        self.layoutWidget.setGeometry(QtCore.QRect(10, 10, 380, 131))
+        self.layoutWidget.setObjectName("layoutWidget")
+        self.gridLayout_date_time_row = QtWidgets.QGridLayout(self.layoutWidget)
         self.gridLayout_date_time_row.setContentsMargins(0, 0, 0, 0)
         self.gridLayout_date_time_row.setObjectName("gridLayout_date_time_row")
-        self.label_test_date = QtWidgets.QLabel(self.widget)
+        self.label_test_date = QtWidgets.QLabel(self.layoutWidget)
         self.label_test_date.setText("")
         self.label_test_date.setObjectName("label_test_date")
         self.gridLayout_date_time_row.addWidget(self.label_test_date, 6, 1, 1, 1)
-        self.label_test_time = QtWidgets.QLabel(self.widget)
+        self.label_test_time = QtWidgets.QLabel(self.layoutWidget)
         self.label_test_time.setText("")
         self.label_test_time.setObjectName("label_test_time")
         self.gridLayout_date_time_row.addWidget(self.label_test_time, 9, 1, 1, 1)
@@ -54,26 +54,26 @@ class Ui_Dialog(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem1)
-        self.spinBox_date_row = QtWidgets.QSpinBox(self.widget)
+        self.spinBox_date_row = QtWidgets.QSpinBox(self.layoutWidget)
         self.spinBox_date_row.setMinimum(1)
         self.spinBox_date_row.setObjectName("spinBox_date_row")
         self.horizontalLayout.addWidget(self.spinBox_date_row)
         self.gridLayout_date_time_row.addLayout(self.horizontalLayout, 5, 1, 1, 1)
         spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.gridLayout_date_time_row.addItem(spacerItem2, 7, 1, 1, 1)
-        self.label_date_row = QtWidgets.QLabel(self.widget)
+        self.label_date_row = QtWidgets.QLabel(self.layoutWidget)
         self.label_date_row.setObjectName("label_date_row")
         self.gridLayout_date_time_row.addWidget(self.label_date_row, 5, 0, 1, 1)
         self.horizontalLayout_2 = QtWidgets.QHBoxLayout()
         self.horizontalLayout_2.setObjectName("horizontalLayout_2")
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem3)
-        self.spinBox_time_row = QtWidgets.QSpinBox(self.widget)
+        self.spinBox_time_row = QtWidgets.QSpinBox(self.layoutWidget)
         self.spinBox_time_row.setMinimum(1)
         self.spinBox_time_row.setObjectName("spinBox_time_row")
         self.horizontalLayout_2.addWidget(self.spinBox_time_row)
         self.gridLayout_date_time_row.addLayout(self.horizontalLayout_2, 8, 1, 1, 1)
-        self.label_time_row = QtWidgets.QLabel(self.widget)
+        self.label_time_row = QtWidgets.QLabel(self.layoutWidget)
         self.label_time_row.setObjectName("label_time_row")
         self.gridLayout_date_time_row.addWidget(self.label_time_row, 8, 0, 1, 1)
         spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -123,7 +123,7 @@ class Ui_Dialog(object):
         self.groupBox_timestamp_column.setMinimumSize(QtCore.QSize(0, 200))
         self.groupBox_timestamp_column.setObjectName("groupBox_timestamp_column")
         self.verticalLayoutWidget = QtWidgets.QWidget(self.groupBox_timestamp_column)
-        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 319, 151))
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 352, 151))
         self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)
@@ -204,6 +204,16 @@ class Ui_Dialog(object):
 
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+        Dialog.setTabOrder(self.checkBox_datetime_metadata, self.spinBox_date_row)
+        Dialog.setTabOrder(self.spinBox_date_row, self.spinBox_time_row)
+        Dialog.setTabOrder(self.spinBox_time_row, self.checkBox_timestamp_column)
+        Dialog.setTabOrder(self.checkBox_timestamp_column, self.spinBox_timestamp_column)
+        Dialog.setTabOrder(self.spinBox_timestamp_column, self.comboBox_relative_absolute)
+        Dialog.setTabOrder(self.comboBox_relative_absolute, self.comboBox_timestamp_unit)
+        Dialog.setTabOrder(self.comboBox_timestamp_unit, self.lineEdit_timestamp_formatstring)
+        Dialog.setTabOrder(self.lineEdit_timestamp_formatstring, self.pushButton_next)
+        Dialog.setTabOrder(self.pushButton_next, self.pushButton_test)
+        Dialog.setTabOrder(self.pushButton_test, self.pushButton_previous)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
@@ -225,13 +235,3 @@ class Ui_Dialog(object):
         self.label_timestamp_unit.setText(_translate("Dialog", "Timestamp unit"))
         self.label_timestamp_formatstring.setText(_translate("Dialog", "Format string of the timestamps"))
         self.checkBox_timestamp_column.setText(_translate("Dialog", "Sensor files contain a timestamp column"))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    Dialog = QtWidgets.QDialog()
-    ui = Ui_Dialog()
-    ui.setupUi(Dialog)
-    Dialog.show()
-    sys.exit(app.exec_())

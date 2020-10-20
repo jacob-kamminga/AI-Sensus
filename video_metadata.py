@@ -68,7 +68,6 @@ def parse_video_duration(file_path):
 def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     """
     Parses the start time of video files.
-
     :param file_path: The path of the video
     :param timezone: The timezone that should be used
     :return: datetime: The begin UTC datetime of the video (without tzinfo)
@@ -77,10 +76,11 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
         raise FileNotFoundException(file_path)
 
     # List tags to obtain from videofile. Note that different cameras may use different tags
-    tags = ['DateTimeOriginal', 'CreateDate', 'TrackCreateDate', 'MediaCreateDate']
+    create_datetime_tags = ['DateTimeOriginal', 'CreateDate', 'TrackCreateDate', 'MediaCreateDate']
     # 'TimeStamp', 'SonyDateTime', 'DateTime', 'GPSDateStamp'
     cmd = "exiftool -j -DateTimeOriginal " \
-          "-CreateDate -TrackCreateDate -MediaCreateDate -TimeStamp -SonyDateTime -DateTime -GPSDateStamp"
+          "-CreateDate -TrackCreateDate -MediaCreateDate -TimeStamp -SonyDateTime -DateTime -GPSDateStamp " \
+          "-api largefilesupport=1"
     #  TODO automate the install of the config file. The config file is required to be able to parse large files for
     #  TODO CreateDate tags or use relative path from project dir to config and to bin
     args = shlex.split(cmd)
@@ -89,13 +89,13 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     exiftool_output = subprocess.check_output(args).decode('utf-8')
     exiftool_output = json.loads(exiftool_output)
 
-    for tag in tags:
+    for tag in create_datetime_tags:
         dt = exiftool_output[0].get(tag)
         if dt != '' and dt is not None:
             break
-    if dt == '' or dt is None:
-        # TODO handle case where no start time for video was found
-        raise StartTimeNotFoundException
+    # if dt == '' or dt is None:
+    # TODO handle case where no start time for video was found
+    # raise StartTimeNotFoundException
 
     # Loop over known datetime string formats used as tags to find the correct format to be parsed. When reading,
     # ExifTool converts all date and time information to standard EXIF format, so this is also the way it is
@@ -115,16 +115,17 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
 
     if naive_dt is None:
         # TODO handle case where no start time for video was found
-        raise StartTimeNotParsedException
+        # raise StartTimeNotParsedException
+        naive_dt = datetime.datetime.now()
 
+    # Verify if naive_dt is really naive. THere are cases when the parsed time is not naive
     if naive_dt.tzinfo is None:
-        local_dt = timezone.localize(naive_dt)
+        ret = naive_to_utc(naive_dt, timezone)
     else:
-        local_dt = naive_dt
+        # return UTC time
+        ret = naive_dt.astimezone(pytz.utc).replace(tzinfo=None)
 
-    utc_dt = local_dt.astimezone(pytz.utc).replace(tzinfo=None)
-
-    return naive_to_utc(naive_dt, timezone) # todo update to check when dt is naive (as in lines directly above)
+    return ret
 
 
 def datetime_with_tz_to_string(utc_dt, format_str, timezone=pytz.utc):
