@@ -10,6 +10,7 @@ import pytz
 
 from date_utils import naive_to_utc
 
+
 # MP4_VIDEO_DT_FORMAT = '%Y-%m-%dT%H:%M:%S.000000Z\n'
 
 
@@ -23,6 +24,7 @@ class StartTimeNotFoundException(Exception):
 
 class StartTimeNotParsedException(Exception):
     pass
+
 
 def parse_video_frame_rate(file_path):
     """
@@ -63,6 +65,32 @@ def parse_video_duration(file_path):
     ffprobe_output = subprocess.check_output(args).decode('utf-8')
 
     return float(ffprobe_output)
+
+
+def parse_camera_name(file_path):
+    """
+    Attempts to find camera name in video file
+    :param file_path:
+    :return:
+    """
+    if file_path is None or not os.path.isfile(file_path):
+        raise FileNotFoundException(file_path)
+    camera_name_tags = ['DeviceManufacturer', 'DeviceModelName', 'DeviceSerialNo']
+    cmd = "exiftool -j -DeviceManufacturer -DeviceModelName -DeviceSerialNo"
+    args = shlex.split(cmd)
+    args.append(file_path)
+    # run the exiftool process, decode stdout into utf-8 & convert to JSON
+    exiftool_output = subprocess.check_output(args).decode('utf-8')
+    exiftool_output = json.loads(exiftool_output)
+    camera_id = ''
+    for tag in camera_name_tags:
+        cid = exiftool_output[0].get(tag)
+        if cid != '':
+            camera_id = camera_id + '_' + cid
+    if camera_id == '':
+        camera_id = None
+
+    return camera_id
 
 
 def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
