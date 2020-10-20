@@ -2,6 +2,7 @@ import datetime as dt
 from typing import Optional
 
 import pandas as pd
+import pytz
 from PyQt5.QtCore import QDateTime
 from PyQt5.QtWidgets import QMessageBox
 from matplotlib.dates import date2num, num2date
@@ -32,6 +33,7 @@ class Plot:
         self.gui = gui
         self.settings: ProjectSettingsDialog = gui.settings
         self.sensor_data_file: SensorDataFile = gui.sensor_data_file
+        self.project_timezone = pytz.timezone(self.settings.get_setting('timezone'))
 
         # self.reset()
         self.label_manager = LabelManager(self.settings)
@@ -187,7 +189,7 @@ class Plot:
 
         time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]  # TODO: Replace hardcoded column with user setting
         self.sensor_data_file.df['clock_time'] = \
-            utc_to_local(self.sensor_data_file.utc_dt, self.sensor_data_file.sensor_data.metadata.sensor_timezone) \
+            utc_to_local(self.sensor_data_file.utc_dt, self.project_timezone) \
             + pd.to_timedelta(time, unit='s')
 
         self.x_min_dt = self.sensor_data_file.df['clock_time'].min()
