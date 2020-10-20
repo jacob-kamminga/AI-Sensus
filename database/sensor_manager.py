@@ -83,7 +83,11 @@ class SensorManager:
     def get_timezone_by_id(self, id_: int) -> str:
         try:
             self._cur.execute(SQL_SELECT_TIMEZONE, (id_,))
-            return self._cur.fetchone()[0]
+            ret = self._cur.fetchone()
+            if ret is not None:
+                return ret[0]
+            else:
+                return ""
         except sqlite3.Error:
             return ""
 
