@@ -44,7 +44,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         self.label_id_row.setText(str(self.model[SENSOR_ID_ROW]))
         self.label_id_column.setText(str(self.model[SENSOR_ID_COLUMN]))
         self.label_id_regex.setText(str(self.model[SENSOR_ID_REGEX]))
-        self.label_headers_row.setText(str(self.model[HEADERS_ROW]))
+        self.label_col_names_row.setText(str(self.model[COL_NAMES_ROW]))
         self.label_comment_style.setText(str(self.model[COMMENT_STYLE]))
 
     def get_model_from_db(self):
@@ -66,7 +66,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
             SENSOR_ID_COLUMN: existing_model.sensor_id_col,
             SENSOR_ID_REGEX: existing_model.sensor_id_regex,
 
-            HEADERS_ROW: existing_model.col_names_row,
+            COL_NAMES_ROW: existing_model.col_names_row,
 
             COMMENT_STYLE: existing_model.comment_style
         }
@@ -96,7 +96,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
                 self.model[SENSOR_ID_ROW],
                 self.model[SENSOR_ID_COLUMN],
                 self.model[SENSOR_ID_REGEX],
-                self.model[HEADERS_ROW],
+                self.model[COL_NAMES_ROW],
                 self.model[COMMENT_STYLE]
             )
         else:
@@ -111,7 +111,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
                 self.model[SENSOR_ID_ROW],
                 self.model[SENSOR_ID_COLUMN],
                 self.model[SENSOR_ID_REGEX],
-                self.model[HEADERS_ROW],
+                self.model[COL_NAMES_ROW],
                 self.model[COMMENT_STYLE]
             )
 

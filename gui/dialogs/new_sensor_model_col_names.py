@@ -1,12 +1,12 @@
 from PyQt5.QtWidgets import QDialog
 
-from constants import HEADERS_ROW
-from gui.designer.new_sensor_model_headers import Ui_Dialog
+from constants import COL_NAMES_ROW
+from gui.designer.new_sensor_model_column_names import Ui_Dialog
 from gui.dialogs.new_sensor_model_comment_style import SensorModelCommentStyleDialog
 from project_settings import ProjectSettingsDialog
 
 
-class SensorModelHeadersDialog(QDialog, Ui_Dialog):
+class SensorModelColumnNamesDialog(QDialog, Ui_Dialog):
 
     def __init__(self, settings: ProjectSettingsDialog, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
@@ -22,11 +22,11 @@ class SensorModelHeadersDialog(QDialog, Ui_Dialog):
         self.pushButton_next.pressed.connect(self.open_final_dialog)
 
     def fill_existing_data(self):
-        if self.model[HEADERS_ROW] is not None and self.model[HEADERS_ROW] != -1:
-            self.spinBox_row.setValue(self.model[HEADERS_ROW])
+        if self.model[COL_NAMES_ROW] is not None and self.model[COL_NAMES_ROW] != -1:
+            self.spinBox_row.setValue(self.model[COL_NAMES_ROW])
 
     def open_final_dialog(self):
-        self.model[HEADERS_ROW] = self.spinBox_row.value()
+        self.model[COL_NAMES_ROW] = self.spinBox_row.value()
 
         dialog = SensorModelCommentStyleDialog(
             self.settings,

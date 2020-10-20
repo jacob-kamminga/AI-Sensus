@@ -43,7 +43,7 @@ class SensorModelNameDialog(QDialog, Ui_Dialog):
                 SENSOR_ID_COLUMN: existing_model[SENSOR_ID_COLUMN],
                 SENSOR_ID_REGEX: existing_model[SENSOR_ID_REGEX],
 
-                HEADERS_ROW: existing_model[HEADERS_ROW],
+                COL_NAMES_ROW: existing_model[COL_NAMES_ROW],
 
                 COMMENT_STYLE: existing_model[COMMENT_STYLE]
             }
@@ -64,7 +64,7 @@ class SensorModelNameDialog(QDialog, Ui_Dialog):
                 SENSOR_ID_COLUMN: -1,
                 SENSOR_ID_REGEX: '',
 
-                HEADERS_ROW: -1,
+                COL_NAMES_ROW: -1,
 
                 COMMENT_STYLE: ''
             }

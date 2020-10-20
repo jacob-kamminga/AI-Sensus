@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QDialog
 
 from constants import SENSOR_ID_ROW, SENSOR_ID_COLUMN, SENSOR_ID_REGEX
 from gui.designer.new_sensor_model_sensor_id import Ui_Dialog
-from gui.dialogs.new_sensor_model_headers import SensorModelHeadersDialog
+from gui.dialogs.new_sensor_model_col_names import SensorModelColumnNamesDialog
 from project_settings import ProjectSettingsDialog
 
 
@@ -20,7 +20,7 @@ class SensorModelIdDialog(QDialog, Ui_Dialog):
         self.fill_existing_data()
 
         self.pushButton_previous.pressed.connect(self.open_previous_dialog)
-        self.pushButton_next.pressed.connect(self.open_headers_dialog)
+        self.pushButton_next.pressed.connect(self.open_col_names_dialog)
 
     def fill_existing_data(self):
         if self.model[SENSOR_ID_ROW] is not None and self.model[SENSOR_ID_ROW] != -1:
@@ -34,12 +34,12 @@ class SensorModelIdDialog(QDialog, Ui_Dialog):
             self.checkBox_regex.setChecked(True)
             self.lineEdit_regex.setText(self.model[SENSOR_ID_REGEX])
 
-    def open_headers_dialog(self):
+    def open_col_names_dialog(self):
         self.model[SENSOR_ID_ROW] = self.spinBox_row.value()
         self.model[SENSOR_ID_COLUMN] = self.spinBox_column.value() if self.checkBox_column.isChecked() else None
         self.model[SENSOR_ID_REGEX] = self.lineEdit_regex.text() if self.checkBox_regex.isChecked() else None
 
-        dialog = SensorModelHeadersDialog(
+        dialog = SensorModelColumnNamesDialog(
             self.settings,
             self.model,
             model_id=self.model_id,

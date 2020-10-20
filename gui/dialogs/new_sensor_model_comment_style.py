@@ -57,8 +57,8 @@ class SensorModelCommentStyleDialog(QDialog, Ui_Dialog):
             dialog.exec()
 
     def open_previous_dialog(self):
-        from gui.dialogs.new_sensor_model_headers import SensorModelHeadersDialog
-        dialog = SensorModelHeadersDialog(
+        from gui.dialogs.new_sensor_model_col_names import SensorModelColumnNamesDialog
+        dialog = SensorModelColumnNamesDialog(
             self.settings,
             self.model,
             model_id=self.model_id,

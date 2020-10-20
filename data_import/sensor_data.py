@@ -9,7 +9,7 @@ from data_import import sensor as sens, column_metadata as cm
 from database.sensor_model_manager import SensorModelManager
 from date_utils import utc_to_local
 from machine_learning.classifier import CLASSIFIER_NAN
-from models.sensor_metadata import Metadata
+from models.sensor_metadata import SensorMetadata
 from parse_function.parse_exception import ParseException
 from project_settings import ProjectSettingsDialog
 
@@ -54,7 +54,7 @@ class SensorData:
 
         self.sensor_model_id = sensor_model_id
         self.sensor_model = self.sensor_model_manager.get_model_by_id(sensor_model_id)
-        self.metadata = Metadata(self.file_path, self.sensor_model)
+        self.metadata = SensorMetadata(self.file_path, self.sensor_model)
         self.col_metadata = dict()
         self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
         self.sensor_timezone = sensor_timezone

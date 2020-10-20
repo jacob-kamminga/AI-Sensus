@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '..\..\gui\designer\new_sensor_model_headers.ui'
+# Form implementation generated from reading ui file '..\..\gui\designer\new_sensor_model_column_names.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #
@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(450, 350)
+        Dialog.resize(433, 350)
         self.gridLayout_2 = QtWidgets.QGridLayout(Dialog)
         self.gridLayout_2.setObjectName("gridLayout_2")
         self.pushButton_next = QtWidgets.QPushButton(Dialog)
@@ -76,4 +76,4 @@ class Ui_Dialog(object):
         self.pushButton_next.setText(_translate("Dialog", "Next"))
         self.pushButton_previous.setText(_translate("Dialog", "Previous"))
         self.label_row.setText(_translate("Dialog", "Row"))
-        self.label_title.setText(_translate("Dialog", "Headers"))
+        self.label_title.setText(_translate("Dialog", "Column names"))
