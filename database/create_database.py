@@ -123,7 +123,7 @@ CREATE_TABLE_SENSOR_MODEL = \
         " + SENSOR_ID_ROW + "       INTEGER ,\
         " + SENSOR_ID_COLUMN + "    INTEGER,\
         " + SENSOR_ID_REGEX + "     TEXT,\
-        " + HEADERS_ROW + "         INTEGER,\
+        " + COL_NAMES_ROW + "         INTEGER,\
         " + COMMENT_STYLE + "       TEXT\
     );"
 

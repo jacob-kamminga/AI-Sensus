@@ -7,7 +7,7 @@ from date_utils import naive_to_utc
 from models.sensor_model import SensorModel
 
 
-class Metadata:
+class SensorMetadata:
 
     def __init__(self, file_path, sensor_model: SensorModel, sensor_id=None, utc_dt=None, sensor_timezone=pytz.utc):
         self.file_path = file_path
@@ -15,7 +15,6 @@ class Metadata:
         self.sensor_id = sensor_id
         self.utc_dt = utc_dt
         self.sensor_timezone = sensor_timezone
-        self.headers = None
 
         self._metadata_list = None
         self.col_names = None
@@ -35,12 +34,15 @@ class Metadata:
                     # Remove the leading comment char
                     line = line[len(comment):]
 
-                if i == self.sensor_model.col_names_row - 1:
+                if i == self.sensor_model.col_names_row - 1:  # Last row (column names)
                     self.col_names = line.strip().split(',')
                 else:
                     header_rows.append(line)
 
-            self._metadata_list = [value.strip().split(',') for value in header_rows]
+            # Remove leading/trailing whitespace and split the rows
+            split_rows = [row.strip().split(',') for row in header_rows]
+            # Remove leading and trailing whitespace from the values
+            self._metadata_list = [[val.strip() for val in row] for row in split_rows]
 
     def _get_value(self, row, col=-1):
         """
@@ -54,7 +56,7 @@ class Metadata:
         if col > -1:
             return self._metadata_list[row - 1][col - 1]
         else:
-            return ''.join(self._metadata_list[row - 1])
+            return ' '.join(self._metadata_list[row - 1])
 
     def parse_datetime(self):
         # Automatically parse date and time from string
