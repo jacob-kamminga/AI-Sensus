@@ -54,7 +54,7 @@ class SensorData:
 
         self.sensor_model_id = sensor_model_id
         self.sensor_model = self.sensor_model_manager.get_model_by_id(sensor_model_id)
-        self.metadata = Metadata(self.file_path, self.sensor_model)
+        self.metadata = Metadata(self.file_path, self.sensor_model, sensor_model_id, None, sensor_timezone)
         self.col_metadata = dict()
         self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
         self.sensor_timezone = sensor_timezone
@@ -211,8 +211,11 @@ class SensorData:
         self._df["Label"] = ""
 
         for label in labels:
-            start = label["start"]
-            end = label["end"]
+            # start = self.sensor_timezone.localize(label["start"])
+            # end = self.sensor_timezone.localize(label["end"])
+            # TODO are labels always stored as UTC?
+            start = pytz.utc.localize(label["start"])
+            end = pytz.utc.localize(label["end"])
             activity = label["activity"]
 
             self._df.loc[

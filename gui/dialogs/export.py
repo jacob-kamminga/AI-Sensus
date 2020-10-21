@@ -83,6 +83,8 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         if model_id >= 0 and sensor_id >= 0:
             sensor_timezone = pytz.timezone(self.sensor_manager.get_timezone_by_id(sensor_id))
             sensor_data = SensorData(Path(file_path), self.settings, model_id, sensor_timezone)
+            # Parse the utc datetime of the sensor data
+            sensor_data.metadata.parse_datetime()
         # Sensor model unknown
         else:
             sensor_data = None
@@ -141,7 +143,6 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
     def get_start_datetime(self) -> dt.datetime:
         start_dt = self.dateEdit_start.dateTime()
         start_dt.setTime(self.timeEdit_start.time())
-
         return start_dt.toPyDateTime()
 
     def get_end_datetime(self) -> dt.datetime:
@@ -179,6 +180,9 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                         raise Exception('Sensor data not found')
 
                     sensor_data.add_timestamp_column(COL_TIME)
+                    start_dt = sensor_data.project_timezone.localize(start_dt)
+                    end_dt = sensor_data.project_timezone.localize(end_dt)
+
                     sensor_data.filter_between_dates(start_dt, end_dt)
                     sensor_data.add_labels(labels)
 

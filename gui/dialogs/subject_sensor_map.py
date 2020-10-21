@@ -32,7 +32,7 @@ class SubjectSensorMapDialog(QtWidgets.QDialog, Ui_Dialog):
         self.subjects_dict = dict((id_, name) for id_, name, _, _, _ in self.all_subjects)
 
         self.all_sensors = self.sensor_manager.get_all_sensors()
-        self.sensors_dict = dict((id_, name) for id_, name, _ in self.all_sensors)
+        self.sensors_dict = dict((id_, name) for id_, name in self.all_sensors)
 
         self.maps: List[Tuple[str]] = []
         self.column_names = ["ID", "Subject", "Sensor", "Start date", "End date"]

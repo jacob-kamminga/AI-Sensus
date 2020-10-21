@@ -104,11 +104,11 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
         raise FileNotFoundException(file_path)
 
     # List tags to obtain from videofile. Note that different cameras may use different tags
-    create_datetime_tags = ['DateTimeOriginal', 'CreateDate', 'TrackCreateDate', 'MediaCreateDate']
+    create_datetime_tags = ['CreationDateValue','DateTimeOriginal', 'CreateDate', 'TrackCreateDate', 'MediaCreateDate']
     # 'TimeStamp', 'SonyDateTime', 'DateTime', 'GPSDateStamp'
     cmd = "exiftool -j -DateTimeOriginal " \
-          "-CreateDate -TrackCreateDate -MediaCreateDate -TimeStamp -SonyDateTime -DateTime -GPSDateStamp " \
-          "-api largefilesupport=1"
+          "-CreateDate -TrackCreateDate -MediaCreateDate -CreationDateValue -TimeStamp -SonyDateTime -DateTime" \
+          "-GPSDateStamp -api largefilesupport=1"
     #  TODO automate the install of the config file. The config file is required to be able to parse large files for
     #  TODO CreateDate tags or use relative path from project dir to config and to bin
     args = shlex.split(cmd)
@@ -124,6 +124,8 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     # if dt == '' or dt is None:
     # TODO handle case where no start time for video was found
     # raise StartTimeNotFoundException
+
+    # TODO invesitgate (vooral op exiftool site) if convention is that tag is always UTC time except when timezone info explcitly present in timestamp tag
 
     # Loop over known datetime string formats used as tags to find the correct format to be parsed. When reading,
     # ExifTool converts all date and time information to standard EXIF format, so this is also the way it is

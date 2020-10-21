@@ -147,7 +147,7 @@ class Video:
             # First update plot according to offset value
             self.gui.plot.update_plot_axis()
 
-            self.offset = self.gui.plot.x_min_dt - self.project_dt
+            self.offset = self.gui.plot.x_min_dt - self.project_dt  # TODO bug when these timestamps have different timezones
             self.offset_ms = self.offset / dt.timedelta(milliseconds=1)
             self.position = self.offset_ms
 
