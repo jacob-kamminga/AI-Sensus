@@ -114,12 +114,6 @@ class Plot:
         else:
             self.gui.label_current_function_value.clear()
 
-        self.y_min = self.sensor_data_file.df[self.current_plot].min()
-        self.y_max = self.sensor_data_file.df[self.current_plot].max()
-
-        if self.y_min == self.y_max:
-            self.y_max = self.y_max+1
-
         self.draw_graph()
         self.settings.set_setting("current_plot", self.current_plot)
 
@@ -160,7 +154,9 @@ class Plot:
         """
         Every time the timer calls this function, the axis of the graph is updated.
         """
-        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)  # TODO: Fix bug when starting new project
+        if self.x_min_dt is None:
+            return
+        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)  #  TODO: Fix bug when starting new project
         new_position_dt = position_dt if position == -1.0 else position
 
         plot_width_delta = dt.timedelta(seconds=(self.plot_width / 2))
@@ -174,7 +170,11 @@ class Plot:
         x_max = date2num(new_position_dt + plot_width_delta - video_offset_delta - video_offset)
 
         self.data_plot.set_xlim(x_min, x_max)
-        self.data_plot.set_ylim(self.y_min, self.plot_height_factor * self.y_max)
+        self.data_plot.set_ylim(
+            self.y_min - ((self.plot_height_factor - 1) * abs(self.y_min)),
+            self.y_max + ((self.plot_height_factor - 1) * self.y_max))
+
+        # self.data_plot.set_ylim(self.y_min, self.plot_height_factor * self.y_max)
         self.vertical_line.set_xdata((x_min + x_max) / 2)
         self.gui.canvas.draw()
 
@@ -187,7 +187,7 @@ class Plot:
 
         self.data_plot.clear()
 
-        time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]  # TODO: Replace hardcoded column with user setting
+        time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]  #  TODO: Replace hardcoded column with user setting
         self.sensor_data_file.df['clock_time'] = \
             utc_to_local(self.sensor_data_file.utc_dt, self.project_timezone) \
             + pd.to_timedelta(time, unit='s')
@@ -196,6 +196,14 @@ class Plot:
         self.x_max_dt = self.sensor_data_file.df['clock_time'].max()
         self.x_min = date2num(self.sensor_data_file.df['clock_time'].min())
         self.x_max = date2num(self.sensor_data_file.df['clock_time'].max())
+        if self.x_min == self.x_max:
+            self.x_max = self.x_min + 1
+
+        # Remove outliers before assessing y_min and y_max value for plot
+        self.y_min = self.sensor_data_file.df[self.current_plot].quantile(.0001)
+        self.y_max = self.sensor_data_file.df[self.current_plot].quantile(.9999)
+        if self.y_min == self.y_max:
+            self.y_max = self.y_min + 1
 
         self.data_plot.axis([self.x_min, self.x_max, self.y_min, self.y_max])
         self.data_plot.plot(self.sensor_data_file.df['clock_time'], self.sensor_data_file.df[self.current_plot], ',-',

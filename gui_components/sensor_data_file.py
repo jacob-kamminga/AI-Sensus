@@ -193,15 +193,6 @@ class SensorDataFile:
         # Reset the figure and add a new subplot to it
         self.gui.figure.clear()
         self.gui.plot.data_plot = self.gui.figure.add_subplot(1, 1, 1)
-
-        # Determine the length of the y-axis and plot the graph with the specified width
-        if self.df[self.gui.plot.current_plot].min() == self.df[self.gui.plot.current_plot].max():
-            self.gui.plot.y_min = self.df[self.gui.plot.current_plot].min()
-            self.gui.plot.y_max = self.df[self.gui.plot.current_plot].max() + 1
-        else:
-            self.gui.plot.y_min = self.df[self.gui.plot.current_plot].min()
-            self.gui.plot.y_max = self.df[self.gui.plot.current_plot].max()
-
         self.gui.plot.draw_graph()
 
         x_window_start = self.gui.plot.x_min - (self.gui.plot.plot_width / 2)
@@ -212,10 +203,12 @@ class SensorDataFile:
             self.settings.set_setting("plot_height_factor", self.gui.plot.plot_height_factor)
 
         # Set the axis of the data plot
-        self.gui.plot.data_plot.axis([x_window_start,
-                                      x_window_end,
-                                      self.gui.plot.y_min,
-                                      self.gui.plot.plot_height_factor * self.gui.plot.y_max])
+        self.gui.plot.data_plot.axis([
+            x_window_start,
+            x_window_end,
+            self.gui.plot.y_min - ((self.gui.plot.plot_height_factor-1) * self.gui.plot.y_min),
+            self.gui.plot.y_max + ((self.gui.plot.plot_height_factor-1) * self.gui.plot.y_max)
+            ])
 
         # Start the timer that makes the graph scroll smoothly
         self.gui.timer.timeout.connect(self.gui.plot.update_plot_axis)
