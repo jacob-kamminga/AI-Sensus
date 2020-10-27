@@ -5,6 +5,7 @@ import pandas as pd
 import pytz
 
 import parse_function.custom_function_parser as parser
+from constants import COL_ABSOLUTE_DATETIME, RELATIVE_TIME_ITEM, ABSOLUTE_TIME_ITEM
 from data_import import sensor as sens, column_metadata as cm
 from database.sensor_model_manager import SensorModelManager
 from date_utils import utc_to_local
@@ -22,31 +23,6 @@ COLUMN_TIMESTAMP = "Timestamp"
 class SensorData:
 
     def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id, sensor_timezone=pytz.utc):
-        """
-        The SensorData starts parsing as soon as it's constructed. Only SensorData.get_data() needs to
-        be called in order to get the parsed data. SensorData.metadata contains the metadata.
-
-        :param file_path: path to the file to be parsed
-        :param settings: The settings_dict dictionary contains information on where metadata can
-        be found in the parsed file. It should have the following keys in order for it to work:
-
-            - time_row, time_col   (row and column where 'time' attribute is located)
-            - date_row, date_col   (row and column where 'date' attribute is located)
-            - sr_row, sr_col       (row and column where 'sampling rate' attribute is located)
-            - sn_row, sn_col       (row and column where 'serial number' attribute is located)
-            - names_row            (row where the names of the columns are located)
-
-            - comment              (symbol used to indicate a comment !this is a value, not a location!)
-
-        The next keys are variable depending on the name of the column (these are not locations, but values!):
-
-            - <name>_data_type     (data type of the column)
-            - <name>_sensor_name   (name of the sensor used)
-            - <name>_sampling_rate (sampling rate of the sensor)
-            - <name>_unit          (unit of measurement of the sensor)
-            - <name>_conversion    (conversion function for the data,
-                                    for more information on the function see parse_function.custom_function_parser)
-        """
         # Initialize primitives
         self.settings = settings
         self.sensor_model_manager = SensorModelManager(self.settings)
@@ -62,6 +38,9 @@ class SensorData:
         # Parse metadata and data
         self._settings_dict = settings.settings_dict
         self._df = self.parse()
+
+        if self.sensor_model.relative_absolute == RELATIVE_TIME_ITEM:
+            self.normalize_rel_datetime_column()
         """ The sensor data as a DataFrame. """
 
     def __copy__(self):
@@ -81,10 +60,10 @@ class SensorData:
         df = pd.read_csv(self.file_path,
                          names=self.metadata.col_names,
                          skip_blank_lines=False,
-                         skiprows=self.sensor_model.col_names_row,
+                         skiprows=self.sensor_model.col_names_row + 1,
                          comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
-        df.columns = df.columns.str.strip()
 
+        df.columns = df.columns.str.strip()
         columns = df.columns.values.tolist()
 
         # set column metadata
@@ -174,6 +153,33 @@ class SensorData:
         self._df[COLUMN_TIMESTAMP] = \
             pd.to_timedelta(self._df[time_col], unit=time_unit) + \
             utc_to_local(self.metadata.utc_dt, self.project_timezone)
+
+    def add_abs_datetime_column(self):
+        """
+        Add an absolute time column to the existing dataframe.
+        """
+        time_col = self.sensor_model.timestamp_column
+
+        # If time column is relative, convert relative time to absolute time
+        if self.sensor_model.relative_absolute == RELATIVE_TIME_ITEM:
+            time_unit = self.sensor_model.timestamp_unit
+
+            # Add absolute datetime column to dataframe
+            self._df[COL_ABSOLUTE_DATETIME] = \
+                utc_to_local(self.metadata.utc_dt, self.project_timezone) + \
+                pd.to_timedelta(self._df.iloc[:, time_col], unit=time_unit)
+
+        # If time column is absolute, rename the column
+        elif self.sensor_model.relative_absolute == ABSOLUTE_TIME_ITEM:
+            self._df.rename(columns={time_col: COL_ABSOLUTE_DATETIME})
+
+    def normalize_rel_datetime_column(self):
+        time_col = self.sensor_model.timestamp_column
+        first_val = self._df.iloc[0, time_col]
+
+        if first_val != 0:
+            # Subtract the (non-zero) first value from all values in the timestamp column to normalize the data
+            self._df.iloc[:, time_col] = self._df.iloc[:, time_col].subtract(first_val)
 
     def add_labels_ml(self, label_data: [], label_col: str):
         """

@@ -27,14 +27,14 @@ class SensorMetadata:
 
         with self.file_path.open() as f:
             # Parse all
-            for i in range(self.sensor_model.col_names_row):
+            for i in range(self.sensor_model.col_names_row + 1):
                 line = f.readline()
 
                 if comment and line.startswith(comment):
                     # Remove the leading comment char
                     line = line[len(comment):]
 
-                if i == self.sensor_model.col_names_row - 1:  # Last row (column names)
+                if i == self.sensor_model.col_names_row:  # Last row (column names)
                     self.col_names = line.strip().split(',')
                 else:
                     header_rows.append(line)
@@ -46,17 +46,20 @@ class SensorMetadata:
 
     def _get_value(self, row, col=-1):
         """
-        Parses a specific part of the header with a line number and a column number. Raises an ImportException if the
+        Parses a specific part of the header at the specified position. Raises an ImportException if the
         file is smaller than the given row number or if the line is smaller than the given column number.
 
         :param row: row number of header
         :param col: column number of header data
         :return: data on row and column number
         """
-        if col > -1:
-            return self._metadata_list[row - 1][col - 1]
-        else:
-            return ' '.join(self._metadata_list[row - 1])
+        if 0 <= row < len(self._metadata_list) and -1 <= col < len(self._metadata_list[row]):
+            if col > -1:
+                return self._metadata_list[row][col]
+            else:
+                return ' '.join(self._metadata_list[row])
+
+        return IndexError
 
     def parse_datetime(self):
         # Automatically parse date and time from string

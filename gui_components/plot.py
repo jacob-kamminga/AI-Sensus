@@ -7,12 +7,14 @@ from PyQt5.QtCore import QDateTime
 from PyQt5.QtWidgets import QMessageBox
 from matplotlib.dates import date2num, num2date
 
+from constants import COL_ABSOLUTE_DATETIME
 from data_import.label_data import LabelData
 from database.label_manager import LabelManager
 from database.label_type_manager import LabelTypeManager
 from date_utils import utc_to_local
 from gui.dialogs.label import LabelSpecs
 from gui_components.sensor_data_file import SensorDataFile
+from models.sensor_model import SensorModel
 from project_settings import ProjectSettingsDialog
 
 LABEL_START_TIME_INDEX = 0
@@ -163,8 +165,8 @@ class Plot:
         video_offset_delta = dt.timedelta(seconds=self.gui.doubleSpinBox_video_offset.value())
         video_offset = dt.timedelta(seconds=0)
 
-        if self.gui.video.offset is not None:
-            video_offset = self.gui.video.offset
+        if self.gui.video.init_offset is not None:
+            video_offset = self.gui.video.init_offset
 
         x_min = date2num(new_position_dt - plot_width_delta - video_offset_delta - video_offset)
         x_max = date2num(new_position_dt + plot_width_delta - video_offset_delta - video_offset)
@@ -185,17 +187,14 @@ class Plot:
         if self.sensor_data_file.sensor_data is None:
             return
 
+        # Clear the plot
         self.data_plot.clear()
 
-        time = self.sensor_data_file.df[self.sensor_data_file.df.columns[0]]  #  TODO: Replace hardcoded column with user setting
-        self.sensor_data_file.df['clock_time'] = \
-            utc_to_local(self.sensor_data_file.utc_dt, self.project_timezone) \
-            + pd.to_timedelta(time, unit='s')
-
-        self.x_min_dt = self.sensor_data_file.df['clock_time'].min()
-        self.x_max_dt = self.sensor_data_file.df['clock_time'].max()
-        self.x_min = date2num(self.sensor_data_file.df['clock_time'].min())
-        self.x_max = date2num(self.sensor_data_file.df['clock_time'].max())
+        # Get the boundaries of the plot axis
+        self.x_min_dt = self.sensor_data_file.df[COL_ABSOLUTE_DATETIME].min()
+        self.x_max_dt = self.sensor_data_file.df[COL_ABSOLUTE_DATETIME].max()
+        self.x_min = date2num(self.x_min_dt)
+        self.x_max = date2num(self.x_max_dt)
         if self.x_min == self.x_max:
             self.x_max = self.x_min + 1
 
@@ -205,17 +204,28 @@ class Plot:
         if self.y_min == self.y_max:
             self.y_max = self.y_min + 1
 
+        # Set the axis boundaries
         self.data_plot.axis([self.x_min, self.x_max, self.y_min, self.y_max])
-        self.data_plot.plot(self.sensor_data_file.df['clock_time'], self.sensor_data_file.df[self.current_plot], ',-',
-                            linewidth=1, color='black')
+
+        # Plot the graph
+        self.data_plot.plot(
+            self.sensor_data_file.df[COL_ABSOLUTE_DATETIME],
+            self.sensor_data_file.df[self.current_plot],
+            ',-',
+            linewidth=1,
+            color='black'
+        )
+
+        # Draw a red vertical line in the middle of the plot
         self.vertical_line = self.data_plot.axvline(x=0)
         self.vertical_line.set_color('red')
 
+        # Add label types to dictionary
         for row in self.label_type_manager.get_all_label_types():
             self.label_types[row[KEY_ID]] = {KEY_ACTIVITY: row[KEY_ACTIVITY], KEY_COLOR: row[KEY_COLOR]}
 
+        # Get labels and add to plot
         labels = self.label_manager.get_all_labels_by_file(self.sensor_data_file.id_)
-
         self.highlights = {}
 
         for label in labels:

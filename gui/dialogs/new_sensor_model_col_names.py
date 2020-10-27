@@ -19,14 +19,15 @@ class SensorModelColumnNamesDialog(QDialog, Ui_Dialog):
         self.model = model
         self.fill_existing_data()
 
+        self.pushButton_previous.pressed.connect(self.open_previous_dialog)
         self.pushButton_next.pressed.connect(self.open_final_dialog)
 
     def fill_existing_data(self):
         if self.model[COL_NAMES_ROW] is not None and self.model[COL_NAMES_ROW] != -1:
-            self.spinBox_row.setValue(self.model[COL_NAMES_ROW])
+            self.spinBox_row.setValue(self.model[COL_NAMES_ROW] + 1)
 
     def open_final_dialog(self):
-        self.model[COL_NAMES_ROW] = self.spinBox_row.value()
+        self.model[COL_NAMES_ROW] = self.spinBox_row.value() - 1
 
         dialog = SensorModelCommentStyleDialog(
             self.settings,

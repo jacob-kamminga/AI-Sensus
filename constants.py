@@ -16,9 +16,8 @@ RELATIVE_ABSOLUTE = 'relative_absolute'
 TIMESTAMP_UNIT = 'timestamp_unit'
 FORMAT_STRING = 'format_string'
 
-ABSOLUTE_ITEM = 'absolute'
-RELATIVE_METADATA_ITEM = 'relative to metadata timestamp'
-RELATIVE_OTHER_ITEM = 'relative to other time'
+ABSOLUTE_TIME_ITEM = 'absolute'
+RELATIVE_TIME_ITEM = 'relative'
 FORMAT_STRING_ITEM = 'formatted string'
 
 
@@ -34,3 +33,6 @@ PROJECTS = 'projects'
 PROJECT_NAME = 'project_name'
 PROJECT_DIR = 'settings'
 PROJECT_DIR_EXISTS = 'project_dir_exists'
+
+# Sensor data DataFrame
+COL_ABSOLUTE_DATETIME = "absolute_datetime"

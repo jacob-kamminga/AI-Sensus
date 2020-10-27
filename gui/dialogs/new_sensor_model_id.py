@@ -24,20 +24,20 @@ class SensorModelIdDialog(QDialog, Ui_Dialog):
 
     def fill_existing_data(self):
         if self.model[SENSOR_ID_ROW] is not None and self.model[SENSOR_ID_ROW] != -1:
-            self.spinBox_row.setValue(self.model[SENSOR_ID_ROW])
+            self.spinBox_row.setValue(self.model[SENSOR_ID_ROW] + 1)
 
         if self.model[SENSOR_ID_COLUMN] is not None and self.model[SENSOR_ID_COLUMN] != -1:
             self.checkBox_column.setChecked(True)
-            self.spinBox_column.setValue(self.model[SENSOR_ID_COLUMN])
+            self.spinBox_column.setValue(self.model[SENSOR_ID_COLUMN] + 1)
 
         if self.model[SENSOR_ID_REGEX] is not None and self.model[SENSOR_ID_REGEX] != '':
             self.checkBox_regex.setChecked(True)
             self.lineEdit_regex.setText(self.model[SENSOR_ID_REGEX])
 
     def open_col_names_dialog(self):
-        self.model[SENSOR_ID_ROW] = self.spinBox_row.value()
-        self.model[SENSOR_ID_COLUMN] = self.spinBox_column.value() if self.checkBox_column.isChecked() else None
-        self.model[SENSOR_ID_REGEX] = self.lineEdit_regex.text() if self.checkBox_regex.isChecked() else None
+        self.model[SENSOR_ID_ROW] = self.spinBox_row.value() - 1
+        self.model[SENSOR_ID_COLUMN] = self.spinBox_column.value() - 1 if self.checkBox_column.isChecked() else -1
+        self.model[SENSOR_ID_REGEX] = self.lineEdit_regex.text() if self.checkBox_regex.isChecked() else ''
 
         dialog = SensorModelColumnNamesDialog(
             self.settings,
