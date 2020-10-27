@@ -92,14 +92,14 @@ class SensorDataFileManager:
         else:
             return res[0]
 
-    def get_sensor_model_by_file_name(self, file_name: str) -> int:
+    def get_sensor_model_by_file_name(self, file_name: str):
         self._cur.execute(SQL_SELECT_SENSOR_MODEL_BY_FILE_NAME, (file_name,))
         res = self._cur.fetchone()
 
         if res is not None:
             return res[0]
-        else:
-            return -1
+
+        return None
 
     def get_sensor_model_by_id(self, id_: int) -> int:
         self._cur.execute(SQL_SELECT_SENSOR_MODEL_BY_ID, (id_,))

@@ -55,10 +55,12 @@ class SensorDataFile:
 
         if previous_path is not None:
             previous_path = Path(previous_path)
+
             if previous_path.is_file():
                 self.file_path = previous_path
                 self.open_file()
-                if hasattr(self.gui, 'video'):
+
+                if hasattr(self.gui, 'video') and self.gui.video.project_dt is not None:
                     self.gui.video.set_position(0)
 
     def prompt_file(self):
@@ -107,10 +109,11 @@ class SensorDataFile:
             self.model_id = self.sensor_data_file_manager.get_sensor_model_by_file_name(file_name)
 
             # If sensor model unknown, prompt user
-            if self.model_id == -1:
+            if self.model_id is None:
                 self.open_sensor_model_dialog()
 
-            if self.model_id != -1:
+            # Check whether user has actually selected a sensor model in the dialog
+            if self.model_id is not None:
                 # Retrieve the SensorData object that parses the sensor data file
                 self.sensor_data = SensorData(self.file_path, self.settings, self.model_id)
                 sensor_name = self.sensor_data.metadata.sensor_id
@@ -136,6 +139,9 @@ class SensorDataFile:
 
                 # Parse the utc datetime of the sensor data
                 self.sensor_data.metadata.parse_datetime()
+
+                # Add absolute time column to dataframe
+                self.sensor_data.add_abs_datetime_column()
 
                 # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary
                 stored_formulas = self.settings.get_setting('formulas')
@@ -179,15 +185,13 @@ class SensorDataFile:
         # and plot the first one
         self.gui.comboBox_functions.clear()
 
-        for column in self.df.columns:
-            self.gui.comboBox_functions.addItem(column)
+        data_cols = self.df.columns.tolist()
+        del data_cols[self.sensor_data.sensor_model.timestamp_column]
 
-        # self.gui.comboBox_functions.removeItem(0)
-        if self.settings.get_setting("current_plot"):
-            self.gui.plot.current_plot = self.settings.get_setting("current_plot")
-            self.gui.comboBox_functions.setCurrentText(self.gui.plot.current_plot)
-        else:
-            self.gui.plot.current_plot = self.gui.comboBox_functions.currentText()
+        for col in data_cols:
+            self.gui.comboBox_functions.addItem(col)
+
+        self.gui.plot.current_plot = self.gui.comboBox_functions.currentText()
 
     def draw_graph(self):
         # Reset the figure and add a new subplot to it

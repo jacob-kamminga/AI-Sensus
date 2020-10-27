@@ -39,12 +39,20 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
     def init(self):
         self.label_name.setText(str(self.model[MODEL_NAME]))
-        self.label_date_row.setText(str(self.model[DATE_ROW]))
-        self.label_time_row.setText(str(self.model[TIME_ROW]))
-        self.label_id_row.setText(str(self.model[SENSOR_ID_ROW]))
-        self.label_id_column.setText(str(self.model[SENSOR_ID_COLUMN]))
+
+        if self.model[DATE_ROW] != -1:
+            self.label_date_row.setText(str(self.model[DATE_ROW] + 1))
+
+        if self.model[TIME_ROW] != -1:
+            self.label_time_row.setText(str(self.model[TIME_ROW] + 1))
+
+        self.label_id_row.setText(str(self.model[SENSOR_ID_ROW] + 1))
+
+        if self.model[SENSOR_ID_COLUMN] != -1:
+            self.label_id_column.setText(str(self.model[SENSOR_ID_COLUMN] + 1))
+
         self.label_id_regex.setText(str(self.model[SENSOR_ID_REGEX]))
-        self.label_col_names_row.setText(str(self.model[COL_NAMES_ROW]))
+        self.label_col_names_row.setText(str(self.model[COL_NAMES_ROW] + 1))
         self.label_comment_style.setText(str(self.model[COMMENT_STYLE]))
 
     def get_model_from_db(self):

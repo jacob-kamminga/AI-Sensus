@@ -9,8 +9,11 @@ def get_hms_sum(time1, time2):
     :param time2: The string of the second time of the addition.
     :return: The result of the addition of the two times, again as a string in the HH:MM:SS format.
     """
-    return str(timedelta(hours=int(time1[0:2]), minutes=int(time1[3:5]), seconds=int(time1[6:8])) + timedelta(hours=int(
-        time2[0:2]), minutes=int(time2[3:5]), seconds=int(time2[6:8])))
+    if time1 and time2:
+        return str(timedelta(hours=int(time1[0:2]), minutes=int(time1[3:5]), seconds=int(time1[6:8])) +
+                   timedelta(hours=int(time2[0:2]), minutes=int(time2[3:5]), seconds=int(time2[6:8])))
+
+    return ''
 
 
 def ms_to_hms(duration):

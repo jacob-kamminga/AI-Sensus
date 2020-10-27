@@ -34,8 +34,8 @@ class Video:
         self.project_dt: Optional[dt.datetime] = None
         self.position = None
         self.timezone = None
-        self.offset = None  # TODO comment here which specific offset this is : offset between the video and sensor data ?
-        self.offset_ms = None
+        self.init_offset = None
+        """The offset between the beginning of the video and the beginning of the sensor data."""
 
     # def reset(self, gui):
 
@@ -144,20 +144,20 @@ class Video:
         Synchronizes the start time of the video with the sensor data.
         """
         if self.project_dt is not None and self.gui.plot.x_min_dt is not None:
-            # First update plot according to offset value
+            # First update plot according to the camera offset value
             self.gui.plot.update_plot_axis()
 
-            self.offset = self.gui.plot.x_min_dt - self.project_dt  # TODO bug when these timestamps have different timezones
-            self.offset_ms = self.offset / dt.timedelta(milliseconds=1)
-            self.position = self.offset_ms
+            self.init_offset = self.gui.plot.x_min_dt - self.project_dt
+            init_offset_ms = self.init_offset / dt.timedelta(milliseconds=1)
 
             # The offset between the video and sensor data should be at most 12 hours
             # Otherwise an overflow can occur in the horizontal slider
-            if dt.timedelta(hours=-12) <= self.offset <= dt.timedelta(hours=12):
+            if dt.timedelta(hours=-12) <= self.init_offset <= dt.timedelta(hours=12):
+                self.position = init_offset_ms
                 self.gui.mediaPlayer.setPosition(self.position)
                 self.gui.horizontalSlider_time.setValue(int(self.position))
             else:
-                print(f'offset: {self.offset}')
+                print(f'offset: {self.init_offset}')
                 QMessageBox(
                     QMessageBox.Warning,
                     'Sync error',
