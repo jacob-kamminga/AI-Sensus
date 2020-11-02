@@ -19,13 +19,17 @@ class SensorModelCommentStyleDialog(QDialog, Ui_Dialog):
         self.model = model
         self.fill_existing_data()
 
-        self.pushButton_next.pressed.connect(self.open_final_dialog)
+        self.pushButton_next.pressed.connect(self.open_next_dialog)
+        self.pushButton_previous.pressed.connect(self.open_previous_dialog)
+        self.checkBox_enabled.stateChanged.connect(self.toggle_line_edit_style)
 
     def fill_existing_data(self):
         if self.model[COMMENT_STYLE] is not None and self.model[COMMENT_STYLE] != '':
+            self.lineEdit_style.setEnabled(True)
             self.lineEdit_style.setText(self.model[COMMENT_STYLE])
+            self.checkBox_enabled.setChecked(True)
 
-    def open_final_dialog(self):
+    def open_next_dialog(self):
         if self.checkBox_enabled.isChecked():
             comment_style = self.lineEdit_style.text()
 
@@ -46,6 +50,7 @@ class SensorModelCommentStyleDialog(QDialog, Ui_Dialog):
                 error_dialog.showMessage('Comment style cannot be empty if it is enabled.')
                 error_dialog.exec()
         else:
+            self.model[COMMENT_STYLE] = ''
             dialog = SensorModelFinalDialog(
                 self.settings,
                 self.model,
@@ -67,3 +72,8 @@ class SensorModelCommentStyleDialog(QDialog, Ui_Dialog):
         )
         self.close()
         dialog.exec()
+
+    def toggle_line_edit_style(self):
+        self.lineEdit_style.setEnabled(self.checkBox_enabled.isChecked())
+        if not self.checkBox_enabled.isChecked():
+            self.lineEdit_style.clear()

@@ -74,5 +74,5 @@ class SensorMetadata:
         self.utc_dt = naive_to_utc(naive_dt, self.sensor_timezone)
 
     def load_values(self):
-        # TODO prompt user when sensor_id.
+        # TODO prompt user when no sensor_id.
         self.sensor_id = self._get_value(self.sensor_model.sensor_id_row, self.sensor_model.sensor_id_col)

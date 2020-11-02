@@ -104,7 +104,11 @@
         </spacer>
        </item>
        <item>
-        <widget class="QSpinBox" name="spinBox_row"/>
+        <widget class="QSpinBox" name="spinBox_row">
+         <property name="minimum">
+          <number>1</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

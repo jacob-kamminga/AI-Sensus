@@ -129,9 +129,8 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
             self.parent.init()
 
     def previous(self):
-        from gui.dialogs.new_sensor_model_id import SensorModelIdDialog
-
-        dialog = SensorModelIdDialog(
+        from gui.dialogs.new_sensor_model_comment_style import SensorModelCommentStyleDialog
+        dialog = SensorModelCommentStyleDialog(
             self.settings,
             self.model,
             model_id=self.model_id,

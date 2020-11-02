@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 
-def get_hms_sum(time1, time2):
+def get_hms_sum(time1, time2): # TODO replace this function. It causes errors in multiple occassions.
     """
     Takes the strings of two times in the HH:MM:SS format, and returns a string of the sum of the two times.
 
