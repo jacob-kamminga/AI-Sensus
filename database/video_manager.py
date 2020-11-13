@@ -3,7 +3,7 @@ import sqlite3
 from typing import List, Tuple
 
 from exceptions import VideoDoesNotExist
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE = "create table video\
 (\

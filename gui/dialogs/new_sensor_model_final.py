@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog, QMessageBox
 from constants import *
 from database.sensor_model_manager import SensorModelManager
 from gui.designer.new_sensor_model_final import Ui_Dialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class SensorModelFinalDialog(QDialog, Ui_Dialog):

@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog
 from constants import SENSOR_ID_ROW, SENSOR_ID_COLUMN, SENSOR_ID_REGEX
 from gui.designer.new_sensor_model_sensor_id import Ui_Dialog
 from gui.dialogs.new_sensor_model_col_names import SensorModelColumnNamesDialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class SensorModelIdDialog(QDialog, Ui_Dialog):

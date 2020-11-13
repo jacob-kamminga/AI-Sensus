@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QMessageBox
 from database.sensor_manager import SensorManager
 from gui.designer.sensor import Ui_Dialog
 from gui.dialogs.edit_sensor import EditSensorDialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 INDEX_SENSOR_ID = 0
 INDEX_SENSOR_NAME = 1

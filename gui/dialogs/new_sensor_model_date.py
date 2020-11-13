@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets
 from constants import *
 from gui.designer.new_sensor_model_date import Ui_Dialog
 from gui.dialogs.new_sensor_model_id import SensorModelIdDialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):

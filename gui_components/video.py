@@ -14,7 +14,7 @@ from database.camera_manager import CameraManager
 from database.video_manager import VideoManager
 from date_utils import utc_to_local
 from exceptions import VideoDoesNotExist
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 from utils import get_hms_sum, ms_to_hms
 
 
