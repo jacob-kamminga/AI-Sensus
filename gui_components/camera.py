@@ -1,7 +1,5 @@
-import pytz
-
 from database.camera_manager import CameraManager
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class Camera:

@@ -4,10 +4,13 @@ import os
 from pathlib import Path
 from typing import Optional
 
+# import PyQt5
 import pandas as pd
 import pytz
 from PyQt5.QtCore import QDir
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
+# from PyQt5.QtGui import QCursor
+# from PyQt5 import QtGui
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
@@ -18,7 +21,7 @@ from database.sensor_data_file_manager import SensorDataFileManager
 from database.sensor_model_manager import SensorModelManager
 from gui.dialogs.edit_sensor import EditSensorDialog
 from gui.dialogs.sensor_model import SensorModelDialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class SensorDataFile:
@@ -30,6 +33,7 @@ class SensorDataFile:
         self.gui = gui
         self.settings: ProjectSettingsDialog = gui.settings
         self.file_path: Optional[Path] = None
+        self.file_name = None
 
         self.sensor_manager = SensorManager(self.settings)
         self.sensor_model_manager = SensorModelManager(self.settings)
@@ -41,6 +45,8 @@ class SensorDataFile:
         """ The database ID of the sensor data file. """
         self.sensor_id: Optional[int] = None
         """ The database ID of the sensor. """
+        self.sensor_name: Optional[str] = None
+        """ The name of the sensor associated with this sensor datafile"""
         self.sensor_data: Optional[SensorData] = None
         """ The data_import.SensorData object. """
         self.df: Optional[pd.DataFrame] = None
@@ -99,49 +105,64 @@ class SensorDataFile:
         """
         Opens the file specified by self.file_path and sets the sensor data.
         """
+        self.id_ = None
         if self.file_path is not None and self.file_path.is_file():
             self.settings.set_setting(PREVIOUS_SENSOR_DATA_FILE, self.file_path.as_posix())
-            file_name = ntpath.basename(self.file_path.as_posix())
+            self.file_name = ntpath.basename(self.file_path.as_posix())
 
             # Reset the dictionary that maps function names to functions
             self.gui.plot.formula_dict = dict()
 
-            self.model_id = self.sensor_data_file_manager.get_sensor_model_by_file_name(file_name)
+            self.model_id = self.sensor_data_file_manager.get_sensor_model_by_file_path(self.file_path.as_posix())
 
             # If sensor model unknown, prompt user
             if self.model_id is None:
                 self.open_sensor_model_dialog()
-
+                # TODO insert model here?
             # Check whether user has actually selected a sensor model in the dialog
             if self.model_id is not None:
                 # Retrieve the SensorData object that parses the sensor data file
                 self.sensor_data = SensorData(self.file_path, self.settings, self.model_id)
-                sensor_name = self.sensor_data.metadata.sensor_id
+                # Try to load sensor name from either metadata or DB
+                if self.sensor_data.metadata.sensor_name:
+                    self.sensor_name = self.sensor_data.metadata.sensor_name
+                else:
+                    # Check if sensor data has been loaded before and name is known in DB
+                    self.id_ = self.sensor_data_file_manager.get_id_by_file_path(self.file_path.as_posix())
+                    self.sensor_id = self.sensor_data_file_manager.get_sensor_by_id(self.id_)
+                    self.sensor_name = self.sensor_manager.get_sensor_name(self.sensor_id)
+                # When sensor ID (name) cannot be parsed it has to be manually linked to datafile by user
+                while self.sensor_name is None:
+                    self.sensor_name = self.gui.open_select_sensor_dialog()
+                    # Verify that user indeed selected a sensor ID
+                    if self.sensor_name is None:
+                        msg = QMessageBox()
+                        msg.setIcon(QMessageBox.Warning)
+                        msg.setWindowTitle("Warning")
+                        msg.setText("A sensor ID must be selected")
+                        msg.setInformativeText("The selected sensor model states that sensor identifier (ID) cannot "
+                                               "be parsed from sensor datafile. Please select sensor ID manually.")
+                        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
+                        response = msg.exec()
+                        if response == QMessageBox.Cancel:
+                            return
+
+                sensor_timezone = self.sensor_manager.get_timezone_by_id(self.sensor_id)
+                if sensor_timezone is None:
+                    # Prompt user for timezone of sensor
+                    dialog = EditSensorDialog(self.sensor_manager, self.sensor_id, self.sensor_name)
+                    dialog.exec()
+                    sensor_timezone = dialog.new_timezone
+                self.sensor_data.metadata.sensor_timezone = pytz.timezone(sensor_timezone)
 
                 # If sensor not in DB yet, insert it
-                self.sensor_id = self.sensor_manager.get_id_by_name(sensor_name)
+                self.sensor_id = self.sensor_manager.get_id_by_name(self.sensor_name)
 
                 if self.sensor_id == -1:
-                    self.sensor_id = self.sensor_manager.insert_sensor(sensor_name, self.model_id)
+                    self.sensor_id = self.sensor_manager.insert_sensor(self.sensor_name, self.model_id, sensor_timezone)
 
-                    # Prompt user for timezone of sensor
-                    dialog = EditSensorDialog(self.sensor_manager, self.sensor_id, sensor_name)
-                    dialog.exec()
-
-                    if dialog.sensor_edited:
-                        sensor_timezone = pytz.timezone(dialog.new_timezone)
-                        self.sensor_data.metadata.sensor_timezone = sensor_timezone
-                    else:
-                        return
-                else:
-                    sensor_timezone = pytz.timezone(self.sensor_manager.get_timezone_by_id(self.sensor_id))
-                    self.sensor_data.metadata.sensor_timezone = sensor_timezone
-
-                # Parse the utc datetime of the sensor data
-                self.sensor_data.metadata.parse_datetime()
-
-                # Add absolute time column to dataframe
-                self.sensor_data.add_abs_datetime_column()
+                if self.sensor_data._df is None:
+                    self.sensor_data.parse()
 
                 # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary
                 stored_formulas = self.settings.get_setting('formulas')
@@ -153,27 +174,32 @@ class SensorDataFile:
                     except Exception as e:
                         print(e)
 
-                # Retrieve the DataFrame with all the raw sensor data
-                self.df = self.sensor_data.get_data()
-
+                # Parse the utc datetime of the sensor data from metadata when possible
+                # self.sensor_data.metadata.parse_datetime()
+                # self.gui.setCursor(.WaitCursor)
+                # Add absolute time column to dataframe
+                self.sensor_data.add_abs_datetime_column()
                 # Save the starting time of the sensor data in a DateTime object
                 self.utc_dt = self.sensor_data.metadata.utc_dt
 
+                # Retrieve the DataFrame with all the raw sensor data
+                self.df = self.sensor_data.get_data()
+
                 # Check if the sensor data file is already in the label database, if not add it
-                self.id_ = self.sensor_data_file_manager.get_id_by_file_name(file_name)
+                self.id_ = self.sensor_data_file_manager.get_id_by_file_path(self.file_path.as_posix())
 
                 if self.id_ == -1:
                     # File not found in database -> add it
                     self.id_ = self.sensor_data_file_manager.add_file(
-                        file_name,
+                        self.file_name,
                         self.file_path.as_posix(),
                         self.sensor_id,
                         self.utc_dt
                     )
 
-                if self.sensor_data_file_manager.get_file_path_by_id(self.id_) != self.file_path:
-                    self.sensor_data_file_manager.update_file_path(file_name, self.file_path.as_posix())
-
+                if self.sensor_data_file_manager.get_file_path_by_id(self.id_) != self.file_path.as_posix():
+                    self.sensor_data_file_manager.update_file_path(self.file_name, self.file_path.as_posix())
+                # self.gui.setCursor(QtGui.QCursor(0))
                 self.init_functions()
                 self.draw_graph()
                 # self.update_camera_text()
@@ -210,9 +236,9 @@ class SensorDataFile:
         self.gui.plot.data_plot.axis([
             x_window_start,
             x_window_end,
-            self.gui.plot.y_min - ((self.gui.plot.plot_height_factor-1) * self.gui.plot.y_min),
-            self.gui.plot.y_max + ((self.gui.plot.plot_height_factor-1) * self.gui.plot.y_max)
-            ])
+            self.gui.plot.y_min - ((self.gui.plot.plot_height_factor - 1) * self.gui.plot.y_min),
+            self.gui.plot.y_max + ((self.gui.plot.plot_height_factor - 1) * self.gui.plot.y_max)
+        ])
 
         # Start the timer that makes the graph scroll smoothly
         self.gui.timer.timeout.connect(self.gui.plot.update_plot_axis)
@@ -234,3 +260,7 @@ class SensorDataFile:
                     self.utc_dt.date()
                 )
             )
+
+    def update_sensor(self, sensor_id: int):
+        if self.id_ is not None:
+            self.sensor_data_file_manager.update_sensor(self.id_, sensor_id)

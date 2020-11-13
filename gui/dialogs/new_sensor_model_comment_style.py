@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog, QErrorMessage
 from constants import COMMENT_STYLE
 from gui.designer.new_sensor_model_comment_style import Ui_Dialog
 from gui.dialogs.new_sensor_model_final import SensorModelFinalDialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class SensorModelCommentStyleDialog(QDialog, Ui_Dialog):

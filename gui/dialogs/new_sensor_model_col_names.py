@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog
 from constants import COL_NAMES_ROW
 from gui.designer.new_sensor_model_column_names import Ui_Dialog
 from gui.dialogs.new_sensor_model_comment_style import SensorModelCommentStyleDialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class SensorModelColumnNamesDialog(QDialog, Ui_Dialog):

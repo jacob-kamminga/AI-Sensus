@@ -3,7 +3,7 @@ from typing import List
 
 import pytz
 
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 SQL_INSERT_SENSOR = (
@@ -75,10 +75,14 @@ class SensorManager:
 
     def get_sensor_name(self, id_: int) -> str:
         try:
-            self._cur.execute(SQL_SELECT_ID, (id_,))
-            return self._cur.fetchone()[0]
+            self._cur.execute(SQL_SELECT_SENSOR_NAME, (id_,))
+            res = self._cur.fetchone()
+            if res:
+                return res[0]
+            else:
+                return None
         except sqlite3.Error:
-            return ""
+            return None
 
     def get_timezone_by_id(self, id_: int) -> str:
         try:
@@ -87,13 +91,13 @@ class SensorManager:
             if ret is not None:
                 return ret[0]
             else:
-                return ""
+                return None
         except sqlite3.Error:
-            return ""
+            return None
 
-    def insert_sensor(self, sensor_name: str, model_id: int, timezone=str(pytz.utc)) -> int:
+    def insert_sensor(self, sensor_name: str, model_id: int, timezone) -> int:
         try:
-            self._cur.execute(SQL_INSERT_SENSOR, (sensor_name, model_id, timezone))
+            self._cur.execute(SQL_INSERT_SENSOR, (sensor_name, model_id, str(timezone)))
             self._conn.commit()
             return self.get_id_by_name(sensor_name)
         except sqlite3.Error as e:

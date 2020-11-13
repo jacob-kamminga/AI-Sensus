@@ -1,7 +1,6 @@
 import datetime as dt
 from typing import Optional
 
-import pandas as pd
 import pytz
 from PyQt5.QtCore import QDateTime
 from PyQt5.QtWidgets import QMessageBox
@@ -11,11 +10,9 @@ from constants import COL_ABSOLUTE_DATETIME
 from data_import.label_data import LabelData
 from database.label_manager import LabelManager
 from database.label_type_manager import LabelTypeManager
-from date_utils import utc_to_local
 from gui.dialogs.label import LabelSpecs
 from gui_components.sensor_data_file import SensorDataFile
-from models.sensor_model import SensorModel
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1
@@ -267,7 +264,8 @@ class Plot:
         """
         if self.sensor_data_file.sensor_data is not None:
             # Convert the x-position to a Python datetime
-            xdata_dt = num2date(event.xdata).replace(tzinfo=None)
+            # xdata_dt = num2date(event.xdata).astimezone(pytz.utc).replace(tzinfo=None)
+            xdata_dt = num2date(event.xdata).astimezone(self.gui.sensor_data_file.sensor_data.metadata.sensor_timezone).replace(tzinfo=None)
             # Convert to QDateTime, without milliseconds
             xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
 

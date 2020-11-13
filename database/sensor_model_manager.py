@@ -4,8 +4,6 @@ from typing import List
 from constants import *
 from exceptions import SensorModelDoesNotExist
 from models.sensor_model import SensorModel
-from project_settings import ProjectSettingsDialog
-
 
 SQL_INSERT_MODEL = (
     "INSERT INTO sensor_model("

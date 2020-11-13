@@ -1,9 +1,7 @@
 import sqlite3
-from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import List
 
-from constants import PROJECT_DATABASE_FILE
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE_LABEL_TYPE = \
     "create table label_type\

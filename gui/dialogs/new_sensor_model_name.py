@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QDialog, QErrorMessage, QFileDialog
 from constants import *
 from gui.designer.new_sensor_model_name import Ui_Dialog
 from gui.dialogs.new_sensor_model_date import SensorModelDateDialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class SensorModelNameDialog(QDialog, Ui_Dialog):

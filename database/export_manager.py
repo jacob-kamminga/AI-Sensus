@@ -1,7 +1,7 @@
 import datetime as dt
 import sqlite3
 
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 SQL_SELECT_LABELS_BY_DATES = "SELECT start_time, end_time, activity " \
                              "FROM label, label_type " \
