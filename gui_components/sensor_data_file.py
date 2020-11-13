@@ -147,6 +147,8 @@ class SensorDataFile:
                         if response == QMessageBox.Cancel:
                             return
 
+                self.sensor_id = self.sensor_manager.get_id_by_name(self.sensor_name)
+
                 sensor_timezone = self.sensor_manager.get_timezone_by_id(self.sensor_id)
                 if sensor_timezone is None:
                     # Prompt user for timezone of sensor
@@ -156,8 +158,6 @@ class SensorDataFile:
                 self.sensor_data.metadata.sensor_timezone = pytz.timezone(sensor_timezone)
 
                 # If sensor not in DB yet, insert it
-                self.sensor_id = self.sensor_manager.get_id_by_name(self.sensor_name)
-
                 if self.sensor_id == -1:
                     self.sensor_id = self.sensor_manager.insert_sensor(self.sensor_name, self.model_id, sensor_timezone)
 
