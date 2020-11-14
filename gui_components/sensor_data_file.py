@@ -93,7 +93,7 @@ class SensorDataFile:
     def open_sensor_model_dialog(self):
         dialog = SensorModelDialog(self.settings)
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
         self.model_id = dialog.selected_model_id
 
@@ -109,7 +109,7 @@ class SensorDataFile:
         if self.file_path is not None and self.file_path.is_file():
             self.settings.set_setting(PREVIOUS_SENSOR_DATA_FILE, self.file_path.as_posix())
             self.file_name = ntpath.basename(self.file_path.as_posix())
-
+            # directory = ntpath.dirname(self.file_path.as_posix())
             # Reset the dictionary that maps function names to functions
             self.gui.plot.formula_dict = dict()
 
@@ -133,7 +133,7 @@ class SensorDataFile:
                     self.sensor_name = self.sensor_manager.get_sensor_name(self.sensor_id)
                 # When sensor ID (name) cannot be parsed it has to be manually linked to datafile by user
                 while self.sensor_name is None:
-                    self.sensor_name = self.gui.open_select_sensor_dialog()
+                    self.sensor_name = self.gui.open_select_sensor_dialog(self.model_id)
                     # Verify that user indeed selected a sensor ID
                     if self.sensor_name is None:
                         msg = QMessageBox()

@@ -17,7 +17,7 @@ SENSOR_TIMEZONE_INDEX = 3
 
 class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, gui):
+    def __init__(self, gui, model_id=None):
         super().__init__()
         self.setupUi(self)
         self.sensor_data_file = gui.sensor_data_file
@@ -25,7 +25,7 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         # self.selected_camera_id = None
         self.selected_sensor_id = None
         self.selected_sensor_name = None
-        self.selected_sensor_model_id = None
+        self.selected_sensor_model_id = model_id
 
         # Fill sensor dictionary and add sensor names to combobox
         self.sensor_dict = dict()
@@ -46,10 +46,11 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
     def add_sensor(self):
         new_sensor_name = self.lineEdit_new_sensor_name.text()
         if new_sensor_name != '':
-            self.selected_sensor_model_id = \
-                self.sensor_data_file.sensor_data_file_manager.get_sensor_model_by_file_path(
-                    self.sensor_data_file.file_path.as_posix()
-                )
+            if self.selected_sensor_model_id is None:
+                self.selected_sensor_model_id = \
+                    self.sensor_data_file.sensor_data_file_manager.get_sensor_model_by_file_path(
+                        self.sensor_data_file.file_path.as_posix()
+                    )
             # If sensor model unknown, prompt user
             if self.selected_sensor_model_id is None:
                 dialog = SensorModelDialog(self.settings)
@@ -60,13 +61,12 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                     # TODO: Show warning to user
                     return
             # Prompt user for timezone of sensor
-            dialog = EditSensorDialog(self.sensor_data_file.sensor_manager, self.sensor_data_file.sensor_id, self.sensor_data_file.sensor_name)
+            dialog = EditSensorDialog(self.sensor_data_file.sensor_manager, self.sensor_data_file.sensor_id, new_sensor_name)
             dialog.exec()
             sensor_timezone = dialog.new_timezone
             self.sensor_data_file.sensor_manager.insert_sensor(new_sensor_name, self.selected_sensor_model_id, sensor_timezone)
             self.comboBox_sensor.addItem(new_sensor_name)
             self.comboBox_sensor.setCurrentText(new_sensor_name)
-            self.edit_sensor()
             self.lineEdit_new_sensor_name.clear()
 
     def use_sensor(self):

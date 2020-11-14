@@ -385,11 +385,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         dialog.exec()
         dialog.show()
 
-    def open_select_sensor_dialog(self):
+    def open_select_sensor_dialog(self, model_id=None):
         """
         Open the select sensor dialog window.
         """
-        dialog = SelectSensorDialog(self)
+        dialog = SelectSensorDialog(self, model_id)
         if self.sensor_data_file.file_name is not None:
             dialog.setWindowTitle(self.sensor_data_file.file_name)
 
