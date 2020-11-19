@@ -84,12 +84,14 @@ CREATE_TABLE_SENSOR_DATA_FILE = \
       sensor_id INTEGER\
           references sensor,\
       datetime  TIMESTAMP,\
-      last_used_column TEXT\
+      last_used_column TEXT,\
+        UNIQUE(file_path)\
     );"
 
 CREATE_UINDEX_SENSOR_DATA_FILE = \
-    "create unique index sensor_data_file_file_name_uindex\
-         on sensor_data_file (file_name);"
+    "create unique index sensor_data_file_file_path_uindex\
+         on sensor_data_file (file_path);"
+
 
 CREATE_TABLE_SENSOR = \
     "create table sensor\

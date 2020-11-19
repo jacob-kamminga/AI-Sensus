@@ -16,7 +16,7 @@ from database.sensor_manager import SensorManager
 from database.subject_manager import SubjectManager
 from database.sensor_usage_manager import SensorUsageManager
 from gui.designer.export_new import Ui_Dialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -179,6 +179,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
 
+                    # TODO: Is this still required after we already added absolute time column to dataframe?
                     sensor_data.add_timestamp_column(COL_TIME)
                     start_dt = sensor_data.project_timezone.localize(start_dt)
                     end_dt = sensor_data.project_timezone.localize(end_dt)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '..\..\gui\designer\new_sensor_model_comment_style.ui'
+# Form implementation generated from reading ui file 'new_sensor_model_comment_style.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #
@@ -36,6 +36,8 @@ class Ui_Dialog(object):
         self.checkBox_enabled.setObjectName("checkBox_enabled")
         self.formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.checkBox_enabled)
         self.lineEdit_style = QtWidgets.QLineEdit(Dialog)
+        self.lineEdit_style.setEnabled(False)
+        self.lineEdit_style.setClearButtonEnabled(False)
         self.lineEdit_style.setObjectName("lineEdit_style")
         self.formLayout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.lineEdit_style)
         self.gridLayout.addLayout(self.formLayout, 1, 0, 1, 3)
@@ -63,6 +65,16 @@ class Ui_Dialog(object):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Add sensor model"))
         self.label_title.setText(_translate("Dialog", "Comment style"))
-        self.checkBox_enabled.setText(_translate("Dialog", "Style"))
+        self.checkBox_enabled.setText(_translate("Dialog", "Sensordata contains comment style"))
         self.pushButton_previous.setText(_translate("Dialog", "Previous"))
         self.pushButton_next.setText(_translate("Dialog", "Next"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Dialog = QtWidgets.QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(Dialog)
+    Dialog.show()
+    sys.exit(app.exec_())

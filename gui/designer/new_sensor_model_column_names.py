@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file '..\..\gui\designer\new_sensor_model_column_names.ui'
+# Form implementation generated from reading ui file 'new_sensor_model_column_names.ui'
 #
 # Created by: PyQt5 UI code generator 5.15.0
 #
@@ -47,6 +47,7 @@ class Ui_Dialog(object):
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout.addItem(spacerItem3)
         self.spinBox_row = QtWidgets.QSpinBox(Dialog)
+        self.spinBox_row.setMinimum(1)
         self.spinBox_row.setObjectName("spinBox_row")
         self.horizontalLayout.addWidget(self.spinBox_row)
         self.gridLayout.addLayout(self.horizontalLayout, 2, 1, 1, 1)
@@ -77,3 +78,13 @@ class Ui_Dialog(object):
         self.pushButton_previous.setText(_translate("Dialog", "Previous"))
         self.label_row.setText(_translate("Dialog", "Row"))
         self.label_title.setText(_translate("Dialog", "Column names"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Dialog = QtWidgets.QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(Dialog)
+    Dialog.show()
+    sys.exit(app.exec_())

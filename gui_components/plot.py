@@ -12,7 +12,7 @@ from database.label_manager import LabelManager
 from database.label_type_manager import LabelTypeManager
 from gui.dialogs.label import LabelSpecs
 from gui_components.sensor_data_file import SensorDataFile
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1
@@ -113,12 +113,6 @@ class Plot:
         else:
             self.gui.label_current_function_value.clear()
 
-        self.y_min = self.sensor_data_file.df[self.current_plot].min()
-        self.y_max = self.sensor_data_file.df[self.current_plot].max()
-
-        if self.y_min == self.y_max:
-            self.y_max = self.y_max+1
-
         self.draw_graph()
 
         # Save the column in the database
@@ -161,7 +155,9 @@ class Plot:
         """
         Every time the timer calls this function, the axis of the graph is updated.
         """
-        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)  # TODO: Fix bug when starting new project
+        if self.x_min_dt is None:
+            return
+        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)  #  TODO: Fix bug when starting new project
         new_position_dt = position_dt if position == -1.0 else position
 
         plot_width_delta = dt.timedelta(seconds=(self.plot_width / 2))
@@ -175,7 +171,11 @@ class Plot:
         x_max = date2num(new_position_dt + plot_width_delta - video_offset_delta - video_offset)
 
         self.data_plot.set_xlim(x_min, x_max)
-        self.data_plot.set_ylim(self.y_min, self.plot_height_factor * self.y_max)
+        self.data_plot.set_ylim(
+            self.y_min - ((self.plot_height_factor - 1) * abs(self.y_min)),
+            self.y_max + ((self.plot_height_factor - 1) * self.y_max))
+
+        # self.data_plot.set_ylim(self.y_min, self.plot_height_factor * self.y_max)
         self.vertical_line.set_xdata((x_min + x_max) / 2)
         self.gui.canvas.draw()
 
@@ -194,6 +194,14 @@ class Plot:
         self.x_max_dt = self.sensor_data_file.df[COL_ABSOLUTE_DATETIME].max()
         self.x_min = date2num(self.x_min_dt)
         self.x_max = date2num(self.x_max_dt)
+        if self.x_min == self.x_max:
+            self.x_max = self.x_min + 1
+
+        # Remove outliers before assessing y_min and y_max value for plot
+        self.y_min = self.sensor_data_file.df[self.current_plot].quantile(.0001)
+        self.y_max = self.sensor_data_file.df[self.current_plot].quantile(.9999)
+        if self.y_min == self.y_max:
+            self.y_max = self.y_min + 1
 
         # Set the axis boundaries
         self.data_plot.axis([self.x_min, self.x_max, self.y_min, self.y_max])
@@ -258,7 +266,8 @@ class Plot:
         """
         if self.sensor_data_file.sensor_data is not None:
             # Convert the x-position to a Python datetime
-            xdata_dt = num2date(event.xdata).replace(tzinfo=None)
+            # xdata_dt = num2date(event.xdata).astimezone(pytz.utc).replace(tzinfo=None)
+            xdata_dt = num2date(event.xdata).astimezone(self.gui.sensor_data_file.sensor_data.metadata.sensor_timezone).replace(tzinfo=None)
             # Convert to QDateTime, without milliseconds
             xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
 

@@ -20,12 +20,12 @@ from database.offset_manager import OffsetManager
 from database.sensor_usage_manager import SensorUsageManager
 from database.create_database import create_database
 from gui.designer.gui import Ui_MainWindow
-from gui.dialogs.camera_settings import CameraSettingsDialog
 from gui.dialogs.export import ExportDialog
 from gui.dialogs.label import LabelSpecs
 from gui.dialogs.label_settings import LabelSettingsDialog
 from gui.dialogs.machine_learning import MachineLearningDialog
 from gui.dialogs.select_camera import SelectCameraDialog
+from gui.dialogs.select_sensor import SelectSensorDialog
 from gui.dialogs.sensor import SensorDialog
 from gui.dialogs.sensor_model import SensorModelDialog
 from gui.dialogs.subject import SubjectDialog
@@ -37,7 +37,7 @@ from gui_components.plot import Plot
 from gui_components.sensor_data_file import SensorDataFile
 from gui_components.video import Video
 from machine_learning.classifier import Classifier, make_predictions
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, PROJECT_DATABASE_FILE, APP_CONFIG_FILE
 
@@ -88,10 +88,13 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.actionCamera_Settings.triggered.connect(self.open_select_camera_dialog)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
-        self.actionSensors.triggered.connect(self.open_sensor_dialog)
+        # self.actionSensors.triggered.connect(self.open_sensor_dialog)
+        self.actionSensors.triggered.connect(self.open_select_sensor_dialog)
+
         self.actionSensor_models.triggered.connect(self.open_sensor_model_dialog)
         self.actionSubjects.triggered.connect(self.open_subject_dialog)
         self.actionSubject_Mapping.triggered.connect(self.open_subject_sensor_map_dialog)
+        self.actionProject_Settings.triggered.connect(self.open_project_settings_dialog)
         self.actionExit.triggered.connect(qApp.quit)
 
         self.lineEdit_function_regex.returnPressed.connect(self.plot.new_plot)
@@ -382,6 +385,23 @@ class GUI(QMainWindow, Ui_MainWindow):
         dialog.exec()
         dialog.show()
 
+    def open_select_sensor_dialog(self, model_id=None):
+        """
+        Open the select sensor dialog window.
+        """
+        dialog = SelectSensorDialog(self, model_id)
+        if self.sensor_data_file.file_name is not None:
+            dialog.setWindowTitle(self.sensor_data_file.file_name)
+
+        dialog.exec()
+        dialog.show()
+
+        if dialog.selected_sensor_id is not None:
+            self.sensor_data_file.update_sensor(dialog.selected_sensor_id)
+            return dialog.selected_sensor_name
+        else:
+            return None
+
     def open_sensor_model_dialog(self):
         """
         Open the sensor model dialog.
@@ -406,6 +426,17 @@ class GUI(QMainWindow, Ui_MainWindow):
         )
         dialog.exec()
         dialog.show()
+
+    def open_project_settings_dialog(self):
+        if self.app_config.get(PREVIOUS_PROJECT_DIR):
+            prev_project_dir = Path(self.app_config.get(PREVIOUS_PROJECT_DIR))
+
+            # Check if previous project directory exists
+            if prev_project_dir.is_dir():
+                self.settings = ProjectSettingsDialog(prev_project_dir)
+                self.settings.exec()
+                if self.settings.settings_changed:
+                    self.reset_gui_components()
 
     def open_machine_learning_dialog(self):
         """

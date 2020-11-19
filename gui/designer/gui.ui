@@ -48,19 +48,42 @@
           <widget class="QWidget" name="layoutWidget">
            <layout class="QVBoxLayout" name="verticalLayout_video_player">
             <item>
-             <widget class="QLabel" name="label_video">
-              <property name="font">
-               <font>
-                <pointsize>16</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Video</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QLabel" name="label_video">
+                <property name="font">
+                 <font>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Video</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_video_filename">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="cursor">
+                 <cursorShape>CrossCursor</cursorShape>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+                <property name="scaledContents">
+                 <bool>false</bool>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QVideoWidget" name="videoWidget_player" native="true">
@@ -115,19 +138,36 @@
           <widget class="QWidget" name="layoutWidget">
            <layout class="QVBoxLayout" name="verticalLayout_sensor_data">
             <item>
-             <widget class="QLabel" name="label_sensor_data">
-              <property name="font">
-               <font>
-                <pointsize>16</pointsize>
-               </font>
-              </property>
-              <property name="text">
-               <string>Sensor Data</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="QLabel" name="label_sensor_data">
+                <property name="font">
+                 <font>
+                  <pointsize>16</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Sensor Data</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_sensor_data_filename">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="text">
+                 <string/>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_plot">
@@ -496,6 +536,7 @@
     </property>
     <addaction name="actionCamera_Settings"/>
     <addaction name="actionLabel_Settings"/>
+    <addaction name="actionProject_Settings"/>
    </widget>
    <widget class="QMenu" name="menuSensors">
     <property name="title">
@@ -505,6 +546,9 @@
     <addaction name="actionSensor_models"/>
    </widget>
    <widget class="QMenu" name="menuLearning">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>Learning</string>
     </property>
@@ -548,6 +592,9 @@
    </property>
   </action>
   <action name="actionMachine_Learning">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Machine Learning</string>
    </property>
@@ -585,6 +632,11 @@
   <action name="actionOpen_Project">
    <property name="text">
     <string>Open Project</string>
+   </property>
+  </action>
+  <action name="actionProject_Settings">
+   <property name="text">
+    <string>Project Settings</string>
    </property>
   </action>
  </widget>

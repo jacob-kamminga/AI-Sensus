@@ -2,7 +2,7 @@ from PyQt5 import QtWidgets
 
 from database.label_type_manager import LabelTypeManager
 from gui.designer.label_settings import Ui_Dialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
