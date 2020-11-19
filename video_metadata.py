@@ -93,7 +93,7 @@ def parse_camera_name(file_path):
     return camera_id
 
 
-def parse_video_begin_time(file_path, camera_timezone=pytz.utc) -> datetime.datetime:
+def parse_video_begin_time(file_path, camera_timezone) -> datetime.datetime:
     """
     Parses the start time of video files.
     :param file_path: The path of the video
@@ -110,8 +110,6 @@ def parse_video_begin_time(file_path, camera_timezone=pytz.utc) -> datetime.date
     cmd = "exiftool -j -DateTimeOriginal " \
           "-CreateDate -CreationDate -TrackCreateDate -MediaCreateDate -CreationDateValue -TimeStamp -SonyDateTime " \
           "-DateTime -GPSDateStamp -api largefilesupport=1"
-    #  TODO automate the install of the config file. The config file is required to be able to parse large files for
-    #  TODO CreateDate tags or use relative path from project dir to config and to bin
     args = shlex.split(cmd)
     args.append(file_path)
     # run the exiftool process, decode stdout into utf-8 & convert to JSON
