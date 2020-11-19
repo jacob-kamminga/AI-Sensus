@@ -10,7 +10,7 @@ import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaContent
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog, QFileDialog, qApp
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
@@ -92,7 +92,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionSensor_models.triggered.connect(self.open_sensor_model_dialog)
         self.actionSubjects.triggered.connect(self.open_subject_dialog)
         self.actionSubject_Mapping.triggered.connect(self.open_subject_sensor_map_dialog)
-        self.actionExit.triggered.connect(exit)
+        self.actionExit.triggered.connect(qApp.quit)
 
         self.lineEdit_function_regex.returnPressed.connect(self.plot.new_plot)
         self.doubleSpinBox_video_offset.valueChanged.connect(self.change_offset)

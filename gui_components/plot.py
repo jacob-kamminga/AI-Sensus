@@ -1,7 +1,6 @@
 import datetime as dt
 from typing import Optional
 
-import pandas as pd
 import pytz
 from PyQt5.QtCore import QDateTime
 from PyQt5.QtWidgets import QMessageBox
@@ -11,10 +10,8 @@ from constants import COL_ABSOLUTE_DATETIME
 from data_import.label_data import LabelData
 from database.label_manager import LabelManager
 from database.label_type_manager import LabelTypeManager
-from date_utils import utc_to_local
 from gui.dialogs.label import LabelSpecs
 from gui_components.sensor_data_file import SensorDataFile
-from models.sensor_model import SensorModel
 from project_settings import ProjectSettingsDialog
 
 LABEL_START_TIME_INDEX = 0
@@ -123,7 +120,9 @@ class Plot:
             self.y_max = self.y_max+1
 
         self.draw_graph()
-        self.settings.set_setting("current_plot", self.current_plot)
+
+        # Save the column in the database
+        self.sensor_data_file.save_last_used_column(self.current_plot)
 
     def delete_formula(self):
         selected_plot = self.gui.comboBox_functions.currentText()

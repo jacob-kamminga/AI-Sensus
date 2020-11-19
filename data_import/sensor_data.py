@@ -174,6 +174,9 @@ class SensorData:
             self._df.rename(columns={time_col: COL_ABSOLUTE_DATETIME})
 
     def normalize_rel_datetime_column(self):
+        """
+        Normalize the relative datetime such that the first row will be zero.
+        """
         time_col = self.sensor_model.timestamp_column
         first_val = self._df.iloc[0, time_col]
 

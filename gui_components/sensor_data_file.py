@@ -53,7 +53,7 @@ class SensorDataFile:
     def open_previous_file(self):
         previous_path = self.settings.get_setting(PREVIOUS_SENSOR_DATA_FILE)
 
-        if previous_path is not None:
+        if previous_path:
             previous_path = Path(previous_path)
 
             if previous_path.is_file():
@@ -191,7 +191,16 @@ class SensorDataFile:
         for col in data_cols:
             self.gui.comboBox_functions.addItem(col)
 
+        last_used_col = self.sensor_data_file_manager.get_last_used_column_by_id(self.id_)
+
+        if last_used_col:
+            self.gui.plot.current_plot = last_used_col
+            self.gui.comboBox_functions.setCurrentText(last_used_col)
+
         self.gui.plot.current_plot = self.gui.comboBox_functions.currentText()
+
+    def save_last_used_column(self, col_name):
+        self.sensor_data_file_manager.set_last_used_column(self.id_, col_name)
 
     def draw_graph(self):
         # Reset the figure and add a new subplot to it

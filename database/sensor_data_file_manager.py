@@ -63,6 +63,16 @@ SQL_UPDATE_FILE_PATH = (
     "SET file_path = ? "
     "WHERE file_name = ?"
 )
+SQL_SELECT_LAST_USED_COL_BY_ID = (
+    "SELECT last_used_column "
+    "FROM sensor_data_file "
+    "WHERE id = ?"
+)
+SQL_UPDATE_LAST_USED_COL = (
+    "UPDATE sensor_data_file "
+    "SET last_used_column = ? "
+    "WHERE id = ?"
+)
 
 
 class SensorDataFileManager:
@@ -119,6 +129,31 @@ class SensorDataFileManager:
         """
         self._cur.execute(SQL_SELECT_FILE_NAME_BY_ID, (id_,))
         return self._cur.fetchone()[0]
+
+    def get_last_used_column_by_id(self, id_: int):
+        """
+        Get the last used column by file ID.
+
+        :param id_: The ID of the sensor data file
+        :return: The last used column
+        """
+        self._cur.execute(SQL_SELECT_LAST_USED_COL_BY_ID, (id_,))
+        res = self._cur.fetchone()
+
+        if res is not None:
+            return res[0]
+
+        return ""
+
+    def set_last_used_column(self, id_: int, col_name: str):
+        """
+        Update the last used column.
+
+        :param id_: The ID of the sensor data file
+        :param col_name: The last used column name
+        """
+        self._cur.execute(SQL_UPDATE_LAST_USED_COL, (col_name, id_))
+        self._conn.commit()
 
     def add_file(self, file_name: str, file_path: str, sensor_id: int, datetime: dt.datetime) -> int:
         """

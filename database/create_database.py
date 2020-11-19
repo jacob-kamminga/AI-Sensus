@@ -83,7 +83,8 @@ CREATE_TABLE_SENSOR_DATA_FILE = \
       file_path TEXT,\
       sensor_id INTEGER\
           references sensor,\
-      datetime  TIMESTAMP\
+      datetime  TIMESTAMP,\
+      last_used_column TEXT\
     );"
 
 CREATE_UINDEX_SENSOR_DATA_FILE = \
