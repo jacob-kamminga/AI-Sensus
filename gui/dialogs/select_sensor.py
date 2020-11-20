@@ -47,9 +47,13 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         new_sensor_name = self.lineEdit_new_sensor_name.text()
         if new_sensor_name != '':
             if self.selected_sensor_model_id is None:
+                # self.selected_sensor_model_id = \
+                #     self.sensor_data_file.sensor_data_file_manager.get_sensor_model_by_file_path(
+                #         self.sensor_data_file.file_path.as_posix()
+                #     )
                 self.selected_sensor_model_id = \
-                    self.sensor_data_file.sensor_data_file_manager.get_sensor_model_by_file_path(
-                        self.sensor_data_file.file_path.as_posix()
+                    self.sensor_data_file.sensor_data_file_manager.get_sensor_model_by_file_id_hash(
+                        self.sensor_data_file.file_id_hash
                     )
             # If sensor model unknown, prompt user
             if self.selected_sensor_model_id is None:

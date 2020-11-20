@@ -1,6 +1,7 @@
 import datetime as dt
 import ntpath
 import os
+from pathlib import Path
 from typing import Optional
 
 import pytz
@@ -98,6 +99,13 @@ class Video:
                 # Video already in database -> update file path
                 else:
                     self.video_manager.update_file_path(self.file_name, self.file_path)
+                file_path = Path(self.file_path)
+                try:
+                    self.gui.label_video_filename.setText(
+                        file_path.parts[-3] + "/" + file_path.parts[-2] + "/" + file_path.parts[-1]
+                    )
+                except:
+                    pass
 
                 # Play the video in the QMediaPlayer and activate the associated widgets
                 self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))

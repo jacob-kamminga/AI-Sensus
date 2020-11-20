@@ -23,6 +23,8 @@ def ms_to_hms(duration):
     :param duration: The number of milliseconds that corresponds to the position of the video.
     :return: A readable string that corresponds to duration in the format HH:MM:SS.
     """
+    if duration < 0:
+        return None
     seconds = round((duration // 1000) % 60)
     seconds_str = "0" + str(seconds) if seconds < 10 else str(seconds)
     minutes = round((duration // (1000 * 60)) % 60)

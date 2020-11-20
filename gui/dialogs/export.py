@@ -7,7 +7,7 @@ import pandas as pd
 import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime, QDir, Qt
-from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton
+from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton, QMessageBox
 
 from data_import.sensor_data import SensorData
 from database.export_manager import ExportManager
@@ -82,9 +82,11 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         if model_id >= 0 and sensor_id >= 0:
             sensor_timezone = pytz.timezone(self.sensor_manager.get_timezone_by_id(sensor_id))
-            sensor_data = SensorData(Path(file_path), self.settings, model_id, sensor_timezone)
+            sensor_data = SensorData(Path(file_path), self.settings, model_id)
+            sensor_data.metadata.sensor_timezone = sensor_timezone
             # Parse the utc datetime of the sensor data
             sensor_data.metadata.parse_datetime()
+            sensor_data.parse()
         # Sensor model unknown
         else:
             sensor_data = None
@@ -180,9 +182,12 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                         raise Exception('Sensor data not found')
 
                     # TODO: Is this still required after we already added absolute time column to dataframe?
-                    sensor_data.add_timestamp_column(COL_TIME)
-                    start_dt = sensor_data.project_timezone.localize(start_dt)
-                    end_dt = sensor_data.project_timezone.localize(end_dt)
+                    # sensor_data.add_timestamp_column(COL_TIME)
+                    sensor_data.add_abs_datetime_column()
+                    if not start_dt.tzinfo:
+                        start_dt = sensor_data.project_timezone.localize(start_dt)
+                    if not end_dt.tzinfo:
+                        end_dt = sensor_data.project_timezone.localize(end_dt)
 
                     sensor_data.filter_between_dates(start_dt, end_dt)
                     sensor_data.add_labels(labels)
@@ -194,9 +199,19 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                 if file_path:
                     df.to_csv(file_path)
 
-        d = QDialog()
-        b = QPushButton("OK", d)
-        b.clicked.connect(d.close)
-        d.setWindowTitle("Export successful")
-        d.setWindowModality(Qt.ApplicationModal)
-        d.exec()
+        # d = QDialog()
+        # b = QPushButton("OK", d)
+        # b.clicked.connect(d.close)
+        # d.setWindowTitle("Export successful")
+        # d.set
+        # d.setWindowModality(Qt.ApplicationModal)
+        # d.exec()
+
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle("Succes")
+        msg.setText("Export successful")
+        # msg.setInformativeText("The selected sensor model states that sensor identifier (ID) cannot "
+        #                        "be parsed from sensor datafile. Please select sensor ID manually.")
+        msg.setStandardButtons(QMessageBox.Ok)
+        msg.exec()

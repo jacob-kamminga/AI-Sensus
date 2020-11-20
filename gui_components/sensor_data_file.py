@@ -1,4 +1,5 @@
 import datetime as dt
+import hashlib
 import ntpath
 import os
 from pathlib import Path
@@ -33,6 +34,7 @@ class SensorDataFile:
         self.gui = gui
         self.settings: ProjectSettingsDialog = gui.settings
         self.file_path: Optional[Path] = None
+
         self.file_name = None
 
         self.sensor_manager = SensorManager(self.settings)
@@ -41,6 +43,8 @@ class SensorDataFile:
         self.offset_manager = OffsetManager(self.settings)
         self.label_manager = LabelManager(self.settings)
 
+        self.file_id_hash = None
+        """" The hashed ID, used to recognize the file independent from location on disk """
         self.id_: Optional[int] = None
         """ The database ID of the sensor data file. """
         self.sensor_id: Optional[int] = None
@@ -109,11 +113,15 @@ class SensorDataFile:
         if self.file_path is not None and self.file_path.is_file():
             self.settings.set_setting(PREVIOUS_SENSOR_DATA_FILE, self.file_path.as_posix())
             self.file_name = ntpath.basename(self.file_path.as_posix())
-            # directory = ntpath.dirname(self.file_path.as_posix())
+
+
+            self.file_id_hash = self.create_file_id(self.file_path)
+
             # Reset the dictionary that maps function names to functions
             self.gui.plot.formula_dict = dict()
 
-            self.model_id = self.sensor_data_file_manager.get_sensor_model_by_file_path(self.file_path.as_posix())
+            # self.model_id = self.sensor_data_file_manager.get_sensor_model_by_file_path(self.file_path.as_posix())
+            self.model_id = self.sensor_data_file_manager.get_sensor_model_by_file_id_hash(self.file_id_hash)
 
             # If sensor model unknown, prompt user
             if self.model_id is None:
@@ -128,7 +136,8 @@ class SensorDataFile:
                     self.sensor_name = self.sensor_data.metadata.sensor_name
                 else:
                     # Check if sensor data has been loaded before and name is known in DB
-                    self.id_ = self.sensor_data_file_manager.get_id_by_file_path(self.file_path.as_posix())
+                    # self.id_ = self.sensor_data_file_manager.get_id_by_file_path(self.file_path.as_posix())
+                    self.id_ = self.sensor_data_file_manager.get_id_by_file_id_hash(self.file_id_hash)
                     self.sensor_id = self.sensor_data_file_manager.get_sensor_by_id(self.id_)
                     self.sensor_name = self.sensor_manager.get_sensor_name(self.sensor_id)
                 # When sensor ID (name) cannot be parsed it has to be manually linked to datafile by user
@@ -186,13 +195,15 @@ class SensorDataFile:
                 self.df = self.sensor_data.get_data()
 
                 # Check if the sensor data file is already in the label database, if not add it
-                self.id_ = self.sensor_data_file_manager.get_id_by_file_path(self.file_path.as_posix())
+                # self.id_ = self.sensor_data_file_manager.get_id_by_file_path(self.file_path.as_posix())
+                self.id_ = self.sensor_data_file_manager.get_id_by_file_id_hash(self.file_id_hash)
 
                 if self.id_ == -1:
                     # File not found in database -> add it
                     self.id_ = self.sensor_data_file_manager.add_file(
                         self.file_name,
                         self.file_path.as_posix(),
+                        self.file_id_hash,
                         self.sensor_id,
                         self.utc_dt
                     )
@@ -203,6 +214,12 @@ class SensorDataFile:
                 self.init_functions()
                 self.draw_graph()
                 # self.update_camera_text()
+                try:
+                    self.gui.label_sensor_data_filename.setText(
+                        self.file_path.parts[-3] + "/" + self.file_path.parts[-2] + "/" + self.file_path.parts[-1]
+                    )
+                except:
+                    pass
                 self.gui.update_camera_sensor_offset()
                 self.gui.video.sync_with_sensor_data()
 
@@ -273,3 +290,22 @@ class SensorDataFile:
     def update_sensor(self, sensor_id: int):
         if self.id_ is not None:
             self.sensor_data_file_manager.update_sensor(self.id_, sensor_id)
+
+    def create_file_id(self, file_path, block_size=256):
+        # Function that takes a file and returns the first 10 characters of a hash of
+        # 10 times block size in the middle of the file
+        # Input: File path as string
+        # Output: Hash of 10 blocks of 128 bits of size as string plus file size as string
+        file_size = os.path.getsize(file_path)
+        start_index = int(file_size / 2)
+        with open(file_path, 'r') as f:
+            f.seek(start_index)
+            n = 1
+            md5 = hashlib.md5()
+            while True:
+                data = f.read(block_size)
+                n += 1
+                if (n == 10):
+                    break
+                md5.update(data.encode('utf-8'))
+        return('{}{}'.format(md5.hexdigest()[0:9],str(file_size)))

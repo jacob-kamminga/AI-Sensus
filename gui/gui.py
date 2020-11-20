@@ -307,6 +307,10 @@ class GUI(QMainWindow, Ui_MainWindow):
         else:
             self.camera = None
 
+        if hasattr(self, 'figure'):
+            self.figure.clear()
+            self.canvas.draw()
+
         if hasattr(self, 'plot'):
             # self.plot.reset()
             self.plot.__init__(self)
@@ -327,6 +331,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.sensor_data_file = None
 
         self.label_project_name_value.setText(self.settings.get_setting('project_name'))
+        self.update_camera_sensor_offset()
         #  TODO: Reset dataplot, labels, spinboxes...
 
     def change_offset(self, offset: float):
@@ -342,7 +347,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                                            date)
 
     def update_camera_sensor_offset(self):
-        if self.sensor_data_file.sensor_id is not None and self.camera.camera_id is not None:
+        if self.sensor_data_file.sensor_id is not None and self.camera.camera_id is not None and self.sensor_data_file.utc_dt is not None:
             offset = self.offset_manager.get_offset(self.camera.camera_id,
                                                     self.sensor_data_file.sensor_id,
                                                     self.sensor_data_file.utc_dt.date())
@@ -360,7 +365,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                                 self.plot.label_manager,
                                 self.plot.label_type_manager)
             dialog.exec()
-            dialog.show()
+            # dialog.show()
 
             if dialog.is_accepted:
                 self.add_label_highlight(dialog.selected_label.start,
@@ -376,11 +381,12 @@ class GUI(QMainWindow, Ui_MainWindow):
             dialog.setWindowTitle(self.video.file_name)
 
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
         if dialog.selected_camera_id is not None:
             self.video.update_camera(dialog.selected_camera_id)
             self.camera.change_camera(dialog.selected_camera_id)
+
 
     def open_label_settings_dialog(self):
         """
@@ -391,7 +397,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.settings
         )
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
         # Upon window close
         if dialog.settings_changed:
@@ -403,7 +409,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         dialog = SubjectDialog(self.settings)
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
     def open_sensor_dialog(self):
         """
@@ -411,7 +417,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         dialog = SensorDialog(self.settings)
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
     def open_select_sensor_dialog(self, model_id=None):
         """
@@ -422,7 +428,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             dialog.setWindowTitle(self.sensor_data_file.file_name)
 
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
         if dialog.selected_sensor_id is not None:
             self.sensor_data_file.update_sensor(dialog.selected_sensor_id)
@@ -436,12 +442,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         dialog = SensorModelDialog(self.settings)
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
     def open_subject_sensor_map_dialog(self):
         dialog = SubjectSensorMapDialog(self.settings)
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
     def open_export(self):
         """
@@ -453,7 +459,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.sensor_data_file.utc_dt
         )
         dialog.exec()
-        dialog.show()
+        # dialog.show()
 
     def open_project_settings_dialog(self):
         if self.app_config.get(PREVIOUS_PROJECT_DIR):

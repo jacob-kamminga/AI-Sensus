@@ -17,7 +17,7 @@ from gui.dialogs.project_settings import ProjectSettingsDialog
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1
 LABEL_INDEX = 2
-COLUMN_TIMESTAMP = "Timestamp"
+COLUMN_TIMESTAMP = COL_ABSOLUTE_DATETIME
 
 
 class SensorData:
