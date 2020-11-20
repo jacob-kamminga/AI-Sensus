@@ -36,6 +36,7 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
         self.database_file = project_dir.joinpath(PROJECT_DATABASE_FILE)
         # self.project_settings = None
         self.settings_dict = {}
+        self.settings_changed = False
 
         # Fill timezone combobox
         self.comboBox_timezone.addItems(pytz.common_timezones)
@@ -82,6 +83,7 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
         with self.config_file.open('w') as f:
             json.dump(self.settings_dict, f)
             # json.dump(jsonpickle.encode(self.project_settings), f)
+        self.settings_changed = True
 
     def set_setting(self, setting: str, new_value: Any) -> None:
         """

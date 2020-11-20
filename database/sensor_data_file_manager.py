@@ -2,22 +2,46 @@ import datetime as dt
 import sqlite3
 from typing import List
 
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 
 SQL_INSERT_FILE = (
-    "INSERT INTO sensor_data_file(file_name, file_path, sensor_id, datetime) "
-    "VALUES (?, ?, ?, ?)"
+    "INSERT INTO sensor_data_file(file_name, file_path, file_id_hash, sensor_id, datetime) "
+    "VALUES (?, ?, ?, ?, ?)"
 )
 SQL_SELECT_ID_BY_FILE_NAME = (
     "SELECT id "
     "FROM sensor_data_file "
     "WHERE file_name = ?"
 )
+SQL_SELECT_ID_BY_FILE_PATH = (
+    "SELECT id "
+    "FROM sensor_data_file "
+    "WHERE file_path = ?"
+)
+SQL_SELECT_ID_BY_FILE_ID_HASH = (
+    "SELECT id "
+    "FROM sensor_data_file "
+    "WHERE file_id_hash = ?"
+)
 SQL_SELECT_SENSOR_MODEL_BY_FILE_NAME = (
     "SELECT sensor_model.id "
     "FROM sensor_data_file, sensor, sensor_model "
     "WHERE sensor_data_file.file_name = ? "
+    "AND sensor_data_file.sensor_id = sensor.id "
+    "AND sensor.model = sensor_model.id"
+)
+SQL_SELECT_SENSOR_MODEL_BY_FILE_PATH = (
+    "SELECT sensor_model.id "
+    "FROM sensor_data_file, sensor, sensor_model "
+    "WHERE sensor_data_file.file_path = ? "
+    "AND sensor_data_file.sensor_id = sensor.id "
+    "AND sensor.model = sensor_model.id"
+)
+SQL_SELECT_SENSOR_MODEL_BY_FILE_ID_HASH = (
+    "SELECT sensor_model.id "
+    "FROM sensor_data_file, sensor, sensor_model "
+    "WHERE sensor_data_file.file_id_hash = ? "
     "AND sensor_data_file.sensor_id = sensor.id "
     "AND sensor.model = sensor_model.id"
 )
@@ -73,6 +97,7 @@ SQL_UPDATE_LAST_USED_COL = (
     "SET last_used_column = ? "
     "WHERE id = ?"
 )
+SQL_UPDATE_SENSOR = "UPDATE sensor_data_file SET sensor_id = ? WHERE id = ?"
 
 
 class SensorDataFileManager:
@@ -87,14 +112,44 @@ class SensorDataFileManager:
 
         self._cur = self._conn.cursor()
 
-    def get_id_by_file_name(self, file_name: str) -> int:
+    # def get_id_by_file_name(self, file_name: str) -> int:
+    #     """
+    #     Return the ID of the sensor data file, or -1 if not exists.
+    #
+    #     :param file_name: The base name of the file
+    #     :return: The ID of the sensor data file, or -1 if not exists
+    #     """
+    #     self._cur.execute(SQL_SELECT_ID_BY_FILE_NAME, (file_name,))
+    #     res = self._cur.fetchone()
+    #
+    #     if res is None:
+    #         return -1
+    #     else:
+    #         return res[0]
+
+    # def get_id_by_file_path(self, file_path: str) -> int:
+    #     """
+    #     Return the ID of the sensor data file, or -1 if not exists.
+    #
+    #     :param file_path: The file path
+    #     :return: The ID of the sensor data file, or -1 if not exists
+    #     """
+    #     self._cur.execute(SQL_SELECT_ID_BY_FILE_PATH, (file_path,))
+    #     res = self._cur.fetchone()
+    #
+    #     if res is None:
+    #         return -1
+    #     else:
+    #         return res[0]
+
+    def get_id_by_file_id_hash(self, file_id_hash: str) -> int:
         """
         Return the ID of the sensor data file, or -1 if not exists.
 
-        :param file_name: The base name of the file
+        :param file_id_hash: The unique ID hashed from file
         :return: The ID of the sensor data file, or -1 if not exists
         """
-        self._cur.execute(SQL_SELECT_ID_BY_FILE_NAME, (file_name,))
+        self._cur.execute(SQL_SELECT_ID_BY_FILE_ID_HASH, (file_id_hash,))
         res = self._cur.fetchone()
 
         if res is None:
@@ -102,8 +157,38 @@ class SensorDataFileManager:
         else:
             return res[0]
 
-    def get_sensor_model_by_file_name(self, file_name: str):
-        self._cur.execute(SQL_SELECT_SENSOR_MODEL_BY_FILE_NAME, (file_name,))
+    # Depricated, sensordata filename is not unique and should not be used. Use file_id_hash instead
+
+    # def get_sensor_model_by_file_name(self, file_name: str):
+    #     self._cur.execute(SQL_SELECT_SENSOR_MODEL_BY_FILE_NAME, (file_name,))
+    #     res = self._cur.fetchone()
+    #
+    #     if res is not None:
+    #         return res[0]
+    #
+    #     return None
+
+    # def get_sensor_model_by_file_path(self, file_path: str):
+    #     """
+    #     Return the model ID by file path
+    #     :param file_path:
+    #     :return: Model ID
+    #     """
+    #     self._cur.execute(SQL_SELECT_SENSOR_MODEL_BY_FILE_PATH, (file_path,))
+    #     res = self._cur.fetchone()
+    #
+    #     if res is not None:
+    #         return res[0]
+    #
+    #     return None
+
+    def get_sensor_model_by_file_id_hash(self, file_id_hash: str):
+        """
+        Return the model ID by file path
+        :param file_id_hash: The unique ID hashed from file
+        :return: Model ID
+        """
+        self._cur.execute(SQL_SELECT_SENSOR_MODEL_BY_FILE_ID_HASH, (file_id_hash,))
         res = self._cur.fetchone()
 
         if res is not None:
@@ -155,16 +240,17 @@ class SensorDataFileManager:
         self._cur.execute(SQL_UPDATE_LAST_USED_COL, (col_name, id_))
         self._conn.commit()
 
-    def add_file(self, file_name: str, file_path: str, sensor_id: int, datetime: dt.datetime) -> int:
+    def add_file(self, file_name: str, file_path: str, file_id_hash: str,sensor_id: int, datetime: dt.datetime) -> int:
         """
         Add a new file mapping.
 
         :param file_name: The file name
         :param file_path: The last known file path
+        :param file_id_hash: Unique file hash
         :param sensor_id: The sensor ID
         :param datetime: datetime of the data-file
         """
-        self._cur.execute(SQL_INSERT_FILE, (file_name, file_path, sensor_id, datetime))
+        self._cur.execute(SQL_INSERT_FILE, (file_name, file_path, file_id_hash, sensor_id, datetime))
         self._conn.commit()
         return self._cur.lastrowid
 
@@ -223,3 +309,14 @@ class SensorDataFileManager:
             return res[0]
 
         return -1
+
+    def update_sensor(self, sensor_data_file_id: int, sensor_id: int):
+        """
+        Updates the associated sensor ID of a sensor datafile.
+
+        :param sensor_data_file_id: The ID of the sensor datafile
+        :param sensor_id: The sensor ID of the sensor associated with the datafile
+        """
+        self._cur.execute(SQL_UPDATE_SENSOR, (sensor_id, sensor_data_file_id))
+        self._conn.commit()
+

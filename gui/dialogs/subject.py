@@ -1,11 +1,9 @@
-from pathlib import Path
-
 from PyQt5 import QtWidgets
 
 from database.subject_manager import SubjectManager
 from gui.designer.subject import Ui_Dialog
 from gui.dialogs.new_subject import NewSubjectDialog
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 SUBJECT_NAME_INDEX = 1
 SUBJECT_COLOR_INDEX = 2

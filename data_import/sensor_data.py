@@ -12,17 +12,17 @@ from date_utils import utc_to_local
 from machine_learning.classifier import CLASSIFIER_NAN
 from models.sensor_metadata import SensorMetadata
 from parse_function.parse_exception import ParseException
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1
 LABEL_INDEX = 2
-COLUMN_TIMESTAMP = "Timestamp"
+COLUMN_TIMESTAMP = COL_ABSOLUTE_DATETIME
 
 
 class SensorData:
 
-    def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id, sensor_timezone=pytz.utc):
+    def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id):
         # Initialize primitives
         self.settings = settings
         self.sensor_model_manager = SensorModelManager(self.settings)
@@ -30,41 +30,42 @@ class SensorData:
 
         self.sensor_model_id = sensor_model_id
         self.sensor_model = self.sensor_model_manager.get_model_by_id(sensor_model_id)
-        self.metadata = SensorMetadata(self.file_path, self.sensor_model, sensor_model_id, None, sensor_timezone)
+        self.sensor_name = None
+        self.metadata = SensorMetadata(self.file_path, self.sensor_model, sensor_model_id)
         self.col_metadata = dict()
         self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
-        self.sensor_timezone = sensor_timezone
 
         # Parse metadata and data
         self._settings_dict = settings.settings_dict
-        self._df = self.parse()
-
-        if self.sensor_model.relative_absolute == RELATIVE_TIME_ITEM:
-            self.normalize_rel_datetime_column()
-        """ The sensor data as a DataFrame. """
+        self._df = None
+        self.parse()
 
     def __copy__(self):
-        new = type(self)(self.file_path, self.settings, self.sensor_model_id, self.sensor_timezone)
+        new = type(self)(self.file_path, self.settings, self.sensor_model_id)
         new.__dict__.update(self.__dict__)
         return new
 
-    def parse(self) -> pd.DataFrame:
+    def parse(self):
         """
         Parses a csv file to get metadata and data.
 
         :return: the parsed data as a DataFrame
         """
+
         self.metadata.load_values()
+        if not self.metadata.sensor_timezone:
+            return
+        self.metadata.parse_datetime()
 
         # Parse data from file
-        df = pd.read_csv(self.file_path,
+        self._df = pd.read_csv(self.file_path,
                          names=self.metadata.col_names,
                          skip_blank_lines=False,
                          skiprows=self.sensor_model.col_names_row + 1,
                          comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
 
-        df.columns = df.columns.str.strip()
-        columns = df.columns.values.tolist()
+        self._df.columns = self._df.columns.str.strip()
+        columns = self._df.columns.values.tolist()
 
         # set column metadata
         self.set_column_metadata(columns)
@@ -83,12 +84,13 @@ class SensorData:
                 parsed_expr = parser.parse(conversion)
 
                 # Apply parsed expression to the data
-                df.eval(name + " = " + parsed_expr, inplace=True)
+                self._df.eval(name + " = " + parsed_expr, inplace=True)
         except ParseException:
             # Pass ParseException
             raise
 
-        return df
+        if self.sensor_model.relative_absolute == RELATIVE_TIME_ITEM:
+            self.normalize_rel_datetime_column()
 
     def set_column_metadata(self, columns):
         """
@@ -171,7 +173,24 @@ class SensorData:
 
         # If time column is absolute, rename the column
         elif self.sensor_model.relative_absolute == ABSOLUTE_TIME_ITEM:
-            self._df.rename(columns={time_col: COL_ABSOLUTE_DATETIME})
+            self._df.columns.values[time_col] = COL_ABSOLUTE_DATETIME
+            # Make sure the column is datetime
+            if not pd.api.types.is_datetime64_any_dtype(self._df[COL_ABSOLUTE_DATETIME]):
+                # Convert to datetime
+                self._df[COL_ABSOLUTE_DATETIME] = pd.to_datetime(self._df[COL_ABSOLUTE_DATETIME])
+                # Localize to sensor timezone and convert to project timezone
+                self._df[COL_ABSOLUTE_DATETIME] = \
+                    self._df[COL_ABSOLUTE_DATETIME].dt.tz_localize(self.metadata.sensor_timezone).dt.tz_convert(
+                        self.project_timezone)
+
+            # If start datetime of file is not in metadata, then we take the first value as utc_dt
+            if self.metadata.utc_dt is None:
+                first_value = self._df.iloc[0, time_col].astimezone(pytz.utc)
+
+                if type(first_value) == pd.Timestamp:
+                    self.metadata.utc_dt = first_value.to_pydatetime()
+                else:
+                    self.metadata.utc_dt = first_value
 
     def normalize_rel_datetime_column(self):
         """
@@ -190,7 +209,6 @@ class SensorData:
 
         :param label_data:
         :param label_col:
-        :param timestamp_col:
         :return:
         """
         # Add Label column to the DataFrame and initialize it to NaN

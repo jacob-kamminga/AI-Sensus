@@ -9,10 +9,11 @@ from models.sensor_model import SensorModel
 
 class SensorMetadata:
 
-    def __init__(self, file_path, sensor_model: SensorModel, sensor_id=None, utc_dt=None, sensor_timezone=pytz.utc):
+    def __init__(self, file_path, sensor_model: SensorModel, sensor_model_id=None, utc_dt=None, sensor_timezone=None):
         self.file_path = file_path
         self.sensor_model = sensor_model
-        self.sensor_id = sensor_id
+        self.sensor_model_id = sensor_model_id
+        self.sensor_name = None
         self.utc_dt = utc_dt
         self.sensor_timezone = sensor_timezone
 
@@ -62,17 +63,19 @@ class SensorMetadata:
         return IndexError
 
     def parse_datetime(self):
-        # Automatically parse date and time from string
-        date_row = self._get_value(self.sensor_model.date_row)
-        date = dateutil.parser.parse(date_row, fuzzy=True).date()
-        time = dateutil.parser.parse(self._get_value(self.sensor_model.time_row), fuzzy=True).time()
-
-        # Create datetime object from date and time
-        naive_dt = dt.datetime.combine(date, time)
-
-        # Convert naive datetime to UTC
-        self.utc_dt = naive_to_utc(naive_dt, self.sensor_timezone)
+        if self.sensor_model.date_row > 0 and self.sensor_model.time_row > 0:
+            # Automatically parse date and time from string
+            date_row = self._get_value(self.sensor_model.date_row)
+            date = dateutil.parser.parse(date_row, fuzzy=True).date()
+            time = dateutil.parser.parse(self._get_value(self.sensor_model.time_row), fuzzy=True).time()
+            # Create datetime object from date and time
+            naive_dt = dt.datetime.combine(date, time)
+            # Convert naive datetime to UTC
+            self.utc_dt = naive_to_utc(naive_dt, self.sensor_timezone)
 
     def load_values(self):
-        # TODO prompt user when sensor_id.
-        self.sensor_id = self._get_value(self.sensor_model.sensor_id_row, self.sensor_model.sensor_id_col)
+        if self.sensor_model.sensor_id_row > 0:
+            self.sensor_name = self._get_value(self.sensor_model.sensor_id_row, self.sensor_model.sensor_id_col)
+
+
+

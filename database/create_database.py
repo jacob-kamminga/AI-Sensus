@@ -81,15 +81,18 @@ CREATE_TABLE_SENSOR_DATA_FILE = \
           primary key autoincrement,\
       file_name TEXT    not null,\
       file_path TEXT,\
+        file_id_hash TEXT,\
       sensor_id INTEGER\
           references sensor,\
       datetime  TIMESTAMP,\
-      last_used_column TEXT\
+      last_used_column TEXT,\
+        UNIQUE(file_id_hash)\
     );"
 
 CREATE_UINDEX_SENSOR_DATA_FILE = \
-    "create unique index sensor_data_file_file_name_uindex\
-         on sensor_data_file (file_name);"
+    "create unique index sensor_data_file_id_hash_uindex\
+         on sensor_data_file (file_id_hash);"
+
 
 CREATE_TABLE_SENSOR = \
     "create table sensor\

@@ -93,30 +93,29 @@ def parse_camera_name(file_path):
     return camera_id
 
 
-def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
+def parse_video_begin_time(file_path, camera_timezone) -> datetime.datetime:
     """
     Parses the start time of video files.
     :param file_path: The path of the video
-    :param timezone: The timezone that should be used
+    :param camera_timezone: The timezone that should be used
     :return: datetime: The begin UTC datetime of the video (without tzinfo)
     """
     if file_path is None or not os.path.isfile(file_path):
         raise FileNotFoundException(file_path)
 
     # List tags to obtain from videofile. Note that different cameras may use different tags
-    create_datetime_tags = ['CreationDateValue','DateTimeOriginal', 'CreateDate', 'TrackCreateDate', 'MediaCreateDate']
+    create_datetime_tags = ['CreationDateValue', 'DateTimeOriginal', 'CreateDate', 'CreationDate', 'TrackCreateDate',
+                            'MediaCreateDate']
     # 'TimeStamp', 'SonyDateTime', 'DateTime', 'GPSDateStamp'
     cmd = "exiftool -j -DateTimeOriginal " \
-          "-CreateDate -TrackCreateDate -MediaCreateDate -CreationDateValue -TimeStamp -SonyDateTime -DateTime" \
-          "-GPSDateStamp -api largefilesupport=1"
-    #  TODO automate the install of the config file. The config file is required to be able to parse large files for
-    #  TODO CreateDate tags or use relative path from project dir to config and to bin
+          "-CreateDate -CreationDate -TrackCreateDate -MediaCreateDate -CreationDateValue -TimeStamp -SonyDateTime " \
+          "-DateTime -GPSDateStamp -api largefilesupport=1"
     args = shlex.split(cmd)
     args.append(file_path)
     # run the exiftool process, decode stdout into utf-8 & convert to JSON
     exiftool_output = subprocess.check_output(args).decode('utf-8')
     exiftool_output = json.loads(exiftool_output)
-
+    dt = None
     for tag in create_datetime_tags:
         dt = exiftool_output[0].get(tag)
         if dt != '' and dt is not None:
@@ -134,26 +133,27 @@ def parse_video_begin_time(file_path, timezone=pytz.utc) -> datetime.datetime:
     # "-HH:MM" or "Z". For example:
     datetime_formats = ['%Y:%m:%d %H:%M:%S', '%Y:%m:%d %H:%M:%S%z DST', '%Y:%m:%d %H:%M:%S%z', '%Y-%m-%d %H:%M:%S',
                         '%Y:%m:%d %H:%M:%SZ', '%Y-%m-%dT%H:%M:%S.000000Z\n']
+    parsed_dt = None
     for str_format in datetime_formats:
         try:
-            naive_dt = datetime.datetime.strptime(dt, str_format)
+            parsed_dt = datetime.datetime.strptime(dt, str_format)
         except:
-            naive_dt = None
+            parsed_dt = None
         finally:
-            if naive_dt is not None:
+            if parsed_dt is not None:
                 break
 
-    if naive_dt is None:
+    if parsed_dt is None:
         # TODO handle case where no start time for video was found
         # raise StartTimeNotParsedException
-        naive_dt = datetime.datetime.now()
+        parsed_dt = datetime.datetime.now()
 
     # Verify if naive_dt is really naive. THere are cases when the parsed time is not naive
-    if naive_dt.tzinfo is None:
-        ret = naive_to_utc(naive_dt, timezone)
+    if parsed_dt.tzinfo is None:
+        ret = naive_to_utc(parsed_dt, camera_timezone)
     else:
         # return UTC time
-        ret = naive_dt.astimezone(pytz.utc).replace(tzinfo=None)
+        ret = parsed_dt.astimezone(pytz.utc).replace(tzinfo=None)
 
     return ret
 
@@ -170,24 +170,26 @@ def datetime_with_tz_to_string(utc_dt, format_str, timezone=pytz.utc):
     return timezone.fromutc(utc_dt).strftime(format_str)
 
 
-def get_video_end_time(file_path):
+def get_video_end_time(file_path, camera_timezone):
     """
     Calculates the stop time of a video file.
 
+    :param camera_timezone: Timezone of camera
     :param file_path: The path of the video
     :return: float: The stop time of the video
     """
-    start_time = parse_video_begin_time(file_path)
+    start_time = parse_video_begin_time(file_path, camera_timezone)
     duration = parse_video_duration(file_path)
     stop_time = start_time + timedelta(seconds=float(duration))
 
     return stop_time
 
 
-def rename_video_to_begin_time(file_path):
+def rename_video_to_begin_time(file_path, camera_timezone):
     """
     Renames a file to its start time.
 
+    :param camera_timezone: Timezone of camera
     :param file_path: The path of the video
     """
     if not os.path.isfile(file_path):
@@ -198,7 +200,7 @@ def rename_video_to_begin_time(file_path):
     file = split_path[1]
     file_extension = file.rsplit('.', 1)[1]
 
-    creation_time = parse_video_begin_time(file_path)
+    creation_time = parse_video_begin_time(file_path, camera_timezone)
     creation_time_string = datetime_with_tz_to_string(creation_time, '%Y%m%d_%H-%M-%S')
 
     os.rename(file_path, '{}/{}.{}'.format(directory, creation_time_string, file_extension))

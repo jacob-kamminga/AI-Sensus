@@ -1,7 +1,7 @@
 import sqlite3
 from datetime import date
 
-from project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE = "create table offset \
 ( \
