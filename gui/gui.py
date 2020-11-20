@@ -1,7 +1,9 @@
 import json
 import sqlite3
+import sys
 from datetime import datetime
 from datetime import timedelta
+from os import getenv
 from typing import Optional
 
 import matplotlib.animation
@@ -46,6 +48,32 @@ COL_TIME = 'Time'
 COL_TIMESTAMP = 'Timestamp'
 
 
+def user_data_dir(file_name):
+    r"""
+    Get OS specific data directory path for LabelingApp.
+    Typical user data directories are:
+        macOS:    ~/Library/Application Support/LabelingApp
+        Unix:     ~/.local/share/LabelingApp   # or in $XDG_DATA_HOME, if defined
+        Win 10:   C:\Users\<username>\AppData\Roaming\LabelingApp
+    For Unix, we follow the XDG spec and support $XDG_DATA_HOME if defined.
+    :param file_name: file to be fetched from the data dir
+    :return: full path to the user-specific data dir
+    """
+    # get os specific path
+    if sys.platform.startswith("win"):
+        os_path = getenv("APPDATA")
+    elif sys.platform.startswith("darwin"):
+        os_path = "~/Library/Application Support"
+    else:
+        # linux
+        os_path = getenv("XDG_DATA_HOME", "~/.local/share")
+
+    # join with LabelingApp dir
+    path = Path(os_path) / "LabelingApp"
+
+    return path.expanduser() / file_name
+
+
 class GUI(QMainWindow, Ui_MainWindow):
 
     def __init__(self):
@@ -59,7 +87,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.settings: Optional[ProjectSettingsDialog] = None
 
-        self.app_config_file = Path.cwd().joinpath(APP_CONFIG_FILE)
+        self.app_config_file = user_data_dir(APP_CONFIG_FILE)
         self.app_config = {}
         self.show_welcome_dialog()
 

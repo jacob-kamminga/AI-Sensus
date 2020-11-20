@@ -44,6 +44,7 @@ class Welcome(QDialog, Ui_Dialog):
 
         else:
             # Create empty application config file
+            self.gui.app_config_file.parent.mkdir(exist_ok=True)
             self.gui.app_config_file.touch()
 
             with self.gui.app_config_file.open('w') as f:
