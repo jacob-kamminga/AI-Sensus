@@ -136,9 +136,9 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         return new_path
 
-    def prompt_save_location(self):
+    def prompt_save_location(self, name_suggestion: str):
         # Open QFileDialog
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save file")
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save file", self.settings.project_dir.as_posix()+"\\"+name_suggestion+".csv")
 
         return file_path
 
@@ -169,6 +169,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         for subject_id in subject_ids:
             df: pd.DataFrame = pd.DataFrame()
+            subject_name = self.subject_manager.get_name_by_id(subject_id)
             sensor_ids = self.get_sensor_ids(subject_id, start_dt, end_dt)
 
             for sensor_id in sensor_ids:
@@ -181,8 +182,6 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
 
-                    # TODO: Is this still required after we already added absolute time column to dataframe?
-                    # sensor_data.add_timestamp_column(COL_TIME)
                     sensor_data.add_abs_datetime_column()
                     if not start_dt.tzinfo:
                         start_dt = sensor_data.project_timezone.localize(start_dt)
@@ -194,18 +193,10 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
                     df = df.append(sensor_data.get_data())
 
-                file_path = self.prompt_save_location()
+                file_path = self.prompt_save_location(subject_name+"_"+str(sensor_id))
 
                 if file_path:
                     df.to_csv(file_path)
-
-        # d = QDialog()
-        # b = QPushButton("OK", d)
-        # b.clicked.connect(d.close)
-        # d.setWindowTitle("Export successful")
-        # d.set
-        # d.setWindowModality(Qt.ApplicationModal)
-        # d.exec()
 
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)

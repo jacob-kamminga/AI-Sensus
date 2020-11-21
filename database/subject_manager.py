@@ -19,6 +19,7 @@ create unique index subject_name_uindex\
 
 SQL_INSERT_SUBJECT = "INSERT INTO subject (name, color, size, extra_info) VALUES (?, ?, ?, ?)"
 SQL_SELECT_ID_BY_NAME = "SELECT id FROM subject WHERE name = ?"
+SQL_SELECT_NAME_BY_ID = "SELECT name FROM subject WHERE id = ?"
 SQL_SELECT_ALL_SUBJECTS = "SELECT * FROM subject"
 SQL_SELECT_ALL_SUBJECTS_NAME_ID = "SELECT name, id FROM subject"
 
@@ -51,6 +52,10 @@ class SubjectManager:
 
     def get_id_by_name(self, name):
         self._cur.execute(SQL_SELECT_ID_BY_NAME, (name,))
+        return self._cur.fetchone()[0]
+
+    def get_name_by_id(self, id_value):
+        self._cur.execute(SQL_SELECT_NAME_BY_ID, (id_value,))
         return self._cur.fetchone()[0]
 
     def get_all_subjects(self) -> List[str]:
