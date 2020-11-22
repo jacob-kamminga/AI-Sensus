@@ -81,7 +81,7 @@ CREATE_TABLE_SENSOR_DATA_FILE = \
           primary key autoincrement,\
       file_name TEXT    not null,\
       file_path TEXT,\
-        file_id_hash TEXT,\
+      file_id_hash TEXT,\
       sensor_id INTEGER\
           references sensor,\
       datetime  TIMESTAMP,\

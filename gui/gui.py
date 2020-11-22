@@ -69,7 +69,7 @@ def user_data_dir(file_name):
         os_path = getenv("XDG_DATA_HOME", "~/.local/share")
 
     # join with LabelingApp dir
-    path = Path(os_path) / "LabelingApp"
+    path = Path(os_path) / "Labeling App"
 
     return path.expanduser() / file_name
 
@@ -181,7 +181,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         # Open the last opened files
         self.video.open_previous_file()
         self.sensor_data_file.open_previous_file()
-
 
         self.label_project_name_value.setText(self.settings.get_setting('project_name'))
 
@@ -347,7 +346,10 @@ class GUI(QMainWindow, Ui_MainWindow):
                                            date)
 
     def update_camera_sensor_offset(self):
-        if self.sensor_data_file.sensor_id is not None and self.camera.camera_id is not None and self.sensor_data_file.utc_dt is not None:
+        if self.sensor_data_file is not None \
+                and self.sensor_data_file.sensor_id is not None \
+                and self.camera.camera_id is not None \
+                and self.sensor_data_file.utc_dt is not None:
             offset = self.offset_manager.get_offset(self.camera.camera_id,
                                                     self.sensor_data_file.sensor_id,
                                                     self.sensor_data_file.utc_dt.date())
