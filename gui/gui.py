@@ -326,11 +326,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         if hasattr(self, 'sensor_data_file'):
             self.sensor_data_file.__init__(self)
             self.sensor_data_file.open_previous_file()
+            self.update_camera_sensor_offset()
         else:
             self.sensor_data_file = None
 
         self.label_project_name_value.setText(self.settings.get_setting('project_name'))
-        self.update_camera_sensor_offset()
+
         #  TODO: Reset dataplot, labels, spinboxes...
 
     def change_offset(self, offset: float):

@@ -265,71 +265,61 @@ class Plot:
         :param event: Specifies what event triggered this function.
         """
         if self.sensor_data_file.sensor_data is not None:
-            # Convert the x-position to a Python datetime
-            # xdata_dt = num2date(event.xdata).astimezone(pytz.utc).replace(tzinfo=None)
-            xdata_dt = num2date(event.xdata).astimezone(self.gui.sensor_data_file.sensor_data.metadata.sensor_timezone).replace(tzinfo=None)
-            # Convert to QDateTime, without milliseconds
-            xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
+            # Convert the x-position to a Python datetime localized as UTC
+            x_data_dt_sensor_utc = num2date(event.xdata).astimezone(pytz.utc)
 
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
             if event.button == 1:
                 self.new_label = LabelSpecs(self.sensor_data_file.id_,
                                             self.label_manager,
-                                            self.label_type_manager)
+                                            self.label_type_manager,
+                                            self.sensor_data_file.sensor_data.metadata.sensor_timezone)
 
-                self.new_label.dateTimeEdit_start.setDateTime(xdata_qdt)
+                self.new_label.start_time = x_data_dt_sensor_utc
 
             # If the right mouse button is used, check if this is the first or second time
             elif event.button == 3:
                 if not self.labeling:
                     self.large_label = LabelSpecs(self.sensor_data_file.id_,
                                                   self.label_manager,
-                                                  self.label_type_manager)
-                    self.large_label.dateTimeEdit_start.setDateTime(xdata_qdt)
+                                                  self.label_type_manager,
+                                                  self.sensor_data_file.sensor_data.metadata.sensor_timezone)
+                    self.large_label.start_time = x_data_dt_sensor_utc
                 # If it is the second time, check if the user wants to delete the label or if the label should start
                 # or end at the start or end of another label
                 else:
                     deleting = False
 
-                    if xdata_qdt < self.large_label.dateTimeEdit_start.dateTime():
-                        self.large_label.dateTimeEdit_end.setDateTime(self.large_label.dateTimeEdit_start.dateTime())
-                        self.large_label.dateTimeEdit_start.setDateTime(xdata_qdt)
+                    if x_data_dt_sensor_utc < self.large_label.start_time:
+                        self.large_label.end_time = self.large_label.start_time
+                        self.large_label.start_time = x_data_dt_sensor_utc
                     else:
-                        self.large_label.dateTimeEdit_end.setDateTime(xdata_qdt)
+                        self.large_label.end_time = x_data_dt_sensor_utc
 
-                    start = self.large_label.dateTimeEdit_start.dateTime().toPyDateTime()
-                    end = self.large_label.dateTimeEdit_end.dateTime().toPyDateTime()
+                    new_start = self.large_label.start_time.replace(tzinfo=None)
+                    new_end = self.large_label.end_time.replace(tzinfo=None)
 
                     for label in self.label_manager.get_all_labels_by_file(self.sensor_data_file.id_):
-                        label_start = label[LABEL_START_TIME_INDEX]
-                        label_end = label[LABEL_END_TIME_INDEX]
-                        label_start_qdt = QDateTime.fromString(label_start.strftime(DATETIME_FORMAT)[:-3],
-                                                               QDATETIME_FORMAT)
-                        label_end_qdt = QDateTime.fromString(label_end.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
+                        existing_label_start = label[LABEL_START_TIME_INDEX]
+                        existing_label_end = label[LABEL_END_TIME_INDEX]
 
-                        if label_start < start < label_end and label_start < end < label_end:
+                        if existing_label_start < new_start < existing_label_end and \
+                                existing_label_start < new_end < existing_label_end:
                             deleting = True
                             delete_label = label
                             break
-                        elif label_start < start < label_end or label_start < end < label_end:
-                            if label_start < start < label_end:
-                                self.large_label.dateTimeEdit_start.setDateTime(label_end_qdt)
+                        elif existing_label_start < new_start < existing_label_end or \
+                                existing_label_start < new_end < existing_label_end:
+                            if existing_label_start < new_start < existing_label_end:
+                                self.large_label.start_time = existing_label_end
                             else:
-                                self.large_label.dateTimeEdit_end.setDateTime(label_start_qdt)
+                                self.large_label.end_time = existing_label_start
 
                     if deleting:
-                        reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete this label?",
-                                                     QMessageBox.Yes, QMessageBox.No)
-                        if reply == QMessageBox.Yes:
-                            self.label_manager.delete_label_by_start_and_file(delete_label[LABEL_START_TIME_INDEX],
-                                                                              self.sensor_data_file.id_)
-
-                            # Remove label highlight and text from plot
-                            self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
-                            self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
+                        self.delete_label(delete_label)
                     else:
-                        self.large_label.exec()
+                        self.large_label.show_dialog()
 
                     if self.large_label.is_accepted:
                         self.add_label_highlight(self.large_label.selected_label.start,
@@ -345,52 +335,47 @@ class Plot:
         :param event: Specifies the event that triggers this function.
         """
         if self.sensor_data_file.sensor_data is not None:
-            xdata_dt = num2date(event.xdata).replace(tzinfo=None)
-            xdata_qdt = QDateTime.fromString(xdata_dt.strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
+            # Convert the x-position to a Python datetime
+            x_data_dt_sensor_utc = num2date(event.xdata).astimezone(pytz.utc)
 
             # If the left mouse button is released, delete or label the right area, similar to the latter
             # part of onclick.
             if event.button == 1:
                 deleting = False
-
-                if xdata_qdt < self.new_label.dateTimeEdit_start.dateTime():
+                if x_data_dt_sensor_utc < self.new_label.start_time:
                     # Switch the values of start and end
-                    self.new_label.dateTimeEdit_end.setDateTime(self.new_label.dateTimeEdit_start.dateTime())
-                    self.new_label.dateTimeEdit_start.setDateTime(xdata_qdt)
+                    self.new_label.end_time = self.new_label.start_time
+                    self.new_label.start_time = x_data_dt_sensor_utc
                 else:
-                    self.new_label.dateTimeEdit_end.setDateTime(xdata_qdt)
+                    self.new_label.end_time = x_data_dt_sensor_utc
 
-                start = self.new_label.dateTimeEdit_start.dateTime().toPyDateTime()
-                end = self.new_label.dateTimeEdit_end.dateTime().toPyDateTime()
+                new_start = self.new_label.start_time.replace(tzinfo=None)
+                new_end = self.new_label.end_time.replace(tzinfo=None)
 
+                # Get all existing labels in UTC format
                 for label in self.label_manager.get_all_labels_by_file(self.sensor_data_file.id_):
-                    label_start = label[LABEL_START_TIME_INDEX]
-                    label_end = label[LABEL_END_TIME_INDEX]
-
+                    existing_label_start = label[LABEL_START_TIME_INDEX]
+                    existing_label_end = label[LABEL_END_TIME_INDEX]
+                    # TODO implement the possibility for label overlap here (and in export of course)
                     # If 'onclick' and 'onrelease' are both inside the label, then delete the label
-                    if label_start < start < label_end and label_start < end < label_end:
+                    if existing_label_start < new_start < existing_label_end and \
+                            existing_label_start < new_end < existing_label_end:
                         deleting = True
                         delete_label = label
                         break
-                    # Else if only 'onclick' is inside the label, then set the start value equal to the end of the label
-                    elif label_start < start < label_end:
-                        self.new_label.dateTimeEdit_start.setDateTime(label_end)
+                    # Else if only 'onclick' is inside the label, then set the new start value equal to the end of
+                    # the existing label
+                    elif existing_label_start < new_start < existing_label_end:
+                        self.new_label.start_time = existing_label_end
                     # Else if only 'onrelease' is inside the label, then set the end value equal to the start of the
-                    # label
-                    elif label_start < end < label_end:
-                        self.new_label.dateTimeEdit_end.setDateTime(label_start)
+                    # existing label
+                    elif existing_label_start < new_end < existing_label_end:
+                        self.new_label.end_time = existing_label_start
 
                 if deleting:
-                    reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete this label?",
-                                                 QMessageBox.Yes, QMessageBox.No)
-                    if reply == QMessageBox.Yes:
-                        self.label_manager.delete_label_by_start_and_file(delete_label[LABEL_START_TIME_INDEX],
-                                                                          self.sensor_data_file.sensor_id)
-                        # Remove label highlight and text from plot
-                        self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
-                        self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
+                    self.delete_label(delete_label)
                 else:
-                    self.new_label.exec()
+                    self.new_label.show_dialog()
 
                 if self.new_label.is_accepted:
                     self.add_label_highlight(self.new_label.selected_label.start,
@@ -399,3 +384,14 @@ class Plot:
                     self.gui.canvas.draw()
             elif event.button == 3:
                 pass
+
+    def delete_label(self, delete_label):
+        reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete this label?",
+                                     QMessageBox.Yes, QMessageBox.No)
+        if reply == QMessageBox.Yes:
+            self.label_manager.delete_label_by_start_and_file(delete_label[LABEL_START_TIME_INDEX],
+                                                              self.sensor_data_file.sensor_id)
+            # Remove label highlight and text from plot
+            self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
+            self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
+
