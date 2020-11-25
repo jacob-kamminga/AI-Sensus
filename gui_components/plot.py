@@ -327,7 +327,7 @@ class Plot:
                         else:
                             label_shortcut = None
 
-                        self.new_label.show_dialog(label_shortcut)
+                        self.large_label.show_dialog(label_shortcut)
 
                     if self.large_label.is_accepted:
                         self.add_label_highlight(self.large_label.selected_label.start,
