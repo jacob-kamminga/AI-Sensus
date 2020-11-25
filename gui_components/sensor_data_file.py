@@ -114,7 +114,6 @@ class SensorDataFile:
             self.settings.set_setting(PREVIOUS_SENSOR_DATA_FILE, self.file_path.as_posix())
             self.file_name = ntpath.basename(self.file_path.as_posix())
 
-
             self.file_id_hash = self.create_file_id(self.file_path)
 
             # Reset the dictionary that maps function names to functions

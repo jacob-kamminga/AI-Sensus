@@ -43,7 +43,8 @@ CREATE_TABLE_LABEL_TYPE = \
                  primary key autoincrement,\
          activity    TEXT    not null,\
          color       TEXT    not null,\
-         description TEXT\
+         description TEXT,\
+         keyboard_shortcut CHAR(1)\
      );"
 
 CREATE_UINDEX_LABEL_TYPE = \

@@ -1,4 +1,7 @@
+from sqlite3 import IntegrityError
+
 from PyQt5 import QtWidgets
+from PyQt5.QtWidgets import QMessageBox
 
 from database.label_type_manager import LabelTypeManager
 from gui.designer.label_settings import Ui_Dialog
@@ -30,10 +33,12 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             activity = row["activity"]
             color = row["color"]
             description = row["description"]
+            keyboard_shortcut = row["keyboard_shortcut"]
 
             self.label_type_dict[activity] = {"id": id_,
                                               "color": color,
-                                              "description": description}
+                                              "description": description,
+                                              "keyboard_shortcut": keyboard_shortcut}
             self.color_dict[activity] = color
 
         self.comboBox_label.addItems(self.label_type_dict.keys())
@@ -42,11 +47,14 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             current_label = self.comboBox_label.currentText()
             current_color = self.color_dict[current_label]
             self.comboBox_color.setCurrentText(current_color)
+            current_keyboard_shortcut = self.label_type_manager.get_keyboard_shortcut(current_label)
+            self.lineEdit_keyboard_shortcut.setText(current_keyboard_shortcut)
 
         self.accepted.connect(self.add_label)
         self.pushButton.clicked.connect(self.delete_label)
         self.comboBox_label.currentTextChanged.connect(self.label_changed)
         self.comboBox_color.currentTextChanged.connect(self.color_changed)
+        self.lineEdit_keyboard_shortcut.textChanged.connect(self.keyboard_shortcut_changed)
         self.doubleSpinBox_opacity.valueChanged.connect(self.opacity_changed)
 
     def add_label(self):
@@ -56,7 +64,8 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             self.label_type_manager.add_label_type(
                 self.lineEdit_new_label.text(),
                 self.comboBox_new_label_color.currentText(),
-                ""
+                "",
+                self.lineEdit_new_keyboard_shortcut.currentText()
             )
 
     def delete_label(self):
@@ -75,6 +84,7 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
     def label_changed(self, text):
         if self.color_dict and self.comboBox_label.count():
             self.comboBox_color.setCurrentText(self.color_dict[text])
+        self.lineEdit_keyboard_shortcut.setText(self.label_type_manager.get_keyboard_shortcut(text))
 
     def color_changed(self, color):
         self.settings_changed = True
@@ -86,3 +96,20 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
     def opacity_changed(self, value):
         self.settings_changed = True
         self.settings.set_setting("label_opacity", value)
+
+    def keyboard_shortcut_changed(self, value):
+        self.settings_changed = True
+
+        try:
+            if value == "":
+                self.label_type_manager.remove_keyboard_shortcut(self.comboBox_label.currentText())
+            self.label_type_manager.update_keyboard_shortcut(self.comboBox_label.currentText(), value)
+        except IntegrityError:
+            if value == "":
+                return
+            existing_mapping = self.label_type_manager.get_activity_by_keyboard_shortcut(value)
+            QMessageBox.warning(self, "Shortcut already assigned",
+                                "This shortcut is already assigned to: "+existing_mapping)
+            self.lineEdit_keyboard_shortcut.clear()
+
+

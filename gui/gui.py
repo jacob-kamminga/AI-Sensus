@@ -13,6 +13,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog, QFileDialog, qApp
+from PyQt5.uic.properties import QtGui
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
@@ -89,7 +90,9 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.app_config_file = user_data_dir(APP_CONFIG_FILE)
         self.app_config = {}
+
         self.show_welcome_dialog()
+        self.update_db_structure()
 
         # GUI components
         self.video = Video(self)
@@ -101,6 +104,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_plus_10s = QShortcut(Qt.Key_Right, self)
         self.shortcut_minus_10s = QShortcut(Qt.Key_Left, self)
         self.shortcut_pause = QShortcut(Qt.Key_Space, self)
+        # Variables for label shortcuts
+        self.current_key_pressed = None
 
         # Connect all the buttons, spin boxes, combo boxes and line edits to their appropriate helper functions.
         self.pushButton_play.clicked.connect(self.video.toggle_play)
@@ -204,6 +209,29 @@ class GUI(QMainWindow, Ui_MainWindow):
         # This is true even if destroy() is called or if the Qt.WA_DeleteOnClose
         # attribute is set.  Clear text for next time.
         self.err_box.setText('')
+
+    def update_db_structure(self):
+        """
+        Provide backward compatibility by updating DB structure
+        :return:
+        """
+        conn = sqlite3.connect(
+            self.settings.database_file.as_posix(),
+            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
+        )
+        # Enable Sqlite foreign key support
+        conn.execute("PRAGMA foreign_keys = 1")
+        c = conn.cursor()
+
+        # Add keyboard_shortcut column to label_type table
+        c.execute("SELECT COUNT(*) AS CNTREC FROM pragma_table_info('label_type') WHERE name='keyboard_shortcut'")
+        # This query will be zero when column does not exist
+        if c.fetchone()[0] == 0:
+            c.execute("alter table label_type add keyboard_shortcut CHAR(1);")
+            c.execute("create unique index label_type_keyboard_shortcut_uindex on label_type(keyboard_shortcut);")
+
+        conn.commit()
+        conn.close()
 
     def show_welcome_dialog(self):
         """"
@@ -366,7 +394,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         else:
             dialog = LabelSpecs(self.sensor_data_file.id_,
                                 self.plot.label_manager,
-                                self.plot.label_type_manager)
+                                self.plot.label_type_manager,
+                                self.sensor_data_file.sensor_data.metadata.sensor_timezone)
             dialog.exec()
             # dialog.show()
 
@@ -389,7 +418,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         if dialog.selected_camera_id is not None:
             self.video.update_camera(dialog.selected_camera_id)
             self.camera.change_camera(dialog.selected_camera_id)
-
 
     def open_label_settings_dialog(self):
         """
@@ -474,6 +502,22 @@ class GUI(QMainWindow, Ui_MainWindow):
                 self.settings.exec()
                 if self.settings.settings_changed:
                     self.reset_gui_components()
+
+    def keyPressEvent(self, event) -> None:
+        self.current_key_pressed = event.text()
+        try:
+            if hasattr(self, 'plot'):
+                self.label_active_label_value.setText(
+                    self.plot.label_type_manager.get_activity_by_keyboard_shortcut(
+                        self.current_key_pressed
+                    )
+                )
+        except:
+            pass
+
+    def keyReleaseEvent(self, event):
+        self.current_key_pressed = None
+        self.label_active_label_value.clear()
 
     def open_machine_learning_dialog(self):
         """
@@ -600,6 +644,8 @@ class GUI(QMainWindow, Ui_MainWindow):
 
             self.plot.update_plot_axis(position=original_position / 1000)
             self.video.pause()
+
+
 
 
 def add_seconds_to_datetime(date_time: datetime, seconds: float):

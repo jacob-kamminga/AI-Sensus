@@ -4,6 +4,7 @@ from typing import Optional
 import pytz
 from PyQt5.QtCore import QDateTime
 from PyQt5.QtWidgets import QMessageBox
+from matplotlib.backend_bases import MouseButton
 from matplotlib.dates import date2num, num2date
 
 from constants import COL_ABSOLUTE_DATETIME
@@ -37,7 +38,7 @@ class Plot:
         # self.reset()
         self.label_manager = LabelManager(self.settings)
         self.label_type_manager = LabelTypeManager(self.settings)
-        self.label_data = LabelData(self.label_manager)
+        # self.label_data = LabelData(self.label_manager)
         self.formulas = self.settings.get_setting('formulas')
         self.plot_width = self.settings.get_setting('plot_width')
         self.plot_height_factor = self.settings.get_setting('plot_height_factor')
@@ -270,7 +271,7 @@ class Plot:
 
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
-            if event.button == 1:
+            if event.button == MouseButton.LEFT:
                 self.new_label = LabelSpecs(self.sensor_data_file.id_,
                                             self.label_manager,
                                             self.label_type_manager,
@@ -279,7 +280,7 @@ class Plot:
                 self.new_label.start_time = x_data_dt_sensor_utc
 
             # If the right mouse button is used, check if this is the first or second time
-            elif event.button == 3:
+            elif event.button == MouseButton.RIGHT:
                 if not self.labeling:
                     self.large_label = LabelSpecs(self.sensor_data_file.id_,
                                                   self.label_manager,
@@ -319,7 +320,14 @@ class Plot:
                     if deleting:
                         self.delete_label(delete_label)
                     else:
-                        self.large_label.show_dialog()
+                        if self.gui.current_key_pressed:
+                            label_shortcut = self.label_type_manager.get_id_by_keyboard_shortcut(
+                                self.gui.current_key_pressed
+                            )
+                        else:
+                            label_shortcut = None
+
+                        self.new_label.show_dialog(label_shortcut)
 
                     if self.large_label.is_accepted:
                         self.add_label_highlight(self.large_label.selected_label.start,
@@ -340,7 +348,7 @@ class Plot:
 
             # If the left mouse button is released, delete or label the right area, similar to the latter
             # part of onclick.
-            if event.button == 1:
+            if event.button == MouseButton.LEFT:
                 deleting = False
                 if x_data_dt_sensor_utc < self.new_label.start_time:
                     # Switch the values of start and end
@@ -375,14 +383,21 @@ class Plot:
                 if deleting:
                     self.delete_label(delete_label)
                 else:
-                    self.new_label.show_dialog()
+                    if self.gui.current_key_pressed:
+                        label_shortcut = self.label_type_manager.get_id_by_keyboard_shortcut(
+                            self.gui.current_key_pressed
+                        )
+                    else:
+                        label_shortcut = None
+
+                    self.new_label.show_dialog(label_shortcut)
 
                 if self.new_label.is_accepted:
                     self.add_label_highlight(self.new_label.selected_label.start,
                                              self.new_label.selected_label.end,
                                              self.new_label.selected_label.type)
                     self.gui.canvas.draw()
-            elif event.button == 3:
+            elif event.button == MouseButton.RIGHT:
                 pass
 
     def delete_label(self, delete_label):
@@ -390,7 +405,7 @@ class Plot:
                                      QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
             self.label_manager.delete_label_by_start_and_file(delete_label[LABEL_START_TIME_INDEX],
-                                                              self.sensor_data_file.sensor_id)
+                                                              self.sensor_data_file.id_)
             # Remove label highlight and text from plot
             self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
             self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()

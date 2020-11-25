@@ -60,7 +60,7 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
                                          self.sensor_data_file)
             self.is_accepted = True
 
-    def show_dialog(self):
+    def show_dialog(self, shortcut_label):
         if self.start_time.tzinfo is None:
             self.start_time = pytz.utc.localize(self.start_time, is_dst=None)
         if self.end_time.tzinfo is None:
@@ -77,7 +77,11 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
             QDateTime.fromString(self.end_time.astimezone(
                 self.sensor_timezone).strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
         )
-        self.exec()
+        if shortcut_label:
+            self.selected_label.type = shortcut_label
+            self.add_label_to_db()
+        else:
+            self.exec()
 
 
 class Label:
