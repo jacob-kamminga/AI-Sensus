@@ -13,6 +13,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog, QFileDialog, qApp
+from PyQt5.uic.properties import QtGui
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
@@ -20,7 +21,7 @@ from pathlib import Path
 from data_export import windowing as wd
 from database.offset_manager import OffsetManager
 from database.sensor_usage_manager import SensorUsageManager
-from database.create_database import create_database
+from database.create_database import *
 from gui.designer.gui import Ui_MainWindow
 from gui.dialogs.export import ExportDialog
 from gui.dialogs.label import LabelSpecs
@@ -89,7 +90,9 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.app_config_file = user_data_dir(APP_CONFIG_FILE)
         self.app_config = {}
+
         self.show_welcome_dialog()
+        update_db_structure(self.settings)
 
         # GUI components
         self.video = Video(self)
@@ -101,6 +104,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.shortcut_plus_10s = QShortcut(Qt.Key_Right, self)
         self.shortcut_minus_10s = QShortcut(Qt.Key_Left, self)
         self.shortcut_pause = QShortcut(Qt.Key_Space, self)
+        # Variables for label shortcuts
+        self.current_key_pressed = None
 
         # Connect all the buttons, spin boxes, combo boxes and line edits to their appropriate helper functions.
         self.pushButton_play.clicked.connect(self.video.toggle_play)
@@ -210,7 +215,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         Open the welcome dialog. The welcome dialog first checks if a project was already used during previous session.
         """
         dialog = Welcome(self)  # pass self to access new and open project dialogs
-
         if dialog.settings is None:
             dialog.exec()
 
@@ -284,6 +288,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         if project_dir:
             self.settings = ProjectSettingsDialog(Path(project_dir))
+            update_db_structure(self.settings)
             # Reset gui components
             self.reset_gui_components()
             # Set project dir as most recent project dir
@@ -366,7 +371,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         else:
             dialog = LabelSpecs(self.sensor_data_file.id_,
                                 self.plot.label_manager,
-                                self.plot.label_type_manager)
+                                self.plot.label_type_manager,
+                                self.sensor_data_file.sensor_data.metadata.sensor_timezone)
             dialog.exec()
             # dialog.show()
 
@@ -389,7 +395,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         if dialog.selected_camera_id is not None:
             self.video.update_camera(dialog.selected_camera_id)
             self.camera.change_camera(dialog.selected_camera_id)
-
 
     def open_label_settings_dialog(self):
         """
@@ -474,6 +479,22 @@ class GUI(QMainWindow, Ui_MainWindow):
                 self.settings.exec()
                 if self.settings.settings_changed:
                     self.reset_gui_components()
+
+    def keyPressEvent(self, event) -> None:
+        self.current_key_pressed = event.text()
+        try:
+            if hasattr(self, 'plot'):
+                self.label_active_label_value.setText(
+                    self.plot.label_type_manager.get_activity_by_keyboard_shortcut(
+                        self.current_key_pressed
+                    )
+                )
+        except:
+            pass
+
+    def keyReleaseEvent(self, event):
+        self.current_key_pressed = None
+        self.label_active_label_value.clear()
 
     def open_machine_learning_dialog(self):
         """
@@ -600,6 +621,8 @@ class GUI(QMainWindow, Ui_MainWindow):
 
             self.plot.update_plot_axis(position=original_position / 1000)
             self.video.pause()
+
+
 
 
 def add_seconds_to_datetime(date_time: datetime, seconds: float):
