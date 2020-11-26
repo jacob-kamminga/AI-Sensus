@@ -50,8 +50,8 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             current_keyboard_shortcut = self.label_type_manager.get_keyboard_shortcut(current_label)
             self.lineEdit_keyboard_shortcut.setText(current_keyboard_shortcut)
 
-        self.accepted.connect(self.add_label)
-        self.pushButton.clicked.connect(self.delete_label)
+        self.pushButton_add_label.clicked.connect(self.add_label)
+        self.pushButton_delete_label.clicked.connect(self.delete_label)
         self.comboBox_label.currentTextChanged.connect(self.label_changed)
         self.comboBox_color.currentTextChanged.connect(self.color_changed)
         self.lineEdit_keyboard_shortcut.textChanged.connect(self.keyboard_shortcut_changed)
@@ -59,27 +59,46 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def add_label(self):
         self.settings_changed = True
+        new_activity = self.lineEdit_new_label.text()
+        new_color = self.comboBox_new_label_color.currentText()
+        new_new_keyboard_shortcut = self.lineEdit_new_keyboard_shortcut.text().strip(' ')
 
         if self.lineEdit_new_label.text():
-            self.label_type_manager.add_label_type(
-                self.lineEdit_new_label.text(),
-                self.comboBox_new_label_color.currentText(),
-                "",
-                self.lineEdit_new_keyboard_shortcut.currentText()
-            )
+            try:
+                self.label_type_manager.add_label_type(new_activity, new_color, "", new_new_keyboard_shortcut)
+
+            except IntegrityError:
+                QMessageBox.warning(self, "Name or shortcut already assigned", "Names and shortcuts must be unique")
+                return
+            except:
+                QMessageBox.warning(self, "Unknown error", "Label was not added")
+                return
+
+            self.label_type_dict[new_activity] = {"id": self.label_type_manager.get_id_by_activity(new_activity),
+                                                  "color": new_color,
+                                                  "description": "",
+                                                  "keyboard_shortcut": new_new_keyboard_shortcut}
+            self.color_dict[new_activity] = new_color
+            self.comboBox_label.clear()
+            self.comboBox_label.addItems(self.label_type_dict.keys())
+            self.lineEdit_new_keyboard_shortcut.clear()
 
     def delete_label(self):
-        # TODO: Fix this function
+        remove_item = self.comboBox_label.currentText()
+        if QMessageBox.warning(self,
+                               'Heads up!',
+                               'Removing the label will remove all annotations associated with it. '
+                               'Are you sure you want to delete ' + remove_item + '?',
+                               QMessageBox.Ok | QMessageBox.Cancel
+                               ) == QMessageBox.Cancel:
+            return
+
         self.settings_changed = True
-        self.label_type_manager.delete_label_type(self.comboBox_label.currentText())
+        self.label_type_manager.delete_label_type(remove_item)
         self.comboBox_label.clear()
-
-        for label in self.label_type_manager.get_all_label_types():
-            self.comboBox_label.addItem(label[0])
-            self.color_dict[label[0]] = label[1]
-
-        if self.label_type_manager.get_all_label_types():
-            self.comboBox_color.setCurrentText(self.label_manager.get_label_types()[0][1])
+        self.label_type_dict.pop(remove_item)
+        self.comboBox_label.addItems(self.label_type_dict.keys())
+        self.settings_changed = True
 
     def label_changed(self, text):
         if self.color_dict and self.comboBox_label.count():
@@ -99,10 +118,11 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def keyboard_shortcut_changed(self, value):
         self.settings_changed = True
-
+        value = value.strip(' ')
         try:
             if value == "":
-                self.label_type_manager.remove_keyboard_shortcut(self.comboBox_label.currentText())
+                value = None
+                # self.label_type_manager.remove_keyboard_shortcut(self.comboBox_label.currentText())
             self.label_type_manager.update_keyboard_shortcut(self.comboBox_label.currentText(), value)
         except IntegrityError:
             if value == "":

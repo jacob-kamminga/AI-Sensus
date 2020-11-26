@@ -21,7 +21,7 @@ from pathlib import Path
 from data_export import windowing as wd
 from database.offset_manager import OffsetManager
 from database.sensor_usage_manager import SensorUsageManager
-from database.create_database import create_database
+from database.create_database import *
 from gui.designer.gui import Ui_MainWindow
 from gui.dialogs.export import ExportDialog
 from gui.dialogs.label import LabelSpecs
@@ -92,7 +92,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.app_config = {}
 
         self.show_welcome_dialog()
-        self.update_db_structure()
+        update_db_structure(self.settings)
 
         # GUI components
         self.video = Video(self)
@@ -210,35 +210,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         # attribute is set.  Clear text for next time.
         self.err_box.setText('')
 
-    def update_db_structure(self):
-        """
-        Provide backward compatibility by updating DB structure
-        :return:
-        """
-        conn = sqlite3.connect(
-            self.settings.database_file.as_posix(),
-            detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
-        )
-        # Enable Sqlite foreign key support
-        conn.execute("PRAGMA foreign_keys = 1")
-        c = conn.cursor()
-
-        # Add keyboard_shortcut column to label_type table
-        c.execute("SELECT COUNT(*) AS CNTREC FROM pragma_table_info('label_type') WHERE name='keyboard_shortcut'")
-        # This query will be zero when column does not exist
-        if c.fetchone()[0] == 0:
-            c.execute("alter table label_type add keyboard_shortcut CHAR(1);")
-            c.execute("create unique index label_type_keyboard_shortcut_uindex on label_type(keyboard_shortcut);")
-
-        conn.commit()
-        conn.close()
-
     def show_welcome_dialog(self):
         """"
         Open the welcome dialog. The welcome dialog first checks if a project was already used during previous session.
         """
         dialog = Welcome(self)  # pass self to access new and open project dialogs
-
         if dialog.settings is None:
             dialog.exec()
 
@@ -312,6 +288,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         if project_dir:
             self.settings = ProjectSettingsDialog(Path(project_dir))
+            update_db_structure(self.settings)
             # Reset gui components
             self.reset_gui_components()
             # Set project dir as most recent project dir

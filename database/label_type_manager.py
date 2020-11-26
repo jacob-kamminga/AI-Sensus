@@ -1,6 +1,8 @@
 import sqlite3
 from typing import List
 
+from PyQt5.QtWidgets import QMessageBox
+
 from gui.dialogs.project_settings import ProjectSettingsDialog
 
 SQL_CREATE_TABLE_LABEL_TYPE = \
@@ -26,6 +28,10 @@ SQL_INSERT_LABEL_TYPE = \
 
 SQL_SELECT_ALL_LABEL_TYPES = \
     "SELECT * FROM label_type"
+
+SQL_SELECT_ID_BY_ACTIVITY = \
+    "SELECT id FROM label_type " \
+    "WHERE activity = ?"
 
 SQL_SELECT_KEYBOARD_SHORTCUT = \
     "SELECT keyboard_shortcut FROM label_type " \
@@ -82,7 +88,7 @@ class LabelTypeManager:
     #     self._cur.execute(SQL_CREATE_TABLE_LABEL_TYPE)
     #     self._conn.commit()
 
-    def add_label_type(self, activity: str, color: str, description: str, keyboard_shortcut: str) -> bool:
+    def add_label_type(self, activity: str, color: str, description: str, keyboard_shortcut: str):
         """
         Creates a new label type.
 
@@ -92,12 +98,10 @@ class LabelTypeManager:
         :param description: The description of the label
         :return: boolean indication if the label type was added successfully
         """
-        try:
-            self._cur.execute(SQL_INSERT_LABEL_TYPE, (activity, color, description, keyboard_shortcut))
-            self._conn.commit()
-            return True
-        except sqlite3.Error:
-            return False
+        if keyboard_shortcut == '':
+            keyboard_shortcut = None
+        self._cur.execute(SQL_INSERT_LABEL_TYPE, (activity, color, description, keyboard_shortcut))
+        self._conn.commit()
 
     def delete_label_type(self, name: str) -> None:
         """
@@ -127,6 +131,14 @@ class LabelTypeManager:
         """
         self._cur.execute(SQL_UPDATE_ACTIVITY, (activity, id_))
         self._conn.commit()
+
+    def get_id_by_activity(self, activity: str):
+        self._cur.execute(SQL_SELECT_ID_BY_ACTIVITY, (activity,))
+        res = self._cur.fetchone()
+        if res:
+            return res[0]
+        else:
+            res
 
     def update_color(self, activity: str, color: str) -> None:
         """
@@ -160,11 +172,19 @@ class LabelTypeManager:
 
     def get_keyboard_shortcut(self, activity: str):
         self._cur.execute(SQL_SELECT_KEYBOARD_SHORTCUT, (activity,))
-        return self._cur.fetchone()[0]
+        res = self._cur.fetchone()
+        if res:
+            return res[0]
+        else:
+            res
 
     def get_activity_by_keyboard_shortcut(self, keyboard_shortcut):
         self._cur.execute(SQL_SELECT_ACTIVITY_BY_KEYBOARD_SHORTCUT, (keyboard_shortcut,))
-        return self._cur.fetchone()[0]
+        res = self._cur.fetchone()
+        if res:
+            return res[0]
+        else:
+            res
 
     def remove_keyboard_shortcut(self, activity: str):
         self._cur.execute(SQL_REMOVE_KEYBOARD_SHORTCUT, (activity,))
@@ -172,4 +192,8 @@ class LabelTypeManager:
 
     def get_id_by_keyboard_shortcut(self, keyboard_shortcut):
         self._cur.execute(SQL_SELECT_ID_BY_KEYBOARD_SHORTCUT, (keyboard_shortcut,))
-        return self._cur.fetchone()[0]
+        res = self._cur.fetchone()
+        if res:
+            return res[0]
+        else:
+            res

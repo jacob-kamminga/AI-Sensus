@@ -1,3 +1,4 @@
+import sqlite3
 from sqlite3 import Connection
 
 from constants import *
@@ -208,3 +209,26 @@ def create_database(conn: Connection):
     cur.execute(CREATE_UINDEX_LABEL)
     cur.execute(CREATE_TABLE_OFFSET)
     conn.commit()
+
+
+def update_db_structure(settings):
+    """
+    Provide backward compatibility by updating DB structure
+    :return:
+    """
+    conn = sqlite3.connect(
+        settings.database_file.as_posix(),
+        detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES
+    )
+    # Enable Sqlite foreign key support
+    conn.execute("PRAGMA foreign_keys = 1")
+    c = conn.cursor()
+    # Add keyboard_shortcut column to label_type table
+    c.execute("SELECT COUNT(*) AS CNTREC FROM pragma_table_info('label_type') WHERE name='keyboard_shortcut'")
+    # This query will be zero when column does not exist
+    if c.fetchone()[0] == 0:
+        c.execute("alter table label_type add keyboard_shortcut CHAR(1);")
+        c.execute("create unique index label_type_keyboard_shortcut_uindex on label_type(keyboard_shortcut);")
+
+    conn.commit()
+    conn.close()
