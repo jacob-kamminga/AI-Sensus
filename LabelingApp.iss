@@ -1,6 +1,6 @@
 [Setup]
 AppName=Labeling App
-AppVersion=0.1
+AppVersion=0.2
 WizardStyle=modern
 DefaultDirName={autopf}\Labeling App
 DefaultGroupName=Labeling App
@@ -10,9 +10,12 @@ SolidCompression=yes
 OutputDir=userdocs:Labeling App Output
 
 [Files]
-Source: "C:\Users\Dennis\Documents\work\labeling_app\LabelingApp\dist\main\*"; Excludes: "main.exe"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "C:\Users\Dennis\Documents\work\labeling_app\LabelingApp\dist\main\main.exe"; DestDir: "{app}"; DestName: "LabelingApp.exe"
-Source: "C:\Users\Dennis\Documents\work\labeling_app\LabelingApp\Lib\*"; DestDir: "{app}\Lib"; Flags: ignoreversion recursesubdirs createallsubdirs
+;Source: "C:\Users\Dennis\Documents\work\labeling_app\LabelingApp\dist\main\*"; Excludes: "main.exe"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+;Source: "C:\Users\Dennis\Documents\work\labeling_app\LabelingApp\dist\main\main.exe"; DestDir: "{app}"; DestName: "LabelingApp.exe"
+;Source: "C:\Users\Dennis\Documents\work\labeling_app\LabelingApp\Lib\*"; DestDir: "{app}\Lib"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\Jacob\PycharmProjects\LabelingApp\dist\main\*"; Excludes: "main.exe"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "C:\Users\Jacob\PycharmProjects\LabelingApp\dist\main\main.exe"; DestDir: "{app}"; DestName: "LabelingApp.exe"
+Source: "C:\Users\Jacob\PycharmProjects\LabelingApp\Lib\*"; DestDir: "{app}\Lib"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Code]
 function NeedsAddPath(Param: string): boolean;
