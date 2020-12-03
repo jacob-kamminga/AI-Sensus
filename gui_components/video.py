@@ -140,7 +140,7 @@ class Video:
 
         if self.position is not None:
             current_video_time = (self.project_dt + dt.timedelta(milliseconds=self.position)).strftime('%H:%M:%S')
-            current_video_date = (self.project_dt + dt.timedelta(milliseconds=self.position)).strftime("%d-%B-%Y")
+            current_video_date = (self.project_dt + dt.timedelta(milliseconds=self.position)).strftime('%d-%B-%Y')
             self.gui.label_video_time_value.setText(current_video_time)
             self.gui.label_video_date_value.setText(current_video_date)
         else:
