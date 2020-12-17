@@ -28,6 +28,7 @@ def except_hook(cls, exception, traceback):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     project = gui.GUI()
+    # project.setWindowTitle("AI Sensus")
     project.show()
 
     # # Override the except hook so it will print the traceback to stdout/stderr

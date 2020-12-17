@@ -33,6 +33,7 @@ from gui.dialogs.sensor import SensorDialog
 from gui.dialogs.sensor_model import SensorModelDialog
 from gui.dialogs.subject import SubjectDialog
 from gui.dialogs.subject_sensor_map import SubjectSensorMapDialog
+from gui.dialogs.visual_analysis import VisualAnalysisDialog
 from gui.dialogs.welcome import Welcome
 from gui.dialogs.new_project import NewProject
 from gui_components.camera import Camera
@@ -123,6 +124,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
         # self.actionSensors.triggered.connect(self.open_sensor_dialog)
         self.actionSensors.triggered.connect(self.open_select_sensor_dialog)
+        self.actionVIsual_Inspection.triggered.connect(self.open_visual_inspection_dialog)
 
         self.actionSensor_models.triggered.connect(self.open_sensor_model_dialog)
         self.actionSubjects.triggered.connect(self.open_subject_dialog)
@@ -158,6 +160,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.mediaPlayer.durationChanged.connect(self.video.duration_changed)
 
         # Connect the usage of the slider to its appropriate helper function
+        # self.horizontalSlider_time.sliderReleased.connect(self.video.set_position)
         self.horizontalSlider_time.sliderMoved.connect(self.video.set_position)
         self.horizontalSlider_time.setEnabled(False)
 
@@ -187,7 +190,9 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.video.open_previous_file()
         self.sensor_data_file.open_previous_file()
 
-        self.label_project_name_value.setText(self.settings.get_setting('project_name'))
+        project_name = self.settings.get_setting('project_name')
+        self.label_project_name_value.setText(project_name)
+        self.setWindowTitle("AI Sensus - " + project_name)
 
     def std_err_post(self, msg):
         """
@@ -334,8 +339,9 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.update_camera_sensor_offset()
         else:
             self.sensor_data_file = None
-
-        self.label_project_name_value.setText(self.settings.get_setting('project_name'))
+        project_name = self.settings.get_setting('project_name')
+        self.label_project_name_value.setText(project_name)
+        self.setWindowTitle("AI Sensus - " + project_name)
 
         #  TODO: Reset dataplot, labels, spinboxes...
 
@@ -480,6 +486,22 @@ class GUI(QMainWindow, Ui_MainWindow):
                 if self.settings.settings_changed:
                     self.reset_gui_components()
 
+    def open_visual_inspection_dialog(self):
+        """
+        Plot all sensor data per subject per activity for visual inspection of annotated data.
+        :return:
+        """
+        if self.sensor_data_file is not None:
+            file_date = self.sensor_data_file.utc_dt
+        else:
+            file_date = None
+
+        dialog = VisualAnalysisDialog(
+            self.settings,
+            file_date
+        )
+        dialog.exec()
+
     def keyPressEvent(self, event) -> None:
         self.current_key_pressed = event.text()
         try:
@@ -495,6 +517,10 @@ class GUI(QMainWindow, Ui_MainWindow):
     def keyReleaseEvent(self, event):
         self.current_key_pressed = None
         self.label_active_label_value.clear()
+
+    def temp_debug_set_position(self, position):
+        self.label_active_label.setText(str(position))
+        self.label_active_label_value.setText(str(self.mediaPlayer.position()))
 
     def open_machine_learning_dialog(self):
         """

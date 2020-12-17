@@ -29,9 +29,14 @@ SQL_INSERT_LABEL_TYPE = \
 SQL_SELECT_ALL_LABEL_TYPES = \
     "SELECT * FROM label_type"
 
+SQL_SELECT_ALL_LABELS_ACTIVITY_ID = "SELECT activity, id FROM label_type"
+
 SQL_SELECT_ID_BY_ACTIVITY = \
     "SELECT id FROM label_type " \
     "WHERE activity = ?"
+
+SQL_SELECT_COLOR_BY_LABEL_TYPE = "SELECT color FROM label_type " \
+                            "WHERE activity = ?"
 
 SQL_SELECT_KEYBOARD_SHORTCUT = \
     "SELECT keyboard_shortcut FROM label_type " \
@@ -69,6 +74,7 @@ SQL_REMOVE_KEYBOARD_SHORTCUT = \
     "UPDATE label_type " \
     "SET keyboard_shortcut = NULL " \
     "WHERE activity = ?"
+
 
 class LabelTypeManager:
 
@@ -121,6 +127,12 @@ class LabelTypeManager:
         self._cur.execute(SQL_SELECT_ALL_LABEL_TYPES)
         return self._cur.fetchall()
 
+    def get_all_labels_activity_id(self) -> dict:
+
+        self._cur.execute(SQL_SELECT_ALL_LABELS_ACTIVITY_ID)
+
+        return dict(self._cur.fetchall())
+
     def update_activity(self, id_: int, activity: str) -> None:
         """
         Updates the name of an existing label type. This also updates the name of all the labels that were made using
@@ -149,6 +161,14 @@ class LabelTypeManager:
         """
         self._cur.execute(SQL_UPDATE_COLOR, (color, activity))
         self._conn.commit()
+
+    def get_color_by_label_type(self, label_type: str):
+        self._cur.execute(SQL_SELECT_COLOR_BY_LABEL_TYPE, (label_type,))
+        res = self._cur.fetchone()
+        if res:
+            return res[0]
+        else:
+            return None
 
     def update_description(self, id_: int, description: str) -> None:
         """

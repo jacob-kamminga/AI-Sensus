@@ -47,8 +47,12 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
         self.selected_label.type = self.label_type_dict[activity]["id"]
 
     def add_label_to_db(self):
-        self.start_time = self.dateTimeEdit_start.dateTime().toPyDateTime().astimezone(pytz.utc)
-        self.end_time = self.dateTimeEdit_end.dateTime().toPyDateTime().astimezone(pytz.utc)
+        self.start_time = self.sensor_timezone.localize(
+            self.dateTimeEdit_start.dateTime().toPyDateTime()
+        ).astimezone(pytz.utc)
+        self.end_time = self.sensor_timezone.localize(
+            self.dateTimeEdit_end.dateTime().toPyDateTime()
+        ).astimezone(pytz.utc)
 
         self.selected_label.start = self.start_time.replace(tzinfo=None)
         self.selected_label.end = self.end_time.replace(tzinfo=None)

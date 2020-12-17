@@ -182,7 +182,8 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
 
-                    sensor_data.add_abs_datetime_column()
+                    if not sensor_data.add_abs_datetime_column():
+                        return
                     if not start_dt.tzinfo:
                         start_dt = sensor_data.project_timezone.localize(start_dt)
                     if not end_dt.tzinfo:
@@ -198,11 +199,11 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                 if file_path:
                     df.to_csv(file_path)
 
-        msg = QMessageBox()
-        msg.setIcon(QMessageBox.Information)
-        msg.setWindowTitle("Succes")
-        msg.setText("Export successful")
-        # msg.setInformativeText("The selected sensor model states that sensor identifier (ID) cannot "
-        #                        "be parsed from sensor datafile. Please select sensor ID manually.")
-        msg.setStandardButtons(QMessageBox.Ok)
-        msg.exec()
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Information)
+                    msg.setWindowTitle("Succes")
+                    msg.setText("Export successful")
+                    # msg.setInformativeText("The selected sensor model states that sensor identifier (ID) cannot "
+                    #                        "be parsed from sensor datafile. Please select sensor ID manually.")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.exec()

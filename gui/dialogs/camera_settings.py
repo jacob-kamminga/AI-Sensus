@@ -18,7 +18,9 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.camera_name = camera_name
         self.selected_camera_id = self.camera_manager.get_camera_id(camera_name)
         self.time_zone = self.camera_manager.get_timezone(self.selected_camera_id).zone
-
+        self.manual_offset = self.camera_manager.get_manual_offset(self.selected_camera_id)
+        if self.manual_offset:
+            self.doubleSpinBox_manual_offset.setValue(self.manual_offset)
         # Pre-fill name in edit box
         self.lineEdit_change_camera_name.setText(self.camera_name)
 
@@ -54,9 +56,12 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         # Get selection
         self.camera_name = self.lineEdit_change_camera_name.text()
         selected_timezone = self.listWidget_timezones.selectedItems()[0].text()
+        self.manual_offset = self.doubleSpinBox_manual_offset.value()
 
         # Update database entry
-        self.camera_manager.update_camera(self.selected_camera_id, self.camera_name, selected_timezone)
+        self.camera_manager.update_camera(
+            self.selected_camera_id, self.camera_name, selected_timezone, self.manual_offset
+        )
         self.close()
     # def enable_timezone_pushbutton(self):
     #     self.pushButton_save_timezone.setEnabled(True)

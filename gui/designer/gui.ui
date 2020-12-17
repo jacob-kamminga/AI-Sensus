@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Labeling Application</string>
+   <string>AI Sensus</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="sizePolicy">
@@ -21,7 +21,7 @@
     </sizepolicy>
    </property>
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+    <item row="1" column="0">
      <widget class="QSplitter" name="splitter_main">
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
@@ -34,9 +34,6 @@
         </sizepolicy>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
-        <item>
-         <widget class="QMediaPlayer" name="mediaPlayer" native="true"/>
-        </item>
         <item>
          <widget class="QSplitter" name="splitter_data">
           <property name="orientation">
@@ -137,6 +134,13 @@
           </widget>
           <widget class="QWidget" name="layoutWidget">
            <layout class="QVBoxLayout" name="verticalLayout_sensor_data">
+            <item>
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_3">
               <item>
@@ -555,6 +559,9 @@
       </widget>
      </widget>
     </item>
+    <item row="0" column="0">
+     <widget class="QMediaPlayer" name="mediaPlayer" native="true"/>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -610,11 +617,18 @@
     </property>
     <addaction name="actionMachine_Learning"/>
    </widget>
+   <widget class="QMenu" name="menuStatistics">
+    <property name="title">
+     <string>Analysis</string>
+    </property>
+    <addaction name="actionVIsual_Inspection"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSubject"/>
    <addaction name="menuSensors"/>
    <addaction name="menuLearning"/>
    <addaction name="menuSettings"/>
+   <addaction name="menuStatistics"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionOpen_Video">
@@ -693,6 +707,11 @@
   <action name="actionProject_Settings">
    <property name="text">
     <string>Project Settings</string>
+   </property>
+  </action>
+  <action name="actionVIsual_Inspection">
+   <property name="text">
+    <string>Visual Inspection</string>
    </property>
   </action>
  </widget>

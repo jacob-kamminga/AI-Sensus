@@ -186,7 +186,8 @@ class SensorDataFile:
                 # self.sensor_data.metadata.parse_datetime()
                 # self.gui.setCursor(.WaitCursor)
                 # Add absolute time column to dataframe
-                self.sensor_data.add_abs_datetime_column()
+                if not self.sensor_data.add_abs_datetime_column():
+                    return
                 # Save the starting time of the sensor data in a DateTime object
                 self.utc_dt = self.sensor_data.metadata.utc_dt
 
@@ -235,11 +236,10 @@ class SensorDataFile:
 
         last_used_col = self.sensor_data_file_manager.get_last_used_column_by_id(self.id_)
 
-        if last_used_col:
-            self.gui.plot.current_plot = last_used_col
+        if last_used_col and self.gui.plot.set_current_plot(last_used_col):
             self.gui.comboBox_functions.setCurrentText(last_used_col)
-
-        self.gui.plot.current_plot = self.gui.comboBox_functions.currentText()
+        else:
+            self.gui.plot.set_current_plot(self.gui.comboBox_functions.currentText())
 
     def save_last_used_column(self, col_name):
         self.sensor_data_file_manager.set_last_used_column(self.id_, col_name)
@@ -248,6 +248,11 @@ class SensorDataFile:
         # Reset the figure and add a new subplot to it
         self.gui.figure.clear()
         self.gui.plot.data_plot = self.gui.figure.add_subplot(1, 1, 1)
+        if self.gui.plot.current_plot is None:
+            QMessageBox.warning(self.gui, "No, or an incompatible, function selected",
+                                "Cannot plot the function that is currently selected. "
+                                "Please select a different function.")
+            return
         self.gui.plot.draw_graph()
 
         x_window_start = self.gui.plot.x_min - (self.gui.plot.plot_width / 2)

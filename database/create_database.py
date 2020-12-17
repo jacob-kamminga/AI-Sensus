@@ -7,7 +7,8 @@ CREATE_TABLE_CAMERA = "create table camera\
 (\
   name     TEXT    not null,\
   timezone TEXT default 'UTC' not null,\
-  id       INTEGER not null\
+  id       INTEGER not null,\
+  manual_offset DOUBLE\
     constraint cameras_pk\
       primary key autoincrement\
 );"
@@ -229,6 +230,11 @@ def update_db_structure(settings):
     if c.fetchone()[0] == 0:
         c.execute("alter table label_type add keyboard_shortcut CHAR(1);")
         c.execute("create unique index label_type_keyboard_shortcut_uindex on label_type(keyboard_shortcut);")
+
+    c.execute("SELECT COUNT(*) AS CNTREC FROM pragma_table_info('camera') WHERE name='manual_offset'")
+    # This query will be zero when column does not exist
+    if c.fetchone()[0] == 0:
+        c.execute("alter table camera add manual_offset DOUBLE;")
 
     conn.commit()
     conn.close()

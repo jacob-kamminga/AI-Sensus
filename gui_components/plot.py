@@ -6,6 +6,7 @@ from PyQt5.QtCore import QDateTime
 from PyQt5.QtWidgets import QMessageBox
 from matplotlib.backend_bases import MouseButton
 from matplotlib.dates import date2num, num2date
+from pandas.core.dtypes.common import is_numeric_dtype
 
 from constants import COL_ABSOLUTE_DATETIME
 from data_import.label_data import LabelData
@@ -107,7 +108,7 @@ class Plot:
         If the user changes the variable on the y-axis, this function changes the label if necessary and redraws the
         plot.
         """
-        self.current_plot = self.gui.comboBox_functions.currentText()
+        self.set_current_plot(self.gui.comboBox_functions.currentText())
 
         if self.current_plot in self.formulas:
             self.gui.label_current_function_value.setText(self.formulas[self.current_plot])
@@ -118,6 +119,15 @@ class Plot:
 
         # Save the column in the database
         self.sensor_data_file.save_last_used_column(self.current_plot)
+
+    def set_current_plot(self, new_plot):
+        # test if this column has numeric values
+        if is_numeric_dtype(self.sensor_data_file.df[new_plot]):
+            self.current_plot = new_plot
+            return True
+        else:
+            # self.current_plot = None
+            return False
 
     def delete_formula(self):
         selected_plot = self.gui.comboBox_functions.currentText()
@@ -176,7 +186,6 @@ class Plot:
             self.y_min - ((self.plot_height_factor - 1) * abs(self.y_min)),
             self.y_max + ((self.plot_height_factor - 1) * self.y_max))
 
-        # self.data_plot.set_ylim(self.y_min, self.plot_height_factor * self.y_max)
         self.vertical_line.set_xdata((x_min + x_max) / 2)
         self.gui.canvas.draw()
 
@@ -184,7 +193,7 @@ class Plot:
         """
         Redraws the graph with the right colors, labels, etc.
         """
-        if self.sensor_data_file.sensor_data is None:
+        if self.sensor_data_file.sensor_data is None or self.current_plot is None:
             return
 
         # Clear the plot

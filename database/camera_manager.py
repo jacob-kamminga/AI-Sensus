@@ -24,7 +24,9 @@ SQL_SELECT_CAMERA_ID = "SELECT id FROM camera WHERE name = ?"
 SQL_SELECT_CAMERA_NAME = "SELECT name FROM camera WHERE id = ?"
 SQL_SELECT_TIMEZONE = "SELECT timezone FROM camera WHERE id = ?"
 SQL_UPDATE_TIMEZONE = "UPDATE camera SET timezone = ? WHERE id = ?"
-SQL_UPDATE_CAMERA = "UPDATE camera SET name = ?,  timezone = ? WHERE id = ?"
+SQL_UPDATE_CAMERA = "UPDATE camera SET name = ?,  timezone = ?, manual_offset = ? WHERE id = ?"
+SQL_SELECT_MANUAL_OFFSET = "SELECT manual_offset FROM camera WHERE id = ?"
+SQL_UPDATE_MANUAL_OFFSET = "UPDATE camera SET manual_offset = ? WHERE id = ?"
 
 
 class CameraManager:
@@ -111,13 +113,26 @@ class CameraManager:
         self._cur.execute(SQL_UPDATE_TIMEZONE, (timezone, camera_id))
         self._conn.commit()
 
-    def update_camera(self, camera_id: int, camera_name: str, timezone: str):
+    def get_manual_offset(self, camera_id):
+        self._cur.execute(SQL_SELECT_MANUAL_OFFSET, (camera_id,))
+        res = self._cur.fetchone()
+        if res:
+            return res[0]
+        else:
+            return False
+
+    def update_manual_offset(self, camera_id, manual_offset):
+        self._cur.execute(SQL_UPDATE_MANUAL_OFFSET, (manual_offset, camera_id))
+        self._conn.commit()
+
+    def update_camera(self, camera_id: int, camera_name: str, timezone: str, manual_offset: int):
         """
         Updates the name and timezone of a camera. The camera is selected by camera_id.
 
+        :param manual_offset: Optional additional offset in hours
         :param camera_id: The ID of the camera
         :param camera_name: The name of the camera
         :param timezone: The timezone that has been set on the camera
         """
-        self._cur.execute(SQL_UPDATE_CAMERA, (camera_name, timezone, camera_id))
+        self._cur.execute(SQL_UPDATE_CAMERA, (camera_name, timezone, manual_offset, camera_id))
         self._conn.commit()

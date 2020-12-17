@@ -13,6 +13,7 @@ class Camera:
         self.camera_id = None
         self.camera_name = None
         self.timezone = None
+        self.manual_offset = None
 
     def change_camera(self, camera_id: int):
         # Update camera name in main GUI
@@ -22,6 +23,9 @@ class Camera:
 
         # Update timezone and datetime labels
         self.timezone = self.camera_manager.get_timezone(self.camera_id)
+        self.manual_offset = self.camera_manager.get_manual_offset(self.camera_id)
+        if self.manual_offset is None:
+            self.manual_offset = 0
         self.gui.video.update_datetime()
 
         # Update offset between camera and sensor data

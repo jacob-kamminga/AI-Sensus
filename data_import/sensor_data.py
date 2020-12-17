@@ -3,6 +3,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytz
+from PyQt5.QtWidgets import QMessageBox
 
 import parse_function.custom_function_parser as parser
 from constants import COL_ABSOLUTE_DATETIME, RELATIVE_TIME_ITEM, ABSOLUTE_TIME_ITEM
@@ -59,10 +60,10 @@ class SensorData:
 
         # Parse data from file
         self._df = pd.read_csv(self.file_path,
-                         names=self.metadata.col_names,
-                         skip_blank_lines=False,
-                         skiprows=self.sensor_model.col_names_row + 1,
-                         comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
+                               names=self.metadata.col_names,
+                               skip_blank_lines=False,
+                               skiprows=self.sensor_model.col_names_row + 1,
+                               comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
 
         self._df.columns = self._df.columns.str.strip()
         columns = self._df.columns.values.tolist()
@@ -124,8 +125,11 @@ class SensorData:
             # create new column metadata and add it to list with metadata
             self.col_metadata[name] = cm.ColumnMetadata(name, data_type, sensor)
 
-    def get_data(self):
-        return self._df.copy()
+    def get_data(self, label=None):
+        if label is None:
+            return self._df.copy()
+        else:
+            return self._df[self._df["Label"] == label]
 
     def add_column_from_func(self, name: str, func: str):
         """
@@ -176,9 +180,27 @@ class SensorData:
             self._df.columns.values[time_col] = COL_ABSOLUTE_DATETIME
             # Make sure the column is datetime
             if not pd.api.types.is_datetime64_any_dtype(self._df[COL_ABSOLUTE_DATETIME]):
-                # Convert to datetime
-                self._df[COL_ABSOLUTE_DATETIME] = pd.to_datetime(self._df[COL_ABSOLUTE_DATETIME])
+                try:
+                    # Convert to datetime
+                    self._df[COL_ABSOLUTE_DATETIME] = pd.to_datetime(
+                        self._df[COL_ABSOLUTE_DATETIME],
+                        format=self.sensor_model.format_string)
+                except ValueError as e:
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setWindowTitle("Parse DateTime Error")
+                    msg.setText("Error: " + str(e))
+                    msg.setInformativeText("Could not add datetime column in data. Please verify "
+                                           "the format string in the sensor model settings. ")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.exec()
+                    return False
+                except:
+                    pass
+                    return False
+
                 # Localize to sensor timezone and convert to project timezone
+
                 self._df[COL_ABSOLUTE_DATETIME] = \
                     self._df[COL_ABSOLUTE_DATETIME].dt.tz_localize(self.metadata.sensor_timezone).dt.tz_convert(
                         self.project_timezone)
@@ -191,6 +213,8 @@ class SensorData:
                     self.metadata.utc_dt = first_value.to_pydatetime()
                 else:
                     self.metadata.utc_dt = first_value
+
+        return True
 
     def normalize_rel_datetime_column(self):
         """
