@@ -63,7 +63,10 @@ class SensorData:
                                names=self.metadata.col_names,
                                skip_blank_lines=False,
                                skiprows=self.sensor_model.col_names_row + 1,
-                               comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
+                               comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None,
+                               # parse_dates=[1],
+                               # infer_datetime_format=True
+                               )
 
         self._df.columns = self._df.columns.str.strip()
         columns = self._df.columns.values.tolist()
@@ -184,7 +187,10 @@ class SensorData:
                     # Convert to datetime
                     self._df[COL_ABSOLUTE_DATETIME] = pd.to_datetime(
                         self._df[COL_ABSOLUTE_DATETIME],
-                        format=self.sensor_model.format_string)
+                        errors='coerce',
+                        format=self.sensor_model.format_string,
+                        exact=False
+                    )
                 except ValueError as e:
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Critical)

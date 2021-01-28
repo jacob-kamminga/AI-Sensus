@@ -189,7 +189,7 @@ class Video:
             self.gui.mediaPlayer.setPosition(new_position)
         else:
             self.position = new_position
-
+        # print(new_position)
         # self.gui.label_active_label_value.setText(str(self.gui.mediaPlayer.position()))
 
         self.gui.horizontalSlider_time.setValue(self.position)
@@ -306,7 +306,9 @@ class Video:
 
         :param position: The position as indicated by the slider.
         """
-        if position is None:
-            position = self.gui.horizontalSlider_time.value()
-        self.gui.mediaPlayer.setPosition(position) # todo is this method different for wmv files?
+        if self.gui.mediaPlayer.duration() != 0:
+            if position is None:
+                position = self.gui.horizontalSlider_time.value()
+            self.gui.mediaPlayer.setPosition(position)  # todo is this method different for wmv files?
+
 

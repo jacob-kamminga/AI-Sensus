@@ -168,7 +168,8 @@ class Plot:
         """
         if self.x_min_dt is None:
             return
-        position_dt = self.x_min_dt + dt.timedelta(seconds=self.gui.mediaPlayer.position() / 1000)  #  TODO: Fix bug when starting new project
+        position_dt = self.x_min_dt + dt.timedelta(
+            seconds=self.gui.mediaPlayer.position() / 1000)  # TODO: Fix bug when starting new project
         new_position_dt = position_dt if position == -1.0 else position
 
         plot_width_delta = dt.timedelta(seconds=(self.plot_width / 2))
@@ -218,7 +219,7 @@ class Plot:
 
         # Plot the graph
         self.data_plot.plot(
-            self.sensor_data_file.df[COL_ABSOLUTE_DATETIME],
+            self.sensor_data_file.df[COL_ABSOLUTE_DATETIME], # [self.sensor_data_file.df[COL_ABSOLUTE_DATETIME] != 'NaT']
             self.sensor_data_file.df[self.current_plot],
             ',-',
             linewidth=1,
@@ -418,4 +419,3 @@ class Plot:
             # Remove label highlight and text from plot
             self.highlights[delete_label[LABEL_START_TIME_INDEX]][0].remove()
             self.highlights[delete_label[LABEL_START_TIME_INDEX]][1].remove()
-
