@@ -1,37 +1,13 @@
-## Welcome to GitHub Pages
+# Welcome to AI Sensus
 
-You can use the [editor on GitHub](https://github.com/jacob-kamminga/AI-Sensus/edit/develop/docs/index.md) to maintain and preview the content for your website in Markdown files.
+AI Sensus is a development and research project at the University of Twente that revolves around the training of AI algorithms. Ultimately, we want this platform to learn like human babies learn. 
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+AI Sensus aims to manage and enhance the data collection and annotation process while training the AI. The goal of AI Sensus is to become a platform that connects any AI to the real world through any type of sensor (e.g., a microphone, video camera, or inertial measurement unit (IMU)) and facilitate the training process while collecting the data. The application synchronizes different devices so that an expert can use one or more datatypes as ground truth to annotate another datatype of interest for the AI when it requires it. 
 
-### Markdown
+For example, show a segment of video to a human so that she can annotate the corresponding segment of IMU data. These annotations are then used by the AI to improve the performance of the given task. One of the goals is to only query an expert to annotate those samples that are most informative for training.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+The application is written in Python. The GUI is developed using PyQT. Data is parsed, managed, and exported using the Pandas package. SQL databases are managed using the Peewee package. We use Github for versioning and project todos are managed using a Trello board.
 
-```markdown
-Syntax highlighted code block
+A variety of research topics is linked to this UTFlex job. So expect to work together with, and support, other students in their research.
 
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/jacob-kamminga/AI-Sensus/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+Are you a skilled programmer that likes a challenge? Please contact us! 
