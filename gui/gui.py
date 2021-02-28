@@ -93,7 +93,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.app_config = {}
 
         self.show_welcome_dialog()
-        update_db_structure(self.settings)
+        # update_db_structure(self.settings)
 
         # GUI components
         self.video = Video(self)
@@ -293,7 +293,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         if project_dir:
             self.settings = ProjectSettingsDialog(Path(project_dir))
-            update_db_structure(self.settings)
+            # update_db_structure(self.settings)
             # Reset gui components
             self.reset_gui_components()
             # Set project dir as most recent project dir

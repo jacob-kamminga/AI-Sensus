@@ -7,8 +7,8 @@ CREATE_TABLE_CAMERA = "create table camera\
 (\
   name     TEXT    not null,\
   timezone TEXT default 'UTC' not null,\
-  id       INTEGER not null,\
-  manual_offset DOUBLE\
+  manual_offset DOUBLE,\
+  id       INTEGER not null\
     constraint cameras_pk\
       primary key autoincrement\
 );"
