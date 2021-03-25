@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QDialog
 
 from constants import PREVIOUS_PROJECT_DIR, PROJECTS
 from gui.designer.welcome import Ui_Dialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 INIT_APP_CONFIG = {
     PREVIOUS_PROJECT_DIR: "",

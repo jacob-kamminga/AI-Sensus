@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 import pytz
 
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 SQL_CREATE_TABLE = "create table camera \
 ( \

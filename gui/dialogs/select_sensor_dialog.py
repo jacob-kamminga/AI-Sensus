@@ -1,14 +1,10 @@
-import sqlite3
-
-import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
+from database.peewee.models import SensorDataFile, Sensor
 from gui.designer.select_sensor import Ui_Dialog
-# from gui.dialogs.camera_settings import CameraSettingsDialog
-from gui.dialogs.edit_sensor import EditSensorDialog
-from gui.dialogs.sensor_model import SensorModelDialog
-from gui_components.camera import Camera
+from gui.dialogs.edit_sensor_dialog import EditSensorDialog
+from gui.dialogs.sensor_model_dialog import SensorModelDialog
 
 SENSOR_ID_INDEX = 0
 SENSOR_NAME_INDEX = 1
@@ -20,12 +16,11 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
     def __init__(self, gui, model_id=None):
         super().__init__()
         self.setupUi(self)
-        self.sensor_data_file = gui.sensor_data_file
+        self.sensor_data_file = gui.sensor_controller
         self.settings = gui.settings
-        # self.selected_camera_id = None
         self.selected_sensor_id = None
         self.selected_sensor_name = None
-        self.selected_sensor_model_id = model_id
+        self.sensor_model_id = model_id
 
         # Fill sensor dictionary and add sensor names to combobox
         self.sensor_dict = dict()
@@ -46,60 +41,54 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
     def add_sensor(self):
         new_sensor_name = self.lineEdit_new_sensor_name.text()
         if new_sensor_name != '':
-            if self.selected_sensor_model_id is None:
-                # self.selected_sensor_model_id = \
-                #     self.sensor_data_file.sensor_data_file_manager.get_sensor_model_by_file_path(
-                #         self.sensor_data_file.file_path.as_posix()
-                #     )
-                self.selected_sensor_model_id = \
-                    self.sensor_data_file.sensor_data_file_manager.get_sensor_model_by_file_id_hash(
-                        self.sensor_data_file.file_id_hash
-                    )
+            if self.sensor_model_id is None:
+                self.sensor_model_id = SensorDataFile.get(SensorDataFile.file_id_hash ==
+                                                          self.sensor_data_file.file_id_hash).id
+
             # If sensor model unknown, prompt user
-            if self.selected_sensor_model_id is None:
+            if self.sensor_model_id is None:
                 dialog = SensorModelDialog(self.settings)
                 dialog.exec()
                 dialog.show()
-                self.selected_sensor_model_id = dialog.selected_model_id
-                if self.selected_sensor_model_id is None:
+                self.sensor_model_id = dialog.selected_model_id
+                if self.sensor_model_id is None:
                     # TODO: Show warning to user
                     return
             # Prompt user for timezone of sensor
-            dialog = EditSensorDialog(self.sensor_data_file.sensor_manager, self.sensor_data_file.sensor_id, new_sensor_name)
+            sensor = Sensor(name=new_sensor_name, model=self.sensor_model_id)
+            dialog = EditSensorDialog(sensor)
             dialog.exec()
-            sensor_timezone = dialog.new_timezone
-            self.sensor_data_file.sensor_manager.insert_sensor(new_sensor_name, self.selected_sensor_model_id, sensor_timezone)
-            self.comboBox_sensor.addItem(new_sensor_name)
-            self.comboBox_sensor.setCurrentText(new_sensor_name)
-            self.lineEdit_new_sensor_name.clear()
+
+            if dialog.saved:
+                self.comboBox_sensor.addItem(new_sensor_name)
+                self.comboBox_sensor.setCurrentText(new_sensor_name)
+                self.lineEdit_new_sensor_name.clear()
 
     def use_sensor(self):
         self.selected_sensor_name = self.comboBox_sensor.currentText()
 
         if self.selected_sensor_name:
-            self.selected_sensor_id = self.sensor_data_file.sensor_manager.get_id_by_name(self.selected_sensor_name)
+            self.selected_sensor_id = Sensor.get(Sensor.name == self.selected_sensor_name).id
             self.close()
 
     def edit_sensor(self):
-        if self.comboBox_sensor.currentText():
-            id_ = self.sensor_data_file.sensor_manager.get_id_by_name(self.comboBox_sensor.currentText())
-            dialog = EditSensorDialog(self.sensor_data_file.sensor_manager, id_, self.comboBox_sensor.currentText())
-        #     dialog = SensorSettingsDialog(self.sensor.sensor_manager, self.comboBox_sensor.currentText())
+        sensor_name = self.comboBox_sensor.currentText()
+        if sensor_name:
+            sensor = Sensor.get(Sensor.name == sensor_name)
+            dialog = EditSensorDialog(sensor)
             dialog.exec()
             dialog.show()
-            self.load_sensors(dialog.sensor_name)
+            self.load_sensors(sensor_name)
 
     def load_sensors(self, selected_sensor_name=None):
         self.comboBox_sensor.clear()
-        sensors = self.sensor_data_file.sensor_manager.get_all_sensors()
+        sensors = Sensor.select()
+
         for sensor in sensors:
-            name = sensor[SENSOR_NAME_INDEX]
-            # timezone = sensor[SENSOR_TIMEZONE_INDEX]
-            #
-            # self.sensor_dict[name] = timezone
-            self.comboBox_sensor.addItem(name)
-            # Select current sensor in combobox
-        if selected_sensor_name is not None:
+            self.comboBox_sensor.addItem(sensor.name)
+
+        # Select current sensor in combobox
+        if selected_sensor_name:
             self.comboBox_sensor.setCurrentText(selected_sensor_name)
 
     def delete_sensor(self):

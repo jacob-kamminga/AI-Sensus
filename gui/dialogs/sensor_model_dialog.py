@@ -1,11 +1,11 @@
 from PyQt5.QtWidgets import QDialog
 
 from constants import ID, MODEL_NAME
-from database.sensor_model_manager import SensorModelManager
 from gui.designer.sensor_model_list import Ui_Dialog
-from gui.dialogs.new_sensor_model_final import SensorModelFinalDialog
-from gui.dialogs.new_sensor_model_name import SensorModelNameDialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.new_sensor_model_final_dialog import SensorModelFinalDialog
+from gui.dialogs.new_sensor_model_name_dialog import SensorModelNameDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
+from database.peewee.models import *
 
 
 class SensorModelDialog(QDialog, Ui_Dialog):
@@ -15,7 +15,6 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         self.setupUi(self)
         self.settings = settings
 
-        self.sensor_model_manager = SensorModelManager(self.settings)
         self.models = None
         self.selected_model_id = None
 
@@ -27,7 +26,9 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         self.buttonBox.accepted.connect(self.set_selected_model)
 
     def init(self):
-        self.models = dict((row[MODEL_NAME], row[ID]) for row in self.sensor_model_manager.get_all_models())
+        all_models = SensorModel.select()
+        self.models = dict((model.model_name, model.id) for model in all_models)
+        # self.models = dict((row[MODEL_NAME], row[ID]) for row in self.sensor_model_manager.get_all_models())
         self.fill_list()
 
     def fill_list(self):

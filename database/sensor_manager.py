@@ -3,7 +3,7 @@ from typing import List
 
 import pytz
 
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
 SQL_INSERT_SENSOR = (

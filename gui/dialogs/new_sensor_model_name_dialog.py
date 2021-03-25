@@ -4,9 +4,10 @@ from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QDialog, QErrorMessage, QFileDialog
 
 from constants import *
+from database.peewee.models import *
 from gui.designer.new_sensor_model_name import Ui_Dialog
-from gui.dialogs.new_sensor_model_date import SensorModelDateDialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.new_sensor_model_date_dialog import SensorModelDateDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
 class SensorModelNameDialog(QDialog, Ui_Dialog):
@@ -25,9 +26,7 @@ class SensorModelNameDialog(QDialog, Ui_Dialog):
             self.fill_existing_data()
         elif self.model_id is not None:
             # Get the saved model from the database and fill existing data
-            from database.sensor_model_manager import SensorModelManager
-            sensor_model_manager = SensorModelManager(self.settings)
-            existing_model = sensor_model_manager.get_model_by_id(model_id)
+            existing_model = SensorModel.get_by_id(model_id)
 
             self.model = {
                 MODEL_NAME: existing_model[MODEL_NAME],

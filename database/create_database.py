@@ -213,6 +213,8 @@ def create_database(conn: Connection):
 
 def update_db_structure(settings):
     """
+    PEEWEE: http://docs.peewee-orm.com/en/latest/peewee/playhouse.html#migrate
+
     Provide backward compatibility by updating DB structure
     :return:
     """

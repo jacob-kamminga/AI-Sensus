@@ -3,7 +3,7 @@ from typing import List
 
 from PyQt5.QtWidgets import QMessageBox
 
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 SQL_CREATE_TABLE_LABEL_TYPE = \
     "create table label_type\
@@ -69,6 +69,7 @@ SQL_REMOVE_KEYBOARD_SHORTCUT = \
     "UPDATE label_type " \
     "SET keyboard_shortcut = NULL " \
     "WHERE activity = ?"
+
 
 class LabelTypeManager:
 

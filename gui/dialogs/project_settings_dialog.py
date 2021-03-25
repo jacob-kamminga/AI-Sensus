@@ -1,14 +1,14 @@
 import json
-# import jsonpickle
 from pathlib import Path
 from typing import Any
+from database.peewee.models import db, Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, \
+    SensorUsage, Subject, Offset
 
 import pytz
 from PyQt5.QtWidgets import QDialog
 
 from constants import PROJECT_CONFIG_FILE, PREVIOUS_SENSOR_DATA_FILE, PLOT_HEIGHT_FACTOR, PROJECT_DATABASE_FILE
 from gui.designer.project_settings import Ui_Dialog
-# from project_settings_obj import ProjectSettings
 
 INIT_PROJECT_CONFIG = {
     'subj_map': {},
@@ -34,6 +34,7 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
         self.project_dir = project_dir
         self.config_file = project_dir.joinpath(PROJECT_CONFIG_FILE)
         self.database_file = project_dir.joinpath(PROJECT_DATABASE_FILE)
+
         # self.project_settings = None
         self.settings_dict = {}
         self.settings_changed = False
@@ -45,6 +46,13 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
             self.create_new_project()
         else:
             self.load_config()
+
+        # Initialize the database
+        db.init(self.database_file)
+        db.connect()
+        db.create_tables(
+            [Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, SensorUsage, Subject,
+             Offset])
 
         self.comboBox_timezone.currentTextChanged.connect(self.save_timezone)
         self.buttonBox.accepted.connect(self.save)

@@ -2,7 +2,7 @@ import datetime as dt
 import sqlite3
 from typing import List, Tuple
 
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 SQL_CREATE_TABLE_LABEL = \
     "create table label\

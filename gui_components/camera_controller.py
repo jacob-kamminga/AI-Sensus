@@ -1,14 +1,14 @@
-from database.camera_manager import CameraManager
-from gui.dialogs.project_settings import ProjectSettingsDialog
+import pytz
+
+from database.peewee.models import Camera
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
-class Camera:
+class CameraController:
 
     def __init__(self, gui):
         self.gui = gui
         self.settings: ProjectSettingsDialog = gui.settings
-
-        self.camera_manager = CameraManager(self.settings)
 
         self.camera_id = None
         self.camera_name = None
@@ -17,12 +17,12 @@ class Camera:
     def change_camera(self, camera_id: int):
         # Update camera name in main GUI
         self.camera_id = camera_id
-        self.camera_name = self.camera_manager.get_camera_name(self.camera_id)
+        self.camera_name = Camera.get_by_id(self.camera_id).name
         self.gui.label_camera_name_value.setText(self.camera_name)
 
         # Update timezone and datetime labels
-        self.timezone = self.camera_manager.get_timezone(self.camera_id)
-        self.gui.video.update_datetime()
+        self.timezone = pytz.timezone(Camera.get_by_id(self.camera_id).timezone)
+        self.gui.video_controller.update_datetime()
 
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()

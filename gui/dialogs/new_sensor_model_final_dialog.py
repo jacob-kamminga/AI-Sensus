@@ -1,9 +1,9 @@
 from PyQt5.QtWidgets import QDialog, QMessageBox
 
 from constants import *
-from database.sensor_model_manager import SensorModelManager
 from gui.designer.new_sensor_model_final import Ui_Dialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
+from database.peewee.models import SensorModel
 
 
 class SensorModelFinalDialog(QDialog, Ui_Dialog):
@@ -15,7 +15,6 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         self.model_id = model_id
         self.test_file = test_file
         self.parent = parent
-        self.sensor_model_manager = SensorModelManager(self.settings)
 
         if model is not None:
             self.model = model
@@ -56,27 +55,25 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         self.label_comment_style.setText(str(self.model[COMMENT_STYLE]))
 
     def get_model_from_db(self):
-        from database.sensor_model_manager import SensorModelManager
-        sensor_model_manager = SensorModelManager(self.settings)
-        existing_model = sensor_model_manager.get_model_by_id(self.model_id)
+        model = SensorModel.get_by_id(self.model_id)
 
         return {
-            MODEL_NAME: existing_model.name,
+            MODEL_NAME: model.model_name,
 
-            DATE_ROW: existing_model.date_row,
-            TIME_ROW: existing_model.time_row,
-            TIMESTAMP_COLUMN: existing_model.timestamp_column,
-            RELATIVE_ABSOLUTE: existing_model.relative_absolute,
-            TIMESTAMP_UNIT: existing_model.timestamp_unit,
-            FORMAT_STRING: existing_model.format_string,
+            DATE_ROW: model.date_row,
+            TIME_ROW: model.time_row,
+            TIMESTAMP_COLUMN: model.timestamp_column,
+            RELATIVE_ABSOLUTE: model.relative_absolute,
+            TIMESTAMP_UNIT: model.timestamp_unit,
+            FORMAT_STRING: model.format_string,
 
-            SENSOR_ID_ROW: existing_model.sensor_id_row,
-            SENSOR_ID_COLUMN: existing_model.sensor_id_col,
-            SENSOR_ID_REGEX: existing_model.sensor_id_regex,
+            SENSOR_ID_ROW: model.sensor_id_row,
+            SENSOR_ID_COLUMN: model.sensor_id_column,
+            SENSOR_ID_REGEX: model.sensor_id_regex,
 
-            COL_NAMES_ROW: existing_model.col_names_row,
+            COL_NAMES_ROW: model.col_names_row,
 
-            COMMENT_STYLE: existing_model.comment_style
+            COMMENT_STYLE: model.comment_style
         }
 
     def convert_none_type(self):
@@ -92,36 +89,26 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         self.convert_none_type()
 
         if self.model_id is not None:
-            self.sensor_model_manager.update_sensor_model(
-                self.model_id,
-                self.model[MODEL_NAME],
-                self.model[DATE_ROW],
-                self.model[TIME_ROW],
-                self.model[TIMESTAMP_COLUMN],
-                self.model[RELATIVE_ABSOLUTE],
-                self.model[TIMESTAMP_UNIT],
-                self.model[FORMAT_STRING],
-                self.model[SENSOR_ID_ROW],
-                self.model[SENSOR_ID_COLUMN],
-                self.model[SENSOR_ID_REGEX],
-                self.model[COL_NAMES_ROW],
-                self.model[COMMENT_STYLE]
-            )
+            # Update existing record
+            sensor_model = SensorModel.get_by_id(self.model_id)
         else:
-            self.sensor_model_manager.insert_sensor_model(
-                self.model[MODEL_NAME],
-                self.model[DATE_ROW],
-                self.model[TIME_ROW],
-                self.model[TIMESTAMP_COLUMN],
-                self.model[RELATIVE_ABSOLUTE],
-                self.model[TIMESTAMP_UNIT],
-                self.model[FORMAT_STRING],
-                self.model[SENSOR_ID_ROW],
-                self.model[SENSOR_ID_COLUMN],
-                self.model[SENSOR_ID_REGEX],
-                self.model[COL_NAMES_ROW],
-                self.model[COMMENT_STYLE]
-            )
+            # Insert new record
+            sensor_model = SensorModel()
+
+        sensor_model.model_name = self.model[MODEL_NAME]
+        sensor_model.date_row = self.model[DATE_ROW]
+        sensor_model.time_row = self.model[TIME_ROW]
+        sensor_model.timestamp_column = self.model[TIMESTAMP_COLUMN]
+        sensor_model.relative_absolute = self.model[RELATIVE_ABSOLUTE]
+        sensor_model.timestamp_unit = self.model[TIMESTAMP_UNIT]
+        sensor_model.format_string = self.model[FORMAT_STRING]
+        sensor_model.sensor_id_row = self.model[SENSOR_ID_ROW]
+        sensor_model.sensor_id_column = self.model[SENSOR_ID_COLUMN]
+        sensor_model.sensor_id_regex = self.model[SENSOR_ID_REGEX]
+        sensor_model.col_names_row = self.model[COL_NAMES_ROW]
+        sensor_model.comment_style = self.model[COMMENT_STYLE]
+
+        sensor_model.save()
 
         self.close()
 
@@ -129,7 +116,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
             self.parent.init()
 
     def previous(self):
-        from gui.dialogs.new_sensor_model_comment_style import SensorModelCommentStyleDialog
+        from gui.dialogs.new_sensor_model_comment_style_dialog import SensorModelCommentStyleDialog
         dialog = SensorModelCommentStyleDialog(
             self.settings,
             self.model,
@@ -141,7 +128,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         dialog.exec()
 
     def edit(self):
-        from gui.dialogs.new_sensor_model_name import SensorModelNameDialog
+        from gui.dialogs.new_sensor_model_name_dialog import SensorModelNameDialog
 
         dialog = SensorModelNameDialog(self.settings, model=self.model, model_id=self.model_id, test_file=self.test_file, parent=self.parent)
         self.close()
@@ -156,10 +143,8 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         msg.exec()
 
     def remove(self):
-        from database.sensor_model_manager import SensorModelManager
-
-        sensor_model_manager = SensorModelManager(self.settings)
-        sensor_model_manager.delete_sensor_model_by_id(self.model_id)
+        sensor_model = SensorModel.get_by_id(self.model_id)
+        sensor_model.delete_instance()
 
         self.close()
 

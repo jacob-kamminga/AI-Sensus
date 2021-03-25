@@ -1,7 +1,7 @@
 import pytz
 from PyQt5 import QtWidgets
 
-from database.camera_manager import CameraManager
+from database.peewee.models import Camera
 from gui.designer.camera_settings import Ui_Dialog
 
 CAMERA_ID_INDEX = 0
@@ -11,24 +11,21 @@ CAMERA_TIMEZONE_INDEX = 2
 
 class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, camera_manager: CameraManager, camera_name):
+    def __init__(self, camera: Camera):
         super().__init__()
         self.setupUi(self)
-        self.camera_manager = camera_manager
-        self.camera_name = camera_name
-        self.selected_camera_id = self.camera_manager.get_camera_id(camera_name)
-        self.time_zone = self.camera_manager.get_timezone(self.selected_camera_id).zone
+        self.camera = camera
 
         # Pre-fill name in edit box
-        self.lineEdit_change_camera_name.setText(self.camera_name)
+        self.lineEdit_change_camera_name.setText(self.camera.name)
 
         # Add timezones to combobox
         self.listWidget_timezones.addItems(pytz.common_timezones)
 
         # Select the timezone of the current camera
-        timezone_index = pytz.common_timezones.index(self.time_zone)
-        self.listWidget_timezones.setCurrentRow(timezone_index)
-        self.lineEdit_timezone.setText(self.time_zone)
+        tz_index = pytz.common_timezones.index(self.camera.timezone)
+        self.listWidget_timezones.setCurrentRow(tz_index)
+        self.lineEdit_timezone.setText(self.camera.timezone)
 
         # Connect UI elements
         self.lineEdit_timezone.textChanged.connect(self.filter_timezone_rows)
@@ -42,6 +39,9 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             self.listWidget_timezones.setCurrentRow(index)
 
     def filter_timezone_rows(self):
+        """
+        Filter timezone options in list widget based on text input.
+        """
         filter_text = str(self.lineEdit_timezone.text()).lower()
 
         for i in range(len(pytz.common_timezones)):
@@ -51,12 +51,9 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
                 self.listWidget_timezones.setRowHidden(i, True)
 
     def save_camera_settings(self):
-        # Get selection
-        self.camera_name = self.lineEdit_change_camera_name.text()
-        selected_timezone = self.listWidget_timezones.selectedItems()[0].text()
-
-        # Update database entry
-        self.camera_manager.update_camera(self.selected_camera_id, self.camera_name, selected_timezone)
+        self.camera.name = self.lineEdit_change_camera_name.text()
+        self.camera.timezone = self.listWidget_timezones.selectedItems()[0].text()
+        self.camera.save()
         self.close()
     # def enable_timezone_pushbutton(self):
     #     self.pushButton_save_timezone.setEnabled(True)

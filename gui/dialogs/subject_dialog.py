@@ -1,9 +1,9 @@
 from PyQt5 import QtWidgets
 
-from database.subject_manager import SubjectManager
+from database.peewee.models import Subject
 from gui.designer.subject import Ui_Dialog
-from gui.dialogs.new_subject import NewSubjectDialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.new_subject_dialog import NewSubjectDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 SUBJECT_NAME_INDEX = 1
 SUBJECT_COLOR_INDEX = 2
@@ -17,17 +17,15 @@ class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         super().__init__()
         self.setupUi(self)
 
-        self.subject_manager = SubjectManager(settings)
         self.subjects = dict()
 
         # Fill the subjects dictionary
-        for subject in self.subject_manager.get_all_subjects():
-            name = subject[SUBJECT_NAME_INDEX]
-            color = subject[SUBJECT_COLOR_INDEX]
-            size = subject[SUBJECT_SIZE_INDEX]
-            extra_info = subject[SUBJECT_EXTRA_INFO_INDEX]
-
-            self.subjects[name] = {'color': color, 'size': size, 'extra_info': extra_info}
+        for subject in Subject.select():
+            self.subjects[subject.name] = {
+                'color': subject.color,
+                'size': subject.size,
+                'extra_info': subject.extra_info
+            }
 
         # Fill the subject combobox
         self.fill_subject_combobox()
@@ -52,7 +50,7 @@ class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         """
         Opens the new subject dialog window.
         """
-        dialog = NewSubjectDialog(self.subject_manager)
+        dialog = NewSubjectDialog()
         dialog.exec()
         dialog.show()
 

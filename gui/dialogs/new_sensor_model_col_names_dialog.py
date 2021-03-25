@@ -2,8 +2,8 @@ from PyQt5.QtWidgets import QDialog
 
 from constants import COL_NAMES_ROW
 from gui.designer.new_sensor_model_column_names import Ui_Dialog
-from gui.dialogs.new_sensor_model_comment_style import SensorModelCommentStyleDialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.new_sensor_model_comment_style_dialog import SensorModelCommentStyleDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
 class SensorModelColumnNamesDialog(QDialog, Ui_Dialog):
@@ -40,7 +40,7 @@ class SensorModelColumnNamesDialog(QDialog, Ui_Dialog):
         dialog.exec()
 
     def open_previous_dialog(self):
-        from gui.dialogs.new_sensor_model_id import SensorModelIdDialog
+        from gui.dialogs.new_sensor_model_id_dialog import SensorModelIdDialog
         dialog = SensorModelIdDialog(
             self.settings,
             self.model,

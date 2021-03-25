@@ -11,24 +11,20 @@ from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 import video_metadata
-from database.camera_manager import CameraManager
-from database.video_manager import VideoManager
+from database.peewee.models import Video
 from date_utils import utc_to_local
 from exceptions import VideoDoesNotExist
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from utils import get_hms_sum, ms_to_hms
 
 
-class Video:
+class VideoController:
 
     def __init__(self, gui):
         self.gui = gui
         self.settings: ProjectSettingsDialog = gui.settings
         self.file_name = None
         self.file_path = None
-
-        self.video_manager = VideoManager(self.settings)
-        self.camera_manager = CameraManager(self.settings)
 
         self.id_: Optional[int] = None
         self.utc_dt: Optional[dt.datetime] = None
@@ -81,24 +77,28 @@ class Video:
 
             # Check if a camera has already been set for this video
             try:
-                camera_id = self.video_manager.get_camera(self.file_name)
-                self.gui.camera.change_camera(camera_id)
+                camera_id = Video.get(Video.file_name == self.file_name).camera
+                self.gui.camera_controller.change_camera(camera_id)
             except VideoDoesNotExist:
                 self.gui.open_select_camera_dialog()
 
-            if self.gui.camera.camera_id is not None:
+            if self.gui.camera_controller.camera_id is not None:
                 self.update_datetime()
 
                 # Save file mapping to database if not exists
-                self.id_ = self.video_manager.get_video_id(self.file_name)
+                self.id_ = Video.get(Video.file_name == self.file_name).id
 
                 # Video not yet in database
                 if self.id_ == -1:
-                    self.video_manager.insert_video(self.file_name, self.file_path, self.gui.camera.camera_id,
-                                                    self.utc_dt)
+                    video = Video(file_name=self.file_name, file_path=self.file_path, datetime=self.utc_dt,
+                                  camera=self.gui.camera_controller.camera_id)
+                    video.save()
                 # Video already in database -> update file path
                 else:
-                    self.video_manager.update_file_path(self.file_name, self.file_path)
+                    video = Video.get(Video.file_name == self.file_name)
+                    video.file_path = self.file_path
+                    video.save()
+
                 file_path = Path(self.file_path)
                 try:
                     self.gui.label_video_filename.setText(
@@ -117,7 +117,7 @@ class Video:
                 self.unmute()
 
     def update_datetime(self):
-        self.utc_dt = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera.timezone)
+        self.utc_dt = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera_controller.timezone)
         self.update_timezone()
         self.update_labels_datetime()
 
@@ -127,9 +127,11 @@ class Video:
 
     def update_camera(self, camera_id: int):
         if self.id_ is not None:
-            self.video_manager.update_camera(self.id_, camera_id)
+            video = Video.get_by_id(self.id_)
+            video.camera = camera_id
+            video.save()
 
-        self.gui.camera.change_camera(camera_id)
+        self.gui.camera_controller.change_camera(camera_id)
         self.update_datetime()
         self.sync_with_sensor_data()
         self.set_position(0)
@@ -151,11 +153,11 @@ class Video:
         """
         Synchronizes the start time of the video with the sensor data.
         """
-        if self.project_dt is not None and self.gui.plot.x_min_dt is not None:
+        if self.project_dt is not None and self.gui.plot_controller.x_min_dt is not None:
             # First update plot according to the camera offset value
-            self.gui.plot.update_plot_axis()
+            self.gui.plot_controller.update_plot_axis()
 
-            self.init_offset = self.gui.plot.x_min_dt - self.project_dt
+            self.init_offset = self.gui.plot_controller.x_min_dt - self.project_dt
             init_offset_ms = self.init_offset / dt.timedelta(milliseconds=1)
 
             # The offset between the video and sensor data should be at most 12 hours

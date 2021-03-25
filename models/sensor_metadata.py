@@ -1,10 +1,9 @@
 import datetime as dt
 
 import dateutil.parser
-import pytz
 
+from database.peewee.models import SensorModel
 from date_utils import naive_to_utc
-from models.sensor_model import SensorModel
 
 
 class SensorMetadata:
@@ -75,7 +74,7 @@ class SensorMetadata:
 
     def load_values(self):
         if self.sensor_model.sensor_id_row > 0:
-            self.sensor_name = self._get_value(self.sensor_model.sensor_id_row, self.sensor_model.sensor_id_col)
+            self.sensor_name = self._get_value(self.sensor_model.sensor_id_row, self.sensor_model.sensor_id_column)
 
 
 

@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 
-from database.subject_manager import SubjectManager
+from database.peewee.models import Subject
 from gui.designer.new_subject import Ui_Dialog
 
 SUBJECT_NAME_INDEX = 0
@@ -11,11 +11,9 @@ SUBJECT_EXTRA_INFO_INDEX = 3
 
 class NewSubjectDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, subject_manager: SubjectManager):
+    def __init__(self):
         super().__init__()
         self.setupUi(self)
-
-        self.subject_manager = subject_manager
 
         self.new_subject_name = None
         self.new_subject_color = None
@@ -28,7 +26,7 @@ class NewSubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         self.label_warning_duplicate_name.setVisible(False)
 
         # Get the current names to check uniqueness
-        self.existing_names = self.subject_manager.get_all_subjects_name_id().keys()
+        self.existing_names = Subject.select(Subject.name)
 
         # Check whether the entered name already exists (violates UNIQUE constraint)
         self.lineEdit_name.textChanged.connect(self.check_unique)
@@ -42,10 +40,9 @@ class NewSubjectDialog(QtWidgets.QDialog, Ui_Dialog):
             self.new_subject_size = self.lineEdit_size.text()
             self.new_subject_extra_info = self.plainTextEdit_extra_info.toPlainText()
 
-            self.subject_manager.add_subject(self.new_subject_name,
-                                             self.new_subject_color,
-                                             self.new_subject_size,
-                                             self.new_subject_extra_info)
+            subject = Subject(name=self.new_subject_name, color=self.new_subject_color, size=self.new_subject_size,
+                              extra_info=self.new_subject_extra_info)
+            subject.save()
 
     def check_unique(self, name):
         if name in self.existing_names:

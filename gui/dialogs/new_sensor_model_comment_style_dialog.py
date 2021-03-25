@@ -2,8 +2,8 @@ from PyQt5.QtWidgets import QDialog, QErrorMessage
 
 from constants import COMMENT_STYLE
 from gui.designer.new_sensor_model_comment_style import Ui_Dialog
-from gui.dialogs.new_sensor_model_final import SensorModelFinalDialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.new_sensor_model_final_dialog import SensorModelFinalDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
 class SensorModelCommentStyleDialog(QDialog, Ui_Dialog):
@@ -62,7 +62,7 @@ class SensorModelCommentStyleDialog(QDialog, Ui_Dialog):
             dialog.exec()
 
     def open_previous_dialog(self):
-        from gui.dialogs.new_sensor_model_col_names import SensorModelColumnNamesDialog
+        from gui.dialogs.new_sensor_model_col_names_dialog import SensorModelColumnNamesDialog
         dialog = SensorModelColumnNamesDialog(
             self.settings,
             self.model,

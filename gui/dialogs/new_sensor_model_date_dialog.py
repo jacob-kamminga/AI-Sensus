@@ -2,8 +2,8 @@ from PyQt5 import QtWidgets
 
 from constants import *
 from gui.designer.new_sensor_model_date import Ui_Dialog
-from gui.dialogs.new_sensor_model_id import SensorModelIdDialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.new_sensor_model_id_dialog import SensorModelIdDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
 class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
@@ -81,7 +81,7 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
         dialog.exec()
 
     def open_previous_dialog(self):
-        from gui.dialogs.new_sensor_model_name import SensorModelNameDialog
+        from gui.dialogs.new_sensor_model_name_dialog import SensorModelNameDialog
 
         dialog = SensorModelNameDialog(
             self.settings,

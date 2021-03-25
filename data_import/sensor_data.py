@@ -7,12 +7,12 @@ import pytz
 import parse_function.custom_function_parser as parser
 from constants import COL_ABSOLUTE_DATETIME, RELATIVE_TIME_ITEM, ABSOLUTE_TIME_ITEM
 from data_import import sensor as sens, column_metadata as cm
-from database.sensor_model_manager import SensorModelManager
 from date_utils import utc_to_local
 from machine_learning.classifier import CLASSIFIER_NAN
 from models.sensor_metadata import SensorMetadata
 from parse_function.parse_exception import ParseException
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
+from database.peewee.models import *
 
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1
@@ -25,11 +25,10 @@ class SensorData:
     def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id):
         # Initialize primitives
         self.settings = settings
-        self.sensor_model_manager = SensorModelManager(self.settings)
         self.file_path = file_path
 
         self.sensor_model_id = sensor_model_id
-        self.sensor_model = self.sensor_model_manager.get_model_by_id(sensor_model_id)
+        self.sensor_model = SensorModel.get_by_id(sensor_model_id)
         self.sensor_name = None
         self.metadata = SensorMetadata(self.file_path, self.sensor_model, sensor_model_id)
         self.col_metadata = dict()
@@ -51,46 +50,46 @@ class SensorData:
 
         :return: the parsed data as a DataFrame
         """
+        if not self._df:
+            self.metadata.load_values()
+            if not self.metadata.sensor_timezone:
+                return
+            self.metadata.parse_datetime()
 
-        self.metadata.load_values()
-        if not self.metadata.sensor_timezone:
-            return
-        self.metadata.parse_datetime()
+            # Parse data from file
+            self._df = pd.read_csv(self.file_path,
+                                   names=self.metadata.col_names,
+                                   skip_blank_lines=False,
+                                   skiprows=self.sensor_model.col_names_row + 1,
+                                   comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
 
-        # Parse data from file
-        self._df = pd.read_csv(self.file_path,
-                         names=self.metadata.col_names,
-                         skip_blank_lines=False,
-                         skiprows=self.sensor_model.col_names_row + 1,
-                         comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
+            self._df.columns = self._df.columns.str.strip()
+            columns = self._df.columns.values.tolist()
 
-        self._df.columns = self._df.columns.str.strip()
-        columns = self._df.columns.values.tolist()
+            # set column metadata
+            self.set_column_metadata(columns)
 
-        # set column metadata
-        self.set_column_metadata(columns)
+            try:
+                # Convert sensor data to correct unit
+                for name in columns:
+                    # Retrieve conversion rate from column metadata
+                    conversion = self.col_metadata[name].sensor.conversion
 
-        try:
-            # Convert sensor data to correct unit
-            for name in columns:
-                # Retrieve conversion rate from column metadata
-                conversion = self.col_metadata[name].sensor.conversion
+                    # If column doesn't have a conversion, continue to next column
+                    if conversion is None:
+                        continue
 
-                # If column doesn't have a conversion, continue to next column
-                if conversion is None:
-                    continue
+                    # Parse conversion to python readable expression
+                    parsed_expr = parser.parse(conversion)
 
-                # Parse conversion to python readable expression
-                parsed_expr = parser.parse(conversion)
+                    # Apply parsed expression to the data
+                    self._df.eval(name + " = " + parsed_expr, inplace=True)
+            except ParseException:
+                # Pass ParseException
+                raise
 
-                # Apply parsed expression to the data
-                self._df.eval(name + " = " + parsed_expr, inplace=True)
-        except ParseException:
-            # Pass ParseException
-            raise
-
-        if self.sensor_model.relative_absolute == RELATIVE_TIME_ITEM:
-            self.normalize_rel_datetime_column()
+            if self.sensor_model.relative_absolute == RELATIVE_TIME_ITEM:
+                self.normalize_rel_datetime_column()
 
     def set_column_metadata(self, columns):
         """

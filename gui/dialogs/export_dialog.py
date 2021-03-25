@@ -6,17 +6,13 @@ from pathlib import Path
 import pandas as pd
 import pytz
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QDate, QTime, QDir, Qt
-from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton, QMessageBox
+from PyQt5.QtCore import QDate, QTime, QDir
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 from data_import.sensor_data import SensorData
-from database.export_manager import ExportManager
-from database.sensor_data_file_manager import SensorDataFileManager
-from database.sensor_manager import SensorManager
-from database.subject_manager import SubjectManager
-from database.sensor_usage_manager import SensorUsageManager
+from database.peewee.models import SensorUsage, SensorDataFile, Subject, Label, LabelType, Sensor, SensorModel
 from gui.designer.export_new import Ui_Dialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -30,14 +26,10 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         self.setupUi(self)
 
         self.settings = settings
-        self.export_manager = ExportManager(settings)
-        self.subject_manager = SubjectManager(settings)
-        self.map_manager = SensorUsageManager(settings)
-        self.sensor_data_file_manager = SensorDataFileManager(settings)
-        self.sensor_manager = SensorManager(settings)
         self.settings_dict = settings.settings_dict
 
-        self.subject_dict = self.subject_manager.get_all_subjects_name_id()
+        self.subjects = Subject.select()
+        self.subjects_dict = [{subject.name: subject.id} for subject in self.subjects]
 
         self.init_subject_list_widget()
         self.init_date_time_widgets(datetime)
@@ -45,7 +37,8 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         self.pushButton_export.clicked.connect(self.export)
 
     def init_subject_list_widget(self):
-        self.listWidget_subjects.addItems(self.subject_dict.keys())
+        for subject in self.subjects:
+            self.listWidget_subjects.addItem(subject.name)
 
     def init_date_time_widgets(self, datetime):
         if datetime is not None:
@@ -59,29 +52,28 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
             self.timeEdit_start.setTime(QTime.currentTime())
             self.timeEdit_end.setTime(QTime.currentTime())
 
-    def get_sensor_ids(self, subject_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
-        return self.map_manager.get_sensor_ids_by_dates(subject_id, start_dt, end_dt)
-
-    def get_sensor_data_file_ids(self, sensor_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
-        return self.sensor_data_file_manager.get_ids_by_sensor_and_dates(sensor_id,
-                                                                         start_dt,
-                                                                         end_dt)
-
     def get_labels(self, sensor_data_file_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
-        labels = self.export_manager.get_labels_by_dates(sensor_data_file_id,
-                                                         start_dt,
-                                                         end_dt)
-        return [{"start": label["start_time"],
-                 "end": label["end_time"],
-                 "activity": label["activity"]} for label in labels]
+        labels = (Label
+                  .select(Label.start_time, Label.end_time, LabelType.activity)
+                  .join(LabelType)
+                  .where(Label.sensor_data_file == sensor_data_file_id &
+                         (Label.start_time.between(start_dt, end_dt) |
+                          Label.end_time.between(start_dt, end_dt))))
+        return [{'start': label['start_time'],
+                 'end': label['end_time'],
+                 'activity': label['activity']} for label in labels]
 
     def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
         file_path = self.get_file_path(sensor_data_file_id)
-        model_id = self.sensor_data_file_manager.get_sensor_model_by_id(sensor_data_file_id)
-        sensor_id = self.sensor_data_file_manager.get_sensor_by_id(sensor_data_file_id)
+        model_id = (SensorDataFile
+                    .select(SensorModel.id)
+                    .join(Sensor, SensorModel)
+                    .where(SensorDataFile.id == sensor_data_file_id)
+                    .get())
+        sensor_id = SensorDataFile.get_by_id(sensor_data_file_id).sensor
 
         if model_id >= 0 and sensor_id >= 0:
-            sensor_timezone = pytz.timezone(self.sensor_manager.get_timezone_by_id(sensor_id))
+            sensor_timezone = pytz.timezone(Sensor.get_by_id(sensor_id).timezone)
             sensor_data = SensorData(Path(file_path), self.settings, model_id)
             sensor_data.metadata.sensor_timezone = sensor_timezone
             # Parse the utc datetime of the sensor data
@@ -99,7 +91,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         :param sensor_data_file_id: The list of file names
         """
-        file_path = self.sensor_data_file_manager.get_file_path_by_id(sensor_data_file_id)
+        file_path = SensorDataFile.get_by_id(sensor_data_file_id).file_path
 
         # Check whether the file path is still valid
         if os.path.isfile(file_path):
@@ -107,11 +99,13 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         else:
             # Invalid:
             # Prompt the user for the correct file path
-            file_name = self.sensor_data_file_manager.get_file_name_by_id(sensor_data_file_id)
+            file_name = SensorDataFile.get_by_id(sensor_data_file_id).file_name
             new_file_path = self.prompt_file_location(file_name, file_path)
 
             # Update path in database
-            self.sensor_data_file_manager.update_file_path(file_name, new_file_path)
+            sdf = SensorDataFile.get(SensorDataFile.file_name == file_name)
+            sdf.file_path = file_path
+            sdf.save()
 
             return new_file_path
 
@@ -138,7 +132,8 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def prompt_save_location(self, name_suggestion: str):
         # Open QFileDialog
-        file_path, _ = QFileDialog.getSaveFileName(self, "Save file", self.settings.project_dir.as_posix()+"\\"+name_suggestion+".csv")
+        file_path, _ = QFileDialog.getSaveFileName(self, "Save file",
+                                                   self.settings.project_dir.as_posix() + "\\" + name_suggestion + ".csv")
 
         return file_path
 
@@ -153,7 +148,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         return end_dt.toPyDateTime()
 
     def get_subject_ids(self) -> [int]:
-        return [self.subject_dict.get(item.text()) for item in self.listWidget_subjects.selectedItems()]
+        return [self.subjects_dict.get(item.text()) for item in self.listWidget_subjects.selectedItems()]
 
     @staticmethod
     def save_to_csv(label_data, file_path):
@@ -169,11 +164,19 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         for subject_id in subject_ids:
             df: pd.DataFrame = pd.DataFrame()
-            subject_name = self.subject_manager.get_name_by_id(subject_id)
-            sensor_ids = self.get_sensor_ids(subject_id, start_dt, end_dt)
+            subject_name = Subject.get_by_id(subject_id).name
+            sensor_ids = (SensorUsage
+                          .select(SensorUsage.sensor)
+                          .where(SensorUsage.subject == subject_id &
+                                 (SensorUsage.start_datetime.between(start_dt, end_dt) |
+                                  SensorUsage.end_datetime.between(start_dt, end_dt))
+                                 ))
 
             for sensor_id in sensor_ids:
-                sensor_data_file_ids = self.get_sensor_data_file_ids(sensor_id, start_dt, end_dt)
+                sensor_data_file_ids = (SensorDataFile
+                                        .select(SensorDataFile.id)
+                                        .where(SensorDataFile.sensor == sensor_id &
+                                               SensorDataFile.datetime.between(start_dt, end_dt)))
 
                 for file_id in sensor_data_file_ids:
                     labels = self.get_labels(file_id, start_dt, end_dt)
@@ -193,7 +196,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
                     df = df.append(sensor_data.get_data())
 
-                file_path = self.prompt_save_location(subject_name+"_"+str(sensor_id))
+                file_path = self.prompt_save_location(subject_name + "_" + str(sensor_id))
 
                 if file_path:
                     df.to_csv(file_path)

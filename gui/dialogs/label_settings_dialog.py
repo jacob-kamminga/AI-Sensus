@@ -3,17 +3,16 @@ from sqlite3 import IntegrityError
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
-from database.label_type_manager import LabelTypeManager
+from database.peewee.models import LabelType
 from gui.designer.label_settings import Ui_Dialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
 class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, label_type_manager: LabelTypeManager, settings: ProjectSettingsDialog):
+    def __init__(self, settings: ProjectSettingsDialog):
         super().__init__()
         self.setupUi(self)
-        self.label_type_manager = label_type_manager
         self.settings = settings
 
         self.settings_changed = False
@@ -28,12 +27,12 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.label_type_dict = dict()
         self.color_dict = dict()
 
-        for row in self.label_type_manager.get_all_label_types():
-            id_ = row["id"]
-            activity = row["activity"]
-            color = row["color"]
-            description = row["description"]
-            keyboard_shortcut = row["keyboard_shortcut"]
+        for label_type in LabelType.select().dicts():
+            id_ = label_type["id"]
+            activity = label_type["activity"]
+            color = label_type["color"]
+            description = label_type["description"]
+            keyboard_shortcut = label_type["keyboard_shortcut"]
 
             self.label_type_dict[activity] = {"id": id_,
                                               "color": color,
@@ -47,7 +46,7 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             current_label = self.comboBox_label.currentText()
             current_color = self.color_dict[current_label]
             self.comboBox_color.setCurrentText(current_color)
-            current_keyboard_shortcut = self.label_type_manager.get_keyboard_shortcut(current_label)
+            current_keyboard_shortcut = LabelType.get(LabelType.activity == current_label).keyboard_shortcut
             self.lineEdit_keyboard_shortcut.setText(current_keyboard_shortcut)
 
         self.pushButton_add_label.clicked.connect(self.add_label)
@@ -61,12 +60,13 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.settings_changed = True
         new_activity = self.lineEdit_new_label.text()
         new_color = self.comboBox_new_label_color.currentText()
-        new_new_keyboard_shortcut = self.lineEdit_new_keyboard_shortcut.text().strip(' ')
+        new_keyboard_shortcut = self.lineEdit_new_keyboard_shortcut.text().strip(' ')
 
         if self.lineEdit_new_label.text():
             try:
-                self.label_type_manager.add_label_type(new_activity, new_color, "", new_new_keyboard_shortcut)
-
+                LabelType(activity=new_activity, color=new_color, description="",
+                          keyboard_shortcut=new_keyboard_shortcut
+                          ).save()
             except IntegrityError:
                 QMessageBox.warning(self, "Name or shortcut already assigned", "Names and shortcuts must be unique")
                 return
@@ -74,10 +74,10 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
                 QMessageBox.warning(self, "Unknown error", "Label was not added")
                 return
 
-            self.label_type_dict[new_activity] = {"id": self.label_type_manager.get_id_by_activity(new_activity),
+            self.label_type_dict[new_activity] = {"id": LabelType.get(LabelType.activity == new_activity).id,
                                                   "color": new_color,
                                                   "description": "",
-                                                  "keyboard_shortcut": new_new_keyboard_shortcut}
+                                                  "keyboard_shortcut": new_keyboard_shortcut}
             self.color_dict[new_activity] = new_color
             self.comboBox_label.clear()
             self.comboBox_label.addItems(self.label_type_dict.keys())
@@ -94,40 +94,48 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             return
 
         self.settings_changed = True
-        self.label_type_manager.delete_label_type(remove_item)
+        label_type = LabelType.get(LabelType.activity == remove_item)
+        label_type.delete_instance()
         self.comboBox_label.clear()
         self.label_type_dict.pop(remove_item)
         self.comboBox_label.addItems(self.label_type_dict.keys())
         self.settings_changed = True
 
-    def label_changed(self, text):
+    def label_changed(self, activity):
         if self.color_dict and self.comboBox_label.count():
-            self.comboBox_color.setCurrentText(self.color_dict[text])
-        self.lineEdit_keyboard_shortcut.setText(self.label_type_manager.get_keyboard_shortcut(text))
+            self.comboBox_color.setCurrentText(self.color_dict[activity])
+
+        self.lineEdit_keyboard_shortcut.setText(LabelType.get(LabelType.activity == activity).keyboard_shortcut)
 
     def color_changed(self, color):
         self.settings_changed = True
+        activity = self.comboBox_label.currentText()
         
-        if self.comboBox_label.currentText():
-            self.label_type_manager.update_color(self.comboBox_label.currentText(), color)
-            self.color_dict[self.comboBox_label.currentText()] = color
+        if activity:
+            label_type = LabelType.get(LabelType.activity == activity)
+            label_type.color = color
+            label_type.save()
+            self.color_dict[activity] = color
 
     def opacity_changed(self, value):
         self.settings_changed = True
         self.settings.set_setting("label_opacity", value)
 
-    def keyboard_shortcut_changed(self, value):
+    def keyboard_shortcut_changed(self, keyboard_shortcut):
         self.settings_changed = True
-        value = value.strip(' ')
+        activity = self.comboBox_label.currentText()
+        keyboard_shortcut = keyboard_shortcut.strip(' ')
         try:
-            if value == "":
-                value = None
+            if keyboard_shortcut == "":
+                keyboard_shortcut = None
                 # self.label_type_manager.remove_keyboard_shortcut(self.comboBox_label.currentText())
-            self.label_type_manager.update_keyboard_shortcut(self.comboBox_label.currentText(), value)
+            label_type = LabelType.get(LabelType.activity == activity)
+            label_type.keyboard_shortcut = keyboard_shortcut
+            label_type.save()
         except IntegrityError:
-            if value == "":
+            if keyboard_shortcut == "":
                 return
-            existing_mapping = self.label_type_manager.get_activity_by_keyboard_shortcut(value)
+            existing_mapping = LabelType.get(LabelType.keyboard_shortcut == keyboard_shortcut).activity
             QMessageBox.warning(self, "Shortcut already assigned",
                                 "This shortcut is already assigned to: "+existing_mapping)
             self.lineEdit_keyboard_shortcut.clear()
