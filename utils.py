@@ -24,9 +24,11 @@ def ms_to_hms(millis):
     :return: A readable string that corresponds to duration in the format HH:MM:SS.
     """
     delta = timedelta(milliseconds=millis)
-    seconds = delta.seconds
-    hours = seconds // 3600
-    minutes = (seconds // 60) - (hours * 60)
+    abs_seconds = delta.seconds
 
-    hours, minutes, seconds = str(hours).zfill(2), str(minutes).zfill(2), str(seconds).zfill(2)
-    return f"{hours}:{minutes}:{seconds}"
+    hours = abs_seconds // 3600
+    minutes = (abs_seconds // 60) - (hours * 60)
+    seconds = abs_seconds % 60
+
+    hours, minutes, abs_seconds = str(hours).zfill(2), str(minutes).zfill(2), str(seconds).zfill(2)
+    return f"{hours}:{minutes}:{abs_seconds}"
