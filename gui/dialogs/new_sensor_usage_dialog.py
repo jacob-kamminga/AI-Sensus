@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
 
-from database.peewee.models import SensorUsage, Subject, Sensor
+from database.models import SensorUsage, Subject, Sensor
 from gui.designer.new_subject_sensor_map import Ui_Dialog
 
 

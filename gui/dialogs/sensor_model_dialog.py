@@ -1,11 +1,10 @@
 from PyQt5.QtWidgets import QDialog
 
-from constants import ID, MODEL_NAME
 from gui.designer.sensor_model_list import Ui_Dialog
 from gui.dialogs.new_sensor_model_final_dialog import SensorModelFinalDialog
 from gui.dialogs.new_sensor_model_name_dialog import SensorModelNameDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
-from database.peewee.models import *
+from database.models import *
 
 
 class SensorModelDialog(QDialog, Ui_Dialog):

@@ -4,7 +4,7 @@ from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QDialog, QErrorMessage, QFileDialog
 
 from constants import *
-from database.peewee.models import *
+from database.models import *
 from gui.designer.new_sensor_model_name import Ui_Dialog
 from gui.dialogs.new_sensor_model_date_dialog import SensorModelDateDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog

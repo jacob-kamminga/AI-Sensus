@@ -12,7 +12,7 @@ from machine_learning.classifier import CLASSIFIER_NAN
 from models.sensor_metadata import SensorMetadata
 from parse_function.parse_exception import ParseException
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
-from database.peewee.models import *
+from database.models import *
 
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1

@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 
-from database.peewee.models import Subject
+from database.models import Subject
 from gui.designer.new_subject import Ui_Dialog
 
 SUBJECT_NAME_INDEX = 0

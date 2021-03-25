@@ -14,14 +14,10 @@ from peewee import DoesNotExist
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
-from database.peewee.models import SensorDataFile, SensorModel, Sensor, Camera, Offset
+from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset
 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
-
-
-# from PyQt5.QtGui import QCursor
-# from PyQt5 import QtGui
 
 
 class SensorController:

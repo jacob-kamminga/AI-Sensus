@@ -3,7 +3,7 @@ from typing import Tuple, List
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
 
-from database.peewee.models import Subject, Sensor, SensorUsage
+from database.models import Subject, Sensor, SensorUsage
 from gui.designer.subject_sensor_map import Ui_Dialog
 from gui.dialogs.edit_sensor_usage_dialog import EditSensorUsageDialog
 from gui.dialogs.new_sensor_usage_dialog import NewSensorUsageDialog

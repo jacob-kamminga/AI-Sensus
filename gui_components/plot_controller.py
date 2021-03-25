@@ -7,7 +7,7 @@ from matplotlib.backend_bases import MouseButton
 from matplotlib.dates import date2num, num2date
 
 from constants import COL_ABSOLUTE_DATETIME
-from database.peewee.models import LabelType, Label
+from database.models import LabelType, Label
 from gui.dialogs.label_dialog import LabelSpecs
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui_components.sensor_controller import SensorController

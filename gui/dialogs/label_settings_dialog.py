@@ -3,7 +3,7 @@ from sqlite3 import IntegrityError
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
-from database.peewee.models import LabelType
+from database.models import LabelType
 from gui.designer.label_settings import Ui_Dialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 

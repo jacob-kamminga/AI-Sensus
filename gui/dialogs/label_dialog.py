@@ -4,7 +4,7 @@ import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDateTime
 
-from database.peewee.models import LabelType, Label
+from database.models import LabelType, Label
 from gui.designer.label_specs import Ui_LabelSpecs
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"

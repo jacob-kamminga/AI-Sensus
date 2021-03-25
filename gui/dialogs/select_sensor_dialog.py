@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
-from database.peewee.models import SensorDataFile, Sensor
+from database.models import SensorDataFile, Sensor
 from gui.designer.select_sensor import Ui_Dialog
 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog

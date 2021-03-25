@@ -1,7 +1,7 @@
 import pytz
 from PyQt5 import QtWidgets
 
-from database.peewee.models import Camera
+from database.models import Camera
 from gui.designer.camera_settings import Ui_Dialog
 
 CAMERA_ID_INDEX = 0

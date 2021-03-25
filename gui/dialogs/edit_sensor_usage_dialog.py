@@ -3,7 +3,7 @@ import datetime as dt
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
 
-from database.peewee.models import Subject, Sensor, SensorUsage
+from database.models import Subject, Sensor, SensorUsage
 from gui.designer.edit_subject_sensor_map import Ui_Dialog
 
 INDEX_MAP_ID = 0

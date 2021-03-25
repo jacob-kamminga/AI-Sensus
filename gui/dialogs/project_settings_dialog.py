@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from typing import Any
-from database.peewee.models import db, Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, \
+from database.models import db, Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, \
     SensorUsage, Subject, Offset
 
 import pytz

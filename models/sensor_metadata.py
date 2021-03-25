@@ -2,7 +2,7 @@ import datetime as dt
 
 import dateutil.parser
 
-from database.peewee.models import SensorModel
+from database.models import SensorModel
 from date_utils import naive_to_utc
 
 

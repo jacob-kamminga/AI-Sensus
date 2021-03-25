@@ -1,7 +1,7 @@
 import pytz
 from PyQt5 import QtWidgets
 
-from database.peewee.models import Sensor
+from database.models import Sensor
 from gui.designer.edit_sensor import Ui_Dialog
 
 INDEX_MAP_ID = 0

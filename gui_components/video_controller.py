@@ -9,13 +9,13 @@ from PyQt5 import QtGui
 from PyQt5.QtCore import QUrl, QDir
 from PyQt5.QtMultimedia import QMediaContent, QMediaPlayer
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from peewee import DoesNotExist
 
 import video_metadata
-from database.peewee.models import Video
+from database.models import Video
 from date_utils import utc_to_local
-from exceptions import VideoDoesNotExist
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
-from utils import get_hms_sum, ms_to_hms
+from utils import ms_to_hms
 
 
 class VideoController:
@@ -79,24 +79,20 @@ class VideoController:
             try:
                 camera_id = Video.get(Video.file_name == self.file_name).camera
                 self.gui.camera_controller.change_camera(camera_id)
-            except VideoDoesNotExist:
+            except DoesNotExist:
                 self.gui.open_select_camera_dialog()
 
             if self.gui.camera_controller.camera_id is not None:
                 self.update_datetime()
 
-                # Save file mapping to database if not exists
-                self.id_ = Video.get(Video.file_name == self.file_name).id
-
-                # Video not yet in database
-                if self.id_ == -1:
-                    video = Video(file_name=self.file_name, file_path=self.file_path, datetime=self.utc_dt,
-                                  camera=self.gui.camera_controller.camera_id)
-                    video.save()
-                # Video already in database -> update file path
-                else:
+                try:
                     video = Video.get(Video.file_name == self.file_name)
                     video.file_path = self.file_path
+                    video.save()
+                except DoesNotExist:
+                    # Video not yet in database
+                    video = Video(file_name=self.file_name, file_path=self.file_path, datetime=self.utc_dt,
+                                  camera=self.gui.camera_controller.camera_id)
                     video.save()
 
                 file_path = Path(self.file_path)

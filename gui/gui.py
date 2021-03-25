@@ -8,24 +8,20 @@ from typing import Optional
 
 import matplotlib.animation
 import matplotlib.pyplot as plt
-import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaContent
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QDialog, QFileDialog, qApp
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QFileDialog, qApp
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
 from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, APP_CONFIG_FILE
-from data_export import windowing as wd
-from database.create_database import *
-from database.peewee.models import Offset, LabelType, Label
+from database.models import Offset, LabelType
 from gui.designer.gui import Ui_MainWindow
 from gui.dialogs.export_dialog import ExportDialog
 from gui.dialogs.label_dialog import LabelSpecs
 from gui.dialogs.label_settings_dialog import LabelSettingsDialog
-from gui.dialogs.machine_learning_dialog import MachineLearningDialog
 from gui.dialogs.new_project_dialog import NewProject
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui.dialogs.select_camera_dialog import SelectCameraDialog
@@ -38,7 +34,7 @@ from gui_components.camera_controller import CameraController
 from gui_components.plot_controller import PlotController
 from gui_components.sensor_controller import SensorController
 from gui_components.video_controller import VideoController
-from machine_learning.classifier import Classifier, make_predictions
+from machine_learning.classifier import Classifier
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -379,9 +375,9 @@ class GUI(QMainWindow, Ui_MainWindow):
         dialog.exec()
         # dialog.show()
 
-        if dialog.selected_camera_id is not None:
-            self.video_controller.update_camera(dialog.selected_camera_id)
-            self.camera_controller.change_camera(dialog.selected_camera_id)
+        if dialog.camera is not None:
+            self.video_controller.update_camera(dialog.camera.id)
+            self.camera_controller.change_camera(dialog.camera.id)
 
     def open_label_settings_dialog(self):
         """

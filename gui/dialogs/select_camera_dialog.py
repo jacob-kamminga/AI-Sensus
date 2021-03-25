@@ -1,10 +1,7 @@
-import sqlite3
-
-import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
-from database.peewee.models import Camera, Video
+from database.models import Camera, Video
 from gui.designer.select_camera import Ui_Dialog
 from gui.dialogs.camera_settings_dialog import CameraSettingsDialog
 
@@ -20,7 +17,6 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         self.setupUi(self)
         self.camera_controller = gui.camera_controller
         self.camera = None
-        self.selected_camera_id = None
 
         # Fill camera dictionary and add camera names to combobox
         self.camera_dict = dict()

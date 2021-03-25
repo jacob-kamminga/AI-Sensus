@@ -10,7 +10,7 @@ from PyQt5.QtCore import QDate, QTime, QDir
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 from data_import.sensor_data import SensorData
-from database.peewee.models import SensorUsage, SensorDataFile, Subject, Label, LabelType, Sensor, SensorModel
+from database.models import SensorUsage, SensorDataFile, Subject, Label, LabelType, Sensor, SensorModel
 from gui.designer.export_new import Ui_Dialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 

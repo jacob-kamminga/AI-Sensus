@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets
 
-from database.peewee.models import Subject
+from database.models import Subject
 from gui.designer.subject import Ui_Dialog
 from gui.dialogs.new_subject_dialog import NewSubjectDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog

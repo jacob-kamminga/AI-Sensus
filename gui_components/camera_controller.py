@@ -1,6 +1,6 @@
 import pytz
 
-from database.peewee.models import Camera
+from database.models import Camera
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
