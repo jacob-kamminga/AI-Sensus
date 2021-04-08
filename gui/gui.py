@@ -349,9 +349,9 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Updates the offset in the database.
         """
-        date = self.sensor_data_file.utc_dt.date()
 
         if self.sensor_data_file.sensor_id is not None:
+            date = self.sensor_data_file.utc_dt.date()
             self.offset_manager.set_offset(self.camera.camera_id,
                                            self.sensor_data_file.sensor_id,
                                            offset,
@@ -399,7 +399,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         # dialog.show()
 
         if dialog.selected_camera_id is not None:
-            self.video.update_camera(dialog.selected_camera_id)
+            if self.video.file_name is not None:
+                self.video.update_camera(dialog.selected_camera_id)
             self.camera.change_camera(dialog.selected_camera_id)
 
     def open_label_settings_dialog(self):

@@ -31,14 +31,22 @@ if __name__ == '__main__':
     # project.setWindowTitle("AI Sensus")
     project.show()
 
-    # Override the except hook so it will print the traceback to stdout/stderr
-    sys.excepthook = except_hook
+    # Check if running in normal mode or debug mode.
+    gettrace = getattr(sys, 'gettrace', None)
 
-    # Create the stderr handler and point stderr to it
-    std_err_handler = StdErrHandler()
-    sys.stderr = std_err_handler
+    if gettrace() is None:  # Running in normal mode.
+        print("Running in normal mode.")
+        # Override the except hook so it will print the traceback to stdout/stderr
+        sys.excepthook = except_hook
 
-    # Connect err_msg signal to message box method in main window
-    std_err_handler.err_msg.connect(project.std_err_post)
+        # Create the stderr handler and point stderr to it
+        std_err_handler = StdErrHandler()
+        sys.stderr = std_err_handler
+
+        # Connect err_msg signal to message box method in main window
+        std_err_handler.err_msg.connect(project.std_err_post)
+
+    elif gettrace():  # Running in debug mode.
+        print("Running in debug mode.")
 
     sys.exit(app.exec())

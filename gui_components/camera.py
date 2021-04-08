@@ -26,7 +26,9 @@ class Camera:
         self.manual_offset = self.camera_manager.get_manual_offset(self.camera_id)
         if self.manual_offset is None:
             self.manual_offset = 0
-        self.gui.video.update_datetime()
+
+        if self.gui.video.file_path is not None:
+            self.gui.video.update_datetime()
 
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()
