@@ -354,7 +354,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         if not self.sensor_controller.sensor_data:
             QMessageBox.information(self, "Warning", "You need to import sensor data first.", QMessageBox.Ok)
         else:
-            dialog = LabelSpecs(self.sensor_controller.id_,
+            dialog = LabelSpecs(self.sensor_controller.sensor_data_file.id,
                                 self.sensor_controller.sensor_data.metadata.sensor_timezone)
             dialog.exec()
             # dialog.show()
@@ -425,7 +425,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         # dialog.show()
 
     def open_sensor_usage_dialog(self):
-        dialog = SensorUsageDialog()
+        dialog = SensorUsageDialog(self.settings)
         dialog.exec()
         # dialog.show()
 

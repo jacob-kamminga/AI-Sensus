@@ -1,3 +1,4 @@
+import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
 
@@ -7,14 +8,13 @@ from gui.designer.new_subject_sensor_map import Ui_Dialog
 
 class NewSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self,
-                 subjects_dict: dict,
-                 sensors_dict: dict):
+    def __init__(self, subjects_dict: dict, sensors_dict: dict, project_timezone):
         super().__init__()
         self.setupUi(self)
 
         self.subjects_dict = subjects_dict
         self.sensors_dict = sensors_dict
+        self.project_timezone = project_timezone
 
         self.new_map_added = False
 
@@ -46,10 +46,14 @@ class NewSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         start_dt = self.dateEdit_start.dateTime()
         start_dt.setTime(self.timeEdit_start.time())
         start_dt = start_dt.toPyDateTime()
+        # Convert to UTC
+        start_dt = self.project_timezone.localize(start_dt).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
 
         end_dt = self.dateEdit_end.dateTime()
         end_dt.setTime(self.timeEdit_end.time())
         end_dt = end_dt.toPyDateTime()
+        # Convert to UTC
+        end_dt = self.project_timezone.localize(end_dt).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
 
         if subject_name is not None and \
                 sensor_name is not None and \

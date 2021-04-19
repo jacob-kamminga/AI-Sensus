@@ -5,7 +5,7 @@ import pandas as pd
 import pytz
 
 import parse_function.custom_function_parser as parser
-from constants import COL_ABSOLUTE_DATETIME, RELATIVE_TIME_ITEM, ABSOLUTE_TIME_ITEM
+from constants import COL_ABS_DATETIME, RELATIVE_TIME_ITEM, ABSOLUTE_TIME_ITEM
 from data_import import sensor as sens, column_metadata as cm
 from date_utils import utc_to_local
 from machine_learning.classifier import CLASSIFIER_NAN
@@ -17,7 +17,7 @@ from database.models import *
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1
 LABEL_INDEX = 2
-COLUMN_TIMESTAMP = COL_ABSOLUTE_DATETIME
+COLUMN_TIMESTAMP = COL_ABS_DATETIME
 
 
 class SensorData:
@@ -155,7 +155,7 @@ class SensorData:
             pd.to_timedelta(self._df[time_col], unit=time_unit) + \
             utc_to_local(self.metadata.utc_dt, self.project_timezone)
 
-    def add_abs_datetime_column(self):
+    def add_abs_dt_col(self, use_utc=False):
         """
         Add an absolute time column to the existing dataframe.
         """
@@ -166,20 +166,24 @@ class SensorData:
             time_unit = self.sensor_model.timestamp_unit
 
             # Add absolute datetime column to dataframe
-            self._df[COL_ABSOLUTE_DATETIME] = \
-                utc_to_local(self.metadata.utc_dt, self.project_timezone) + \
-                pd.to_timedelta(self._df.iloc[:, time_col], unit=time_unit)
+            if use_utc:
+                self._df[COL_ABS_DATETIME] = self.metadata.utc_dt + pd.to_timedelta(self._df.iloc[:, time_col],
+                                                                                    unit=time_unit)
+            else:
+                self._df[COL_ABS_DATETIME] = \
+                    utc_to_local(self.metadata.utc_dt, self.project_timezone) + \
+                    pd.to_timedelta(self._df.iloc[:, time_col], unit=time_unit)
 
         # If time column is absolute, rename the column
         elif self.sensor_model.relative_absolute == ABSOLUTE_TIME_ITEM:
-            self._df.columns.values[time_col] = COL_ABSOLUTE_DATETIME
+            self._df.columns.values[time_col] = COL_ABS_DATETIME
             # Make sure the column is datetime
-            if not pd.api.types.is_datetime64_any_dtype(self._df[COL_ABSOLUTE_DATETIME]):
+            if not pd.api.types.is_datetime64_any_dtype(self._df[COL_ABS_DATETIME]):
                 # Convert to datetime
-                self._df[COL_ABSOLUTE_DATETIME] = pd.to_datetime(self._df[COL_ABSOLUTE_DATETIME])
+                self._df[COL_ABS_DATETIME] = pd.to_datetime(self._df[COL_ABS_DATETIME])
                 # Localize to sensor timezone and convert to project timezone
-                self._df[COL_ABSOLUTE_DATETIME] = \
-                    self._df[COL_ABSOLUTE_DATETIME].dt.tz_localize(self.metadata.sensor_timezone).dt.tz_convert(
+                self._df[COL_ABS_DATETIME] = \
+                    self._df[COL_ABS_DATETIME].dt.tz_localize(self.metadata.sensor_timezone).dt.tz_convert(
                         self.project_timezone)
 
             # If start datetime of file is not in metadata, then we take the first value as utc_dt
@@ -193,7 +197,7 @@ class SensorData:
 
     def normalize_rel_datetime_column(self):
         """
-        Normalize the relative datetime such that the first row will be zero.
+        Normalize the relative datetime such that the first row will start at 0.
         """
         time_col = self.sensor_model.timestamp_column
         first_val = self._df.iloc[0, time_col]
@@ -237,14 +241,10 @@ class SensorData:
         self._df["Label"] = ""
 
         for label in labels:
-            # start = self.sensor_timezone.localize(label["start"])
-            # end = self.sensor_timezone.localize(label["end"])
-            # TODO are labels always stored as UTC?
-            start = pytz.utc.localize(label["start"])
-            end = pytz.utc.localize(label["end"])
+            start = pytz.utc.localize(label["start"]).replace(tzinfo=None)
+            end = pytz.utc.localize(label["end"]).replace(tzinfo=None)
             activity = label["activity"]
 
-            self._df.loc[
-                (self._df[COLUMN_TIMESTAMP] >= start) & (self._df[COLUMN_TIMESTAMP] < end),
-                "Label"
-            ] = activity
+            # Select all rows with timestamp between start and end and set activity label
+            self._df.loc[(self._df[COLUMN_TIMESTAMP] >= start) & (self._df[COLUMN_TIMESTAMP] < end),
+                         "Label"] = activity

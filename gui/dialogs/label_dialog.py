@@ -39,6 +39,7 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
         self.label.label_type = label_type
 
     def add_label_to_db(self):
+        # Convert start and end times to UTC
         self.label.start_time = self.dateTimeEdit_start.dateTime().toPyDateTime().astimezone(pytz.utc).replace(tzinfo=None)
         self.label.end_time = self.dateTimeEdit_end.dateTime().toPyDateTime().astimezone(pytz.utc).replace(tzinfo=None)
 
@@ -53,17 +54,17 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
         if self.label.end_time.tzinfo is None:
             self.label.end_time = pytz.utc.localize(self.label.end_time, is_dst=None)
 
+        # Set the minimal difference between start and end to 0.5 seconds
         if self.label.end_time - self.label.start_time < dt.timedelta(seconds=0.5):
             self.label.end_time = self.label.end_time + dt.timedelta(seconds=0.5)
 
+        # Localize start and end times
         self.dateTimeEdit_start.setDateTime(
-            QDateTime.fromString(self.label.start_time.astimezone(
-                self.sensor_timezone).strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
-        )
+            QDateTime.fromString(self.label.start_time.astimezone(self.sensor_timezone).strftime(DATETIME_FORMAT)[:-3],
+                                 QDATETIME_FORMAT))
         self.dateTimeEdit_end.setDateTime(
-            QDateTime.fromString(self.label.end_time.astimezone(
-                self.sensor_timezone).strftime(DATETIME_FORMAT)[:-3], QDATETIME_FORMAT)
-        )
+            QDateTime.fromString(self.label.end_time.astimezone(self.sensor_timezone).strftime(DATETIME_FORMAT)[:-3],
+                                 QDATETIME_FORMAT))
         if shortcut_label:
             self.label.label_type = shortcut_label
             self.add_label_to_db()

@@ -34,8 +34,6 @@ class SensorController:
 
         self.file_id_hash = None
         """" The hashed ID, used to recognize the file independent from location on disk """
-        self.id_: Optional[int] = None
-        """ The database ID of the sensor data file. """
         self.sensor_id: Optional[int] = None
         """ The database ID of the sensor. """
         self.sensor_name: Optional[str] = None
@@ -187,7 +185,7 @@ class SensorController:
             # self.sensor_data.metadata.parse_datetime()
             # self.gui.setCursor(.WaitCursor)
             # Add absolute time column to dataframe
-            self.sensor_data.add_abs_datetime_column()
+            self.sensor_data.add_abs_dt_col()
             # Save the starting time of the sensor data in a DateTime object
             self.sensor_data_file.datetime = self.sensor_data.metadata.utc_dt
 
@@ -277,10 +275,8 @@ class SensorController:
             self.gui.doubleSpinBox_video_offset.setValue(offset)
 
     def update_sensor(self, sensor_id: int):
-        if self.id_:
-            sensor_data_file = SensorDataFile.get_by_id(self.id_)
-            sensor_data_file.sensor = sensor_id
-            sensor_data_file.save()
+        self.sensor_data_file.sensor = sensor_id
+        self.sensor_data_file.save()
 
     def create_file_id(self, file_path, block_size=256):
         # Function that takes a file and returns the first 10 characters of a hash of

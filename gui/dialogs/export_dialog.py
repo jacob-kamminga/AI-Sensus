@@ -8,6 +8,7 @@ import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime, QDir
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from peewee import JOIN
 
 from data_import.sensor_data import SensorData
 from database.models import SensorUsage, SensorDataFile, Subject, Label, LabelType, Sensor, SensorModel
@@ -26,10 +27,13 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         self.setupUi(self)
 
         self.settings = settings
+        self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
         self.settings_dict = settings.settings_dict
 
         self.subjects = Subject.select()
-        self.subjects_dict = [{subject.name: subject.id} for subject in self.subjects]
+        self.subjects_dict = dict()
+        for subject in self.subjects:
+            self.subjects_dict[subject.name] = subject.id
 
         self.init_subject_list_widget()
         self.init_date_time_widgets(datetime)
@@ -59,18 +63,20 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                   .where(Label.sensor_data_file == sensor_data_file_id &
                          (Label.start_time.between(start_dt, end_dt) |
                           Label.end_time.between(start_dt, end_dt))))
-        return [{'start': label['start_time'],
-                 'end': label['end_time'],
-                 'activity': label['activity']} for label in labels]
+        return [{'start': label.start_time,
+                 'end': label.end_time,
+                 'activity': label.label_type.activity} for label in labels]
 
     def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
         file_path = self.get_file_path(sensor_data_file_id)
         model_id = (SensorDataFile
-                    .select(SensorModel.id)
-                    .join(Sensor, SensorModel)
+                    .select()
+                    .join(Sensor, JOIN.LEFT_OUTER)
+                    .join(SensorModel, JOIN.LEFT_OUTER)
                     .where(SensorDataFile.id == sensor_data_file_id)
-                    .get())
-        sensor_id = SensorDataFile.get_by_id(sensor_data_file_id).sensor
+                    .get()
+                    ).sensor.model.id
+        sensor_id = SensorDataFile.get_by_id(sensor_data_file_id).sensor.id
 
         if model_id >= 0 and sensor_id >= 0:
             sensor_timezone = pytz.timezone(Sensor.get_by_id(sensor_id).timezone)
@@ -140,12 +146,18 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
     def get_start_datetime(self) -> dt.datetime:
         start_dt = self.dateEdit_start.dateTime()
         start_dt.setTime(self.timeEdit_start.time())
-        return start_dt.toPyDateTime()
+        return self.project_timezone.localize(start_dt.toPyDateTime()) \
+            .replace(second=0) \
+            .astimezone(pytz.utc) \
+            .strftime('%Y-%m-%d %H:%M:%S')
 
     def get_end_datetime(self) -> dt.datetime:
         end_dt = self.dateEdit_end.dateTime()
         end_dt.setTime(self.timeEdit_end.time())
-        return end_dt.toPyDateTime()
+        return self.project_timezone.localize(end_dt.toPyDateTime()) \
+            .replace(second=0) \
+            .astimezone(pytz.utc) \
+            .strftime('%Y-%m-%d %H:%M:%S')
 
     def get_subject_ids(self) -> [int]:
         return [self.subjects_dict.get(item.text()) for item in self.listWidget_subjects.selectedItems()]
@@ -165,31 +177,35 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         for subject_id in subject_ids:
             df: pd.DataFrame = pd.DataFrame()
             subject_name = Subject.get_by_id(subject_id).name
-            sensor_ids = (SensorUsage
-                          .select(SensorUsage.sensor)
-                          .where(SensorUsage.subject == subject_id &
-                                 (SensorUsage.start_datetime.between(start_dt, end_dt) |
-                                  SensorUsage.end_datetime.between(start_dt, end_dt))
-                                 ))
+            sensor_query = (SensorUsage
+                            .select()
+                            .where((SensorUsage.subject == subject_id) &
+                                   (
+                                           SensorUsage.start_datetime.between(start_dt, end_dt) |
+                                           SensorUsage.end_datetime.between(start_dt, end_dt) |
+                                           (start_dt >= SensorUsage.start_datetime) & (
+                                                       start_dt <= SensorUsage.end_datetime) |
+                                           (end_dt >= SensorUsage.start_datetime) & (end_dt <= SensorUsage.end_datetime)
+                                   )
+                                   ))
 
-            for sensor_id in sensor_ids:
-                sensor_data_file_ids = (SensorDataFile
-                                        .select(SensorDataFile.id)
-                                        .where(SensorDataFile.sensor == sensor_id &
-                                               SensorDataFile.datetime.between(start_dt, end_dt)))
+            for sensor_usage in sensor_query:
+                sensor_id = sensor_usage.sensor
 
-                for file_id in sensor_data_file_ids:
+                sdf_query = (SensorDataFile
+                             .select(SensorDataFile.id)
+                             .where((SensorDataFile.sensor == sensor_id) &
+                                    SensorDataFile.datetime.between(start_dt, end_dt)))
+
+                for file in sdf_query:
+                    file_id = file.id
                     labels = self.get_labels(file_id, start_dt, end_dt)
                     sensor_data = self.get_sensor_data(file_id)
 
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
 
-                    sensor_data.add_abs_datetime_column()
-                    if not start_dt.tzinfo:
-                        start_dt = sensor_data.project_timezone.localize(start_dt)
-                    if not end_dt.tzinfo:
-                        end_dt = sensor_data.project_timezone.localize(end_dt)
+                    sensor_data.add_abs_dt_col(use_utc=True)
 
                     sensor_data.filter_between_dates(start_dt, end_dt)
                     sensor_data.add_labels(labels)

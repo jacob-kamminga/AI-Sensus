@@ -1,5 +1,6 @@
 import datetime as dt
 
+import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
 
@@ -17,24 +18,21 @@ DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 class EditSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, subjects_dict: dict, sensors_dict: dict, map_id: int):
+    def __init__(self, subjects_dict: dict, sensors_dict: dict, usage: SensorUsage, project_timezone):
         super().__init__()
         self.setupUi(self)
 
         self.subjects_dict = subjects_dict
         self.sensors_dict = sensors_dict
-        self.sensor_usage_id = map_id
+        self.project_timezone = project_timezone
 
-        self.map_edited = False
-        self.subject = None
-        self.sensor = None
-        self.start_dt = None
-        self.end_dt = None
+        self.usage = usage
+        self.usage_edited = False
 
         self.fill_subject_combobox()
         self.fill_sensor_combobox()
         self.init_date_time_widgets()
-        self.set_current_map()
+        self.set_current_usage()
 
         # Add the new subject when the 'Ok' button is pressed
         self.buttonBox.accepted.connect(self.edit)
@@ -53,22 +51,13 @@ class EditSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         self.timeEdit_start.setTime(current_time)
         self.timeEdit_end.setTime(current_time)
 
-    def set_current_map(self):
-        usage = SensorUsage.get_by_id(self.sensor_usage_id)
-        subject_id = usage.subject
-        sensor_id = usage.sensor
-
-        self.subject = self.subjects_dict[subject_id]
-        self.sensor = self.sensors_dict[sensor_id]
-        self.start_dt: dt.datetime = dt.datetime.strptime(usage.start_datetime, DT_FORMAT)
-        self.end_dt: dt.datetime = dt.datetime.strptime(usage.end_datetime, DT_FORMAT)
-
-        self.comboBox_subject.setCurrentText(self.subject)
-        self.comboBox_sensor.setCurrentText(self.sensor)
-        self.dateEdit_start.setDate(self.start_dt.date())
-        self.dateEdit_end.setDate(self.end_dt.date())
-        self.timeEdit_start.setTime(self.start_dt.time())
-        self.timeEdit_end.setTime(self.end_dt.time())
+    def set_current_usage(self):
+        self.comboBox_subject.setCurrentText(self.usage.subject.name)
+        self.comboBox_sensor.setCurrentText(self.usage.sensor.name)
+        self.dateEdit_start.setDate(self.usage.start_datetime.date())
+        self.dateEdit_end.setDate(self.end_datetime.date())
+        self.timeEdit_start.setTime(self.start_datetime.time())
+        self.timeEdit_end.setTime(self.end_datetime.time())
 
     def edit(self):
         subject_name = self.comboBox_subject.currentText()
@@ -77,13 +66,16 @@ class EditSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         start_dt = self.dateEdit_start.dateTime()
         start_dt.setTime(self.timeEdit_start.time())
         start_dt = start_dt.toPyDateTime()
+        start_dt = self.project_timezone.localize(start_dt).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
 
         end_dt = self.dateEdit_end.dateTime()
         end_dt.setTime(self.timeEdit_end.time())
         end_dt = end_dt.toPyDateTime()
+        # Convert to UTC
+        end_dt = self.project_timezone.localize(end_dt).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
 
-        if (subject_name != self.subject or sensor_name != self.sensor or start_dt != self.start_dt or end_dt != self.end_dt) \
-                and start_dt < end_dt:
+        if (subject_name != self.usage.subject.name or sensor_name != self.usage.sensor.name or
+                start_dt != self.usage.start_datetime or end_dt != self.usage.end_datetime) and start_dt < end_dt:
             subject_id = Subject.get(Subject.name == subject_name)
             sensor_id = Sensor.get(Sensor.name == sensor_name)
 
@@ -95,4 +87,4 @@ class EditSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
             sensor_usage.end_datetime = end_dt
             sensor_usage.save()
 
-            self.map_edited = True
+            self.usage_edited = True

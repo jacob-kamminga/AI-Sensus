@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QMessageBox
 from matplotlib.backend_bases import MouseButton
 from matplotlib.dates import date2num, num2date
 
-from constants import COL_ABSOLUTE_DATETIME
+from constants import COL_ABS_DATETIME
 from database.models import LabelType, Label
 from gui.dialogs.label_dialog import LabelSpecs
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
@@ -185,8 +185,8 @@ class PlotController:
         self.data_plot.clear()
 
         # Get the boundaries of the plot axis
-        self.x_min_dt = self.sensor_controller.df[COL_ABSOLUTE_DATETIME].min()
-        self.x_max_dt = self.sensor_controller.df[COL_ABSOLUTE_DATETIME].max()
+        self.x_min_dt = self.sensor_controller.df[COL_ABS_DATETIME].min()
+        self.x_max_dt = self.sensor_controller.df[COL_ABS_DATETIME].max()
         self.x_min = date2num(self.x_min_dt)
         self.x_max = date2num(self.x_max_dt)
         if self.x_min == self.x_max:
@@ -203,7 +203,7 @@ class PlotController:
 
         # Plot the graph
         self.data_plot.plot(
-            self.sensor_controller.df[COL_ABSOLUTE_DATETIME],
+            self.sensor_controller.df[COL_ABS_DATETIME],
             self.sensor_controller.df[self.current_plot],
             ',-',
             linewidth=1,
@@ -219,7 +219,7 @@ class PlotController:
             self.label_types[label_type.id] = {label_type.activity, label_type.color}
 
         # Get labels and add to plot
-        labels = Label.select().where(Label.sensor_data_file == self.sensor_controller.id_)
+        labels = Label.select().where(Label.sensor_data_file == self.sensor_controller.sensor_data_file.id)
         self.highlights = {}
 
         for label in labels:
