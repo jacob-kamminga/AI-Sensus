@@ -35,4 +35,4 @@ PROJECT_DIR = 'settings'
 PROJECT_DIR_EXISTS = 'project_dir_exists'
 
 # Sensor data DataFrame
-COL_ABSOLUTE_DATETIME = "absolute_datetime"
+COL_ABS_DATETIME = "absolute_datetime"

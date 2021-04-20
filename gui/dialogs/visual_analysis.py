@@ -1,4 +1,4 @@
-import csv
+import datetime as dt
 import datetime as dt
 import gc
 import math
@@ -7,29 +7,25 @@ from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
 import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime, QDir, Qt
-from PyQt5.QtWidgets import QFileDialog, QDialog, QPushButton, QMessageBox, QShortcut, QSizePolicy, QSizeGrip
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QShortcut
 from matplotlib.backend_bases import MouseButton
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.dates import date2num
 from pandas.core.dtypes.common import is_numeric_dtype
+from peewee import JOIN
 
-from constants import COL_ABSOLUTE_DATETIME
-from data_import.sensor_data import SensorData
-from database.export_manager import ExportManager
-from database.label_type_manager import LabelTypeManager
-from database.sensor_data_file_manager import SensorDataFileManager
-from database.sensor_manager import SensorManager
-from database.subject_manager import SubjectManager
-from database.sensor_usage_manager import SensorUsageManager
-from gui.designer.visual_analysis import Ui_Dialog
-from gui.dialogs.project_settings import ProjectSettingsDialog
-from parse_function.parse_exception import ParseException
 import parse_function.custom_function_parser as parser
+from constants import COL_ABS_DATETIME
+from data_import.sensor_data import SensorData
+from database.models import Subject, LabelType, SensorUsage, SensorDataFile, Sensor, SensorModel
+from gui.designer.visual_analysis import Ui_Dialog
+from gui.dialogs.export_dialog import get_labels
+from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
+from parse_function.parse_exception import ParseException
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -43,12 +39,6 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         self.setupUi(self)
         self.setWindowTitle("Visual Inspection")
         self.settings = settings
-        self.export_manager = ExportManager(settings)
-        self.subject_manager = SubjectManager(settings)
-        self.map_manager = SensorUsageManager(settings)
-        self.sensor_data_file_manager = SensorDataFileManager(settings)
-        self.sensor_manager = SensorManager(settings)
-        self.label_type_manager = LabelTypeManager(settings)
         self.settings_dict = settings.settings_dict
 
         # Create scrolling key shortcuts
@@ -57,8 +47,14 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         self.shortcut_plus_10s.activated.connect(self.fast_forward_10s)
         self.shortcut_minus_10s.activated.connect(self.rewind_10s)
 
-        self.subject_dict = self.subject_manager.get_all_subjects_name_id()
-        self.activity_dict = self.label_type_manager.get_all_labels_activity_id()
+        self.subject_dict = dict()
+        self.activity_dict = dict()
+
+        for subject in Subject.select():
+            self.subject_dict[subject.name] = subject.id
+
+        for label_type in LabelType.select():
+            self.activity_dict[label_type.activity] = label_type.id
 
         self.listWidget_subjects.addItems(self.subject_dict.keys())
         self.listWidget_activities.addItems(self.activity_dict.keys())
@@ -101,7 +97,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
             return
 
         if event.button == MouseButton.LEFT:
-            label_dt = self.df[COL_ABSOLUTE_DATETIME][round(event.xdata)]
+            label_dt = self.df[COL_ABS_DATETIME][round(event.xdata)]
             QMessageBox.information(self, "Date time", "Date and Time of this segment are: " + str(label_dt))
 
     def draw_graph(self, plot_nr_rows=1, plot_index=1):
@@ -121,8 +117,8 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         self.data_plot.clear()
 
         # Get the boundaries of the plot axis
-        # self.x_min_dt = self.df[COL_ABSOLUTE_DATETIME].min()
-        # self.x_max_dt = self.df[COL_ABSOLUTE_DATETIME].max()
+        # self.x_min_dt = self.df[COL_ABS_DATETIME].min()
+        # self.x_max_dt = self.df[COL_ABS_DATETIME].max()
         # self.x_min = date2num(self.x_min_dt)
         # self.x_max = date2num(self.x_max_dt)
 
@@ -132,7 +128,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
             self.x_max = self.x_min + 1
 
         self.sample_rate = round(
-            10 ** 6 / (self.df[COL_ABSOLUTE_DATETIME][self.x_min + 1] - self.df[COL_ABSOLUTE_DATETIME][
+            10 ** 6 / (self.df[COL_ABS_DATETIME][self.x_min + 1] - self.df[COL_ABS_DATETIME][
                 self.x_min]).microseconds)
 
         # Remove outliers before assessing y_min and y_max value for plot
@@ -141,7 +137,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         if self.y_min == self.y_max:
             self.y_max = self.y_min + 1
 
-        # self.data_plot.set_xticklabels(self.df[COL_ABSOLUTE_DATETIME], rotation=45, minor=True)
+        # self.data_plot.set_xticklabels(self.df[COL_ABS_DATETIME], rotation=45, minor=True)
 
         if self.label_color is not None:
             plot_color = self.label_color
@@ -150,7 +146,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
 
         # Plot the graph
         self.data_plot.plot(
-            # self.df[COL_ABSOLUTE_DATETIME],
+            # self.df[COL_ABS_DATETIME],
             self.df.index,
             self.df[self.current_function],
             ',-',
@@ -199,7 +195,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
 
         data_cols = self.df.columns.tolist()
         for col in data_cols:
-            if col != COL_LABEL and col != COL_ABSOLUTE_DATETIME and col != COL_TIME and col != COL_TIMESTAMP:
+            if col != COL_LABEL and col != COL_ABS_DATETIME and col != COL_TIME and col != COL_TIMESTAMP:
                 self.comboBox_functions.addItem(col)
 
         if self.last_used_function:
@@ -300,31 +296,42 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
             self.timeEdit_end.setTime(QTime.currentTime())
 
     def get_sensor_ids(self, subject_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
-        return self.map_manager.get_sensor_ids_by_dates(subject_id, start_dt, end_dt)
+        sensor_usage_query = (SensorUsage
+                              .select()
+                              .where((SensorUsage.subject == subject_id) &
+                                     (
+                                             SensorUsage.start_datetime.between(start_dt, end_dt) |
+                                             SensorUsage.end_datetime.between(start_dt, end_dt) |
+                                             (start_dt >= SensorUsage.start_datetime) & (
+                                                         start_dt <= SensorUsage.end_datetime) |
+                                             (end_dt >= SensorUsage.start_datetime) & (end_dt <= SensorUsage.end_datetime)
+                                     )
+                                     ))
+        return list(sensor_usage_query)
 
     def get_sensor_data_file_ids(self, sensor_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
-        return self.sensor_data_file_manager.get_ids_by_sensor_and_dates(sensor_id,
-                                                                         start_dt.astimezone(pytz.utc).replace(
-                                                                             tzinfo=None),
-                                                                         end_dt.astimezone(pytz.utc).replace(
-                                                                             tzinfo=None)
-                                                                         )
-
-    def get_labels(self, sensor_data_file_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
-        labels = self.export_manager.get_labels_by_dates(sensor_data_file_id,
-                                                         start_dt,
-                                                         end_dt)
-        return [{"start": label["start_time"],
-                 "end": label["end_time"],
-                 "activity": label["activity"]} for label in labels]
+        sdf_query = (SensorDataFile
+                     .select(SensorDataFile.id)
+                     .where((SensorDataFile.sensor == sensor_id) &
+                            SensorDataFile.datetime.between(
+                                start_dt.astimezone(pytz.utc).replace(tzinfo=None),
+                                end_dt.astimezone(pytz.utc).replace(tzinfo=None))
+                            ))
+        return list(sdf_query)
 
     def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
         file_path = self.get_file_path(sensor_data_file_id)
-        model_id = self.sensor_data_file_manager.get_sensor_model_by_id(sensor_data_file_id)
-        sensor_id = self.sensor_data_file_manager.get_sensor_by_id(sensor_data_file_id)
+        model_id = (SensorDataFile
+                    .select()
+                    .join(Sensor, JOIN.LEFT_OUTER)
+                    .join(SensorModel, JOIN.LEFT_OUTER)
+                    .where(SensorDataFile.id == sensor_data_file_id)
+                    .get()
+                    ).sensor.model.id
+        sensor_id = SensorDataFile.get_by_id(sensor_data_file_id).sensor.id
 
         if model_id >= 0 and sensor_id >= 0:
-            sensor_timezone = pytz.timezone(self.sensor_manager.get_timezone_by_id(sensor_id))
+            sensor_timezone = pytz.timezone(Sensor.get_by_id(sensor_id).timezone)
             sensor_data = SensorData(Path(file_path), self.settings, model_id)
             sensor_data.metadata.sensor_timezone = sensor_timezone
             # Parse the utc datetime of the sensor data
@@ -342,7 +349,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
 
         :param sensor_data_file_id: The list of file names
         """
-        file_path = self.sensor_data_file_manager.get_file_path_by_id(sensor_data_file_id)
+        file_path = SensorDataFile.get_by_id(sensor_data_file_id).file_path
 
         # Check whether the file path is still valid
         if os.path.isfile(file_path):
@@ -350,11 +357,13 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         else:
             # Invalid:
             # Prompt the user for the correct file path
-            file_name = self.sensor_data_file_manager.get_file_name_by_id(sensor_data_file_id)
+            file_name = SensorDataFile.get_by_id(sensor_data_file_id).file_name
             new_file_path = self.prompt_file_location(file_name, file_path)
 
             # Update path in database
-            self.sensor_data_file_manager.update_file_path(file_name, new_file_path)
+            sdf = SensorDataFile.get(SensorDataFile.file_name == file_name)
+            sdf.file_path = file_path
+            sdf.save()
 
             return new_file_path
 
@@ -441,7 +450,6 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         idx = 0
         for subject_id in subject_ids:
             for label_type in label_types:
-                subject_name = self.subject_manager.get_name_by_id(subject_id)
                 sensor_ids = self.get_sensor_ids(subject_id, start_dt, end_dt)
 
                 for plot_index, sensor_id in enumerate(sensor_ids):
@@ -450,13 +458,13 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
 
                     for file_id in sensor_data_file_ids:
                         try:
-                            labels = self.get_labels(file_id, start_dt, end_dt)
+                            labels = get_labels(file_id, start_dt, end_dt)
                             sensor_data = self.get_sensor_data(file_id)
 
                             if sensor_data is None:
                                 raise Exception('Sensor data not found')
 
-                            if not sensor_data.add_abs_datetime_column():
+                            if not sensor_data.add_abs_dt_col():
                                 return
 
                             if self.groupBox_select_timeperiod.isChecked():
@@ -491,7 +499,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
                     # self.df.index = np.arange(0, len(self.df)+1)
                     # self.df = self.df.reindex(drop=True)
                     # Get color of this label
-                    self.label_color = self.label_type_manager.get_color_by_label_type(label_type)
+                    self.label_color = LabelType.get_by_id(label_type).color
                     # Plot the data for each sensor ID in a new subplot
                     self.draw_graph(len(sensor_ids), plot_index + 1)
                     self.label_info_text.clear()
