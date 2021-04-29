@@ -5,6 +5,7 @@ from database.models import SensorDataFile, Sensor
 from gui.designer.select_sensor import Ui_Dialog
 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
+from peewee import OperationalError
 
 SENSOR_ID_INDEX = 0
 SENSOR_NAME_INDEX = 1
@@ -84,8 +85,18 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.comboBox_sensor.clear()
         sensors = Sensor.select()
 
-        for sensor in sensors:
-            self.comboBox_sensor.addItem(sensor.name)
+        try:
+            for sensor in sensors:
+                self.comboBox_sensor.addItem(sensor.name)
+        except OperationalError as e:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Critical)
+            msg.setWindowTitle("Different version error")
+            msg.setText("Error: " + str(e))
+            msg.setInformativeText("Please use the app version that was also used to create this project.")
+            msg.setStandardButtons(QMessageBox.Ok)
+            msg.exec()
+            return False
 
         # Select current sensor in combobox
         if selected_sensor_name:
