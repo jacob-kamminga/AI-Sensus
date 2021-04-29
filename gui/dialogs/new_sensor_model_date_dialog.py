@@ -32,6 +32,8 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
         self.pushButton_previous.pressed.connect(self.open_previous_dialog)
         self.pushButton_next.pressed.connect(self.open_next_dialog)
         self.checkBox_datetime_metadata.stateChanged.connect(self.toggle_date_time_group)
+
+        # Disable the datetime string format box unless the timestamp unit is FORMAT_STRING_ITEM
         self.comboBox_timestamp_unit.currentTextChanged.connect(self.toggle_formatted_string_edit)
 
     def fill_existing_data(self):
