@@ -174,13 +174,24 @@ class SensorData:
                 self._df[COL_ABS_DATETIME] = self.metadata.utc_dt + pd.to_timedelta(self._df.iloc[:, time_col],
                                                                                     unit=time_unit)
             else:
-                self._df[COL_ABS_DATETIME] = \
-                    utc_to_local(self.metadata.utc_dt, self.project_timezone) + \
-                    pd.to_timedelta(self._df.iloc[:, time_col], unit=time_unit)
+                try:
+                    self._df[COL_ABS_DATETIME] = \
+                        utc_to_local(self.metadata.utc_dt, self.project_timezone) + \
+                        pd.to_timedelta(self._df.iloc[:, time_col], unit=time_unit)
+                except ValueError as e:
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setWindowTitle("Invalid datetime string format")
+                    msg.setText("Error: " + str(e))
+                    msg.setInformativeText("The sensor datetime string format you entered is invalid. "
+                                           f"Please change it to the correct format under Sensor > Sensor models > {self.sensor_name} > View settings.")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.exec()
+                    return False
 
         # If time column is absolute, rename the column
         elif self.sensor_model.relative_absolute == ABSOLUTE_TIME_ITEM:
-            self._df.columns.values[time_col] = COL_ABS_DATETIME
+            self._df.rename(columns={time_col: COL_ABS_DATETIME}, inplace=True)
 
             # Make sure the column is datetime
             if not pd.api.types.is_datetime64_any_dtype(self._df[COL_ABS_DATETIME]):
@@ -203,7 +214,6 @@ class SensorData:
                     msg.exec()
                     return False
                 except:
-                    pass
                     return False
 
                 # Localize to sensor timezone and convert to project timezone
