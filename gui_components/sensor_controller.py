@@ -279,8 +279,9 @@ class SensorController:
             self.gui.doubleSpinBox_video_offset.setValue(offset)
 
     def update_sensor(self, sensor_id: int):
-        self.sensor_data_file.sensor = sensor_id
-        self.sensor_data_file.save()
+        if self.sensor_data_file is not None:
+            self.sensor_data_file.sensor = sensor_id
+            self.sensor_data_file.save()
 
     def create_file_id(self, file_path, block_size=256):
         # Function that takes a file and returns the first 10 characters of a hash of
