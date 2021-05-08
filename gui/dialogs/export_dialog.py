@@ -13,7 +13,10 @@ from peewee import JOIN
 from data_import.sensor_data import SensorData
 from database.models import SensorUsage, SensorDataFile, Subject, Label, LabelType, Sensor, SensorModel
 from gui.designer.export_new import Ui_Dialog
+from gui.dialogs.export_progress import ExportProgressDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
+
+from numpy import array_split
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -213,15 +216,6 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                     df = df.append(sensor_data.get_data())
 
                 file_path = self.prompt_save_location(subject_name + "_" + str(sensor_id))
+                export_dialog = ExportProgressDialog(df, file_path)
+                export_dialog.exec()
 
-                if file_path:
-                    df.to_csv(file_path)
-
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Information)
-                    msg.setWindowTitle("Succes")
-                    msg.setText("Export successful")
-                    # msg.setInformativeText("The selected sensor model states that sensor identifier (ID) cannot "
-                    #                        "be parsed from sensor datafile. Please select sensor ID manually.")
-                    msg.setStandardButtons(QMessageBox.Ok)
-                    msg.exec()
