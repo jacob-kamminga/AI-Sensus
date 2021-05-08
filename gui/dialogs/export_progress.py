@@ -3,7 +3,7 @@ from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox
 from gui.designer.progress_bar import Ui_Dialog
 from numpy import array_split
-
+import sys
 
 class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
     def __init__(self, df, output_path):
@@ -72,11 +72,16 @@ class Worker(QObject):
         """Long-running task."""
         df_split = array_split(self.df, 100)  # Divide into 100 (roughly) equal chunks.
 
+        gettrace = getattr(sys, 'gettrace', None)
+        debug = gettrace() is not None  # Running in debug mode
+        if debug:
+            print("Slowing down export progress bar for visualisation...")
         try:
             for i in range(100):
                 # self.progressBar.setProperty("value", i + 1)
-                for j in range(1000):
-                    pass
+                if debug:
+                    for j in range(1000):
+                        pass
                 df_split[i].to_csv(self.output_path, mode='a', header=False, index=False)  # mode='a' means append to file.
                 self.progress.emit(i + 1)
 

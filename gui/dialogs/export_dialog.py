@@ -191,6 +191,18 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                                    )
                                    ))
 
+            if len(sensor_query) == 0:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("No labels within timespan.")
+                msg.setText(f"There are no labels found between {start_dt} and {end_dt}.")
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.exec()
+                return
+            print('-')
+            for el in sensor_query:
+                print(el)
+            print('-')
             for sensor_usage in sensor_query:
                 sensor_id = sensor_usage.sensor.id
 
