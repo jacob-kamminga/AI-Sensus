@@ -59,7 +59,7 @@ class SensorData:
 
             # Parse data from file
             self._df = pd.read_csv(self.file_path,
-                                   names=self.metadata.col_names,
+                                   names=list(filter(None, self.metadata.col_names)),
                                    skip_blank_lines=False,
                                    skiprows=self.sensor_model.col_names_row + 1,
                                    comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
