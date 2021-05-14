@@ -6,5 +6,6 @@ migrator = SqliteMigrator(my_db)
 
 migrate(
     # migrator.drop_not_null('sensordatafile', 'datetime')
-    migrator.add_column('camera', 'manual_offset', DoubleField(null=True))
+    # migrator.add_column('camera', 'manual_offset', DoubleField(null=True))
+    migrator.add_index('offset', ('camera', 'sensor'), True),
 )

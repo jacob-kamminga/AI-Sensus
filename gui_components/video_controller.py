@@ -82,7 +82,7 @@ class VideoController:
             except DoesNotExist:
                 self.gui.open_select_camera_dialog()
 
-            if self.gui.camera_controller.camera_id is not None:
+            if self.gui.camera_controller.camera is not None:
                 self.update_datetime()
 
                 try:
@@ -92,7 +92,7 @@ class VideoController:
                 except DoesNotExist:
                     # Video not yet in database
                     video = Video(file_name=self.file_name, file_path=self.file_path, datetime=self.utc_dt,
-                                  camera=self.gui.camera_controller.camera_id)
+                                  camera=self.gui.camera_controller.camera.id)
                     video.save()
 
                 file_path = Path(self.file_path)
@@ -113,8 +113,9 @@ class VideoController:
                 self.unmute()
 
     def update_datetime(self):
-        self.utc_dt = video_metadata.parse_video_begin_time(self.file_path, self.gui.camera_controller.timezone) + \
-                      dt.timedelta(hours=self.gui.camera_controller.manual_offset)
+        timezone = pytz.timezone(self.gui.camera_controller.camera.timezone)
+        self.utc_dt = video_metadata.parse_video_begin_time(self.file_path, timezone) + \
+                      dt.timedelta(hours=self.gui.camera_controller.camera.manual_offset)
         self.update_timezone()
         self.update_labels_datetime()
 

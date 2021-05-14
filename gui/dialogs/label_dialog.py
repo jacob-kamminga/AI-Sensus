@@ -41,9 +41,10 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
 
     def add_label_to_db(self):
         # Convert start and end times to UTC
-        self.label.start_time = self.dateTimeEdit_start.dateTime().toPyDateTime().astimezone(pytz.utc)\
-            .replace(tzinfo=None)
-        self.label.end_time = self.dateTimeEdit_end.dateTime().toPyDateTime().astimezone(pytz.utc).replace(tzinfo=None)
+        start_time_local = self.sensor_timezone.localize(self.dateTimeEdit_start.dateTime().toPyDateTime())
+        self.label.start_time = start_time_local.astimezone(pytz.utc).replace(tzinfo=None)
+        end_time_local = self.sensor_timezone.localize(self.dateTimeEdit_end.dateTime().toPyDateTime())
+        self.label.end_time = end_time_local.astimezone(pytz.utc).replace(tzinfo=None)
 
         if self.label.label_type is not None:
             # Save the label to the database

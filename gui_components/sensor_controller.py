@@ -34,8 +34,6 @@ class SensorController:
 
         self.file_id_hash = None
         """" The hashed ID, used to recognize the file independent from location on disk """
-        self.sensor_id: Optional[int] = None
-        """ The database ID of the sensor. """
         self.sensor_name: Optional[str] = None
         """ The name of the sensor associated with this sensor datafile"""
         self.sensor_data: Optional[SensorData] = None
@@ -273,10 +271,10 @@ class SensorController:
                       .select(Offset.offset)
                       .join(Camera, Sensor)
                       .where((Camera.name == camera_name) &
-                             (Sensor.id == self.sensor_id) &
+                             (Sensor.id == self.sensor_data_file.sensor) &
                              (Offset.added == self.utc_dt.date())))
 
-            self.gui.doubleSpinBox_video_offset.setValue(offset)
+            self.gui.doubleSpinBox_video_offset.setValue(offset.offset)
 
     def update_sensor(self, sensor_id: int):
         if self.sensor_data_file is not None:
