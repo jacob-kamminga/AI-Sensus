@@ -59,7 +59,7 @@ class SensorData:
 
             # Parse data from file
             self._df = pd.read_csv(self.file_path,
-                                   names=self.metadata.col_names,
+                                   names=list(filter(None, self.metadata.col_names)),
                                    skip_blank_lines=False,
                                    skiprows=self.sensor_model.col_names_row + 1,
                                    comment=self.sensor_model.comment_style if self.sensor_model.comment_style else None)
@@ -90,7 +90,18 @@ class SensorData:
                 raise
 
             if self.sensor_model.relative_absolute == RELATIVE_TIME_ITEM:
-                self.normalize_rel_datetime_column()
+                try:
+                    self.normalize_rel_datetime_column()
+                except TypeError as e:
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Critical)
+                    msg.setWindowTitle("Error")
+                    msg.setText("Datetime column not relative.")
+                    msg.setInformativeText("The sensor data datetime format was set to be relative "
+                                           "but may actually be absolute. Please verify in the sensor model settings. "
+                                           "The data will be parsed as absolute.")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.exec()
 
     def set_column_metadata(self, columns):
         """
@@ -188,10 +199,13 @@ class SensorData:
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec()
                     return False
+                except AttributeError as e:
+                    # Relative time format could not be parsed.
+                    self.sensor_model.relative_absolute = ABSOLUTE_TIME_ITEM
 
         # If time column is absolute, rename the column
-        elif self.sensor_model.relative_absolute == ABSOLUTE_TIME_ITEM:
-            self._df.rename(columns={time_col: COL_ABS_DATETIME}, inplace=True)
+        if self.sensor_model.relative_absolute == ABSOLUTE_TIME_ITEM:
+            self._df.rename(columns={self._df.columns[time_col]: COL_ABS_DATETIME}, inplace=True)
 
             # Make sure the column is datetime
             if not pd.api.types.is_datetime64_any_dtype(self._df[COL_ABS_DATETIME]):
@@ -199,10 +213,11 @@ class SensorData:
                     # Convert to datetime
                     self._df[COL_ABS_DATETIME] = pd.to_datetime(
                         self._df[COL_ABS_DATETIME],
-                        errors='coerce',
+                        errors='raise',
                         format=self.sensor_model.format_string,
-                        exact=False
+                        exact=True
                     )
+
                 except ValueError as e:
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Critical)
@@ -223,7 +238,8 @@ class SensorData:
 
             # If start datetime of file is not in metadata, then we take the first value as utc_dt
             if self.metadata.utc_dt is None:
-                first_value = self._df.iloc[0, time_col].astimezone(pytz.utc)
+                first_value = self._df.iloc[0, time_col]
+                first_value = first_value.astimezone(pytz.utc)
 
                 if type(first_value) == pd.Timestamp:
                     self.metadata.utc_dt = first_value.to_pydatetime()
@@ -238,6 +254,9 @@ class SensorData:
         """
         time_col = self.sensor_model.timestamp_column
         first_val = self._df.iloc[0, time_col]
+
+        if type(first_val) == str:
+            raise TypeError("Datetime is not relative.")
 
         if first_val != 0:
             # Subtract the (non-zero) first value from all values in the timestamp column to normalize the data
