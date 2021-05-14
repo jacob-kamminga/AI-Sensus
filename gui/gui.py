@@ -337,25 +337,27 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Updates the offset in the database.
         """
-        if self.sensor_controller.sensor_id is not None:
+        if self.sensor_controller.sensor_data_file.sensor is not None:
             date = self.sensor_controller.sensor_data_file.datetime.date()
 
-            Offset.replace(camera=self.camera_controller.camera_id,
-                           sensor=self.sensor_controller.sensor_id,
-                           offset=offset,
-                           added=date)
+            (Offset
+             .replace(camera=self.camera_controller.camera.id,
+                      sensor=self.sensor_controller.sensor_data_file.sensor,
+                      offset=offset,
+                      added=date)
+             .execute())
 
     def update_camera_sensor_offset(self):
         if self.sensor_controller is not None \
-                and self.sensor_controller.sensor_id is not None \
-                and self.camera_controller.camera_id is not None \
-                and self.sensor_controller.utc_dt is not None:
-            offset = (Offset.get(Offset.camera == self.camera_controller.camera_id,
-                                 Offset.sensor == self.sensor_controller.sensor_id,
-                                 Offset.added == self.sensor_controller.utc_dt.date())
-                      ).offset
-
-            self.doubleSpinBox_video_offset.setValue(offset)
+                and self.sensor_controller.sensor_data_file is not None \
+                and self.camera_controller.camera is not None:
+            try:
+                offset = Offset.get(Offset.camera == self.camera_controller.camera.id,
+                                    Offset.sensor == self.sensor_controller.sensor_data_file.sensor,
+                                    Offset.added == self.sensor_controller.sensor_data_file.datetime.date())
+                self.doubleSpinBox_video_offset.setValue(offset.offset)
+            except Offset.DoesNotExist:
+                pass
 
     def open_label_dialog(self):
         """

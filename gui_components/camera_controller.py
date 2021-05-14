@@ -10,24 +10,12 @@ class CameraController:
         self.gui = gui
         self.settings: ProjectSettingsDialog = gui.settings
 
-        self.camera_id = None
-        self.camera_name = None
-        self.timezone = None
-        self.manual_offset = None
+        self.camera = None
 
     def change_camera(self, camera_id: int):
         # Update camera name in main GUI
-        self.camera_id = camera_id
-        camera = Camera.get_by_id(self.camera_id)
-        self.camera_name = camera.name
-        self.gui.label_camera_name_value.setText(self.camera_name)
-
-        # Update timezone and datetime labels
-        self.timezone = pytz.timezone(camera.timezone)
-        self.manual_offset = camera.manual_offset
-
-        if self.manual_offset is None:
-            self.manual_offset = 0
+        self.camera = Camera.get_by_id(camera_id)
+        self.gui.label_camera_name_value.setText(self.camera.name)
 
         if self.gui.video_controller.file_path is not None:
             self.gui.video_controller.update_datetime()

@@ -177,7 +177,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
             df: pd.DataFrame = pd.DataFrame()
             subject_name = Subject.get_by_id(subject_id).name
             sensor_query = (SensorUsage
-                            .select()
+                            .select(SensorUsage.sensor)
                             .where((SensorUsage.subject == subject_id) &
                                    (
                                            SensorUsage.start_datetime.between(start_dt, end_dt) |
@@ -189,7 +189,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                                    ))
 
             for sensor_usage in sensor_query:
-                sensor_id = sensor_usage.sensor
+                sensor_id = sensor_usage.sensor.id
 
                 sdf_query = (SensorDataFile
                              .select(SensorDataFile.id)

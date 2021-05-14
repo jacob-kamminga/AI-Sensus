@@ -278,8 +278,8 @@ class SensorData:
         self._df["Label"] = ""
 
         for label in labels:
-            start = pytz.utc.localize(label["start"])
-            end = pytz.utc.localize(label["end"])
+            start = label["start"]
+            end = label["end"]
             activity = label["activity"]
 
             # Select all rows with timestamp between start and end and set activity label

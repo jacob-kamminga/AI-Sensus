@@ -20,7 +20,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
         # Fill camera dictionary and add camera names to combobox
         self.camera_dict = dict()
-        self.load_cameras(self.camera_controller.camera_name)
+        self.load_cameras(self.camera_controller.camera.name)
 
         # Connect UI elements
         self.pushButton_new_camera.setEnabled(False)

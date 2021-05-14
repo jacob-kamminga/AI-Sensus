@@ -77,6 +77,12 @@ class Offset(BaseModel):
     offset = DoubleField()
     added = DateField()
 
+    class Meta:
+        indexes = (
+            # Create a unique index on camera/sensor
+            (('camera', 'sensor'), True),
+        )
+
 
 class LabelType(BaseModel):
     activity = TextField(unique=True)
