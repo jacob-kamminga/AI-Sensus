@@ -199,10 +199,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                 msg.setStandardButtons(QMessageBox.Ok)
                 msg.exec()
                 return
-            print('-')
-            for el in sensor_query:
-                print(el)
-            print('-')
+
             for sensor_usage in sensor_query:
                 sensor_id = sensor_usage.sensor.id
 
@@ -225,9 +222,9 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                     sensor_data.filter_between_dates(start_dt, end_dt)
                     sensor_data.add_labels(labels)
 
+                    # TODO: Indefinite loading bar / loop over deze call plaatsen.
                     df = df.append(sensor_data.get_data())
 
                 file_path = self.prompt_save_location(subject_name + "_" + str(sensor_id))
                 export_dialog = ExportProgressDialog(df, file_path)
                 export_dialog.exec()
-

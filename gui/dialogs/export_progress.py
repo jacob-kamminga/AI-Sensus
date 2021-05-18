@@ -5,6 +5,7 @@ from gui.designer.progress_bar import Ui_Dialog
 from numpy import array_split
 import sys
 
+
 class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
     def __init__(self, df, output_path):
         super().__init__()
