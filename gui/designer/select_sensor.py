@@ -101,7 +101,7 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        Dialog.setWindowTitle(_translate("Dialog", "Select Sensor ID"))
         self.label_sensor.setText(_translate("Dialog", "Select Sensor ID"))
         self.label.setText(_translate("Dialog", "Select a sensor that was used to record the selected sensordata"))
         self.pushButton_delete_sensor.setText(_translate("Dialog", "Delete"))
