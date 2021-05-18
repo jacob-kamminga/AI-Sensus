@@ -25,10 +25,11 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
         # Fill sensor dictionary and add sensor names to combobox
         self.sensor_dict = dict()
-        if self.sensor_data_file.sensor_data is not None:
-            self.load_sensors(self.sensor_data_file.sensor_data.metadata.sensor_name)
-        else:
-            self.load_sensors()
+        if self.sensor_data_file is not None:
+            if self.sensor_data_file.sensor_data is not None:
+                self.load_sensors(self.sensor_data_file.sensor_data.metadata.sensor_name)
+            else:
+                self.load_sensors()
 
         # Connect UI elements
         self.pushButton_new_sensor.setEnabled(False)
