@@ -415,8 +415,10 @@ class GUI(QMainWindow, Ui_MainWindow):
         Open the select sensor dialog window.
         """
         dialog = SelectSensorDialog(self, model_id)
-        if self.sensor_controller.file_name is not None:
-            dialog.setWindowTitle(self.sensor_controller.file_name)
+
+        if self.sensor_controller is not None:
+            if self.sensor_controller.file_name is not None:
+                dialog.setWindowTitle(self.sensor_controller.file_name)
 
         dialog.exec()
         # dialog.show()
