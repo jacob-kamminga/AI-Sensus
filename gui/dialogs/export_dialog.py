@@ -27,8 +27,8 @@ def get_labels(sensor_data_file_id: int, start_dt: dt.datetime, end_dt: dt.datet
               .where(Label.sensor_data_file == sensor_data_file_id &
                      (Label.start_time.between(start_dt, end_dt) |
                       Label.end_time.between(start_dt, end_dt))))
-    return [{'start': label.start_time,
-             'end': label.end_time,
+    return [{'start': label.start_time.replace(tzinfo=pytz.utc),
+             'end': label.end_time.replace(tzinfo=pytz.utc),
              'activity': label.label_type.activity} for label in labels]
 
 
@@ -149,14 +149,14 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         start_dt.setTime(self.timeEdit_start.time())
         return self.project_timezone.localize(start_dt.toPyDateTime()) \
             .astimezone(pytz.utc) \
-            .replace(second=0, tzinfo=None)
+            .replace(second=0)
 
     def get_end_datetime(self) -> dt.datetime:
         end_dt = self.dateEdit_end.dateTime()
         end_dt.setTime(self.timeEdit_end.time())
         return self.project_timezone.localize(end_dt.toPyDateTime()) \
             .astimezone(pytz.utc) \
-            .replace(second=0, tzinfo=None)
+            .replace(second=0)
 
     def get_subject_ids(self) -> [int]:
         return [self.subjects_dict.get(item.text()) for item in self.listWidget_subjects.selectedItems()]

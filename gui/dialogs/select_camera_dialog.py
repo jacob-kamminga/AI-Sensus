@@ -20,7 +20,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
         # Fill camera dictionary and add camera names to combobox
         self.camera_dict = dict()
-        self.load_cameras(self.camera_controller.camera.name)
+        self.load_cameras(self.camera_controller.camera)
 
         # Connect UI elements
         self.pushButton_new_camera.setEnabled(False)
@@ -58,7 +58,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             dialog.show()
             self.load_cameras(dialog.camera.name)
 
-    def load_cameras(self, camera_name):
+    def load_cameras(self, selected_cam):
         self.comboBox_camera.clear()
         cameras = Camera.select()
 
@@ -67,8 +67,8 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             self.comboBox_camera.addItem(camera.name)
 
         # Select current camera in combobox
-        if camera_name is not None:
-            self.comboBox_camera.setCurrentText(camera_name)
+        if selected_cam is not None:
+            self.comboBox_camera.setCurrentText(selected_cam.name)
 
     def delete_camera(self):
         camera_name = self.comboBox_camera.currentText()
