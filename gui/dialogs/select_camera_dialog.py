@@ -56,7 +56,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             dialog = CameraSettingsDialog(camera)
             dialog.exec()
             dialog.show()
-            self.load_cameras(dialog.camera.name)
+            self.load_cameras(dialog.camera)
 
     def load_cameras(self, selected_cam):
         self.comboBox_camera.clear()
@@ -68,7 +68,6 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
         # Select current camera in combobox
         if selected_cam is not None:
-            #TODO: Going to Camera Settings > Edit > Cancel throws an error
             self.comboBox_camera.setCurrentText(selected_cam.name)
 
     def delete_camera(self):
