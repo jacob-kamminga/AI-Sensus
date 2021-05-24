@@ -55,9 +55,9 @@ class EditSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         self.comboBox_subject.setCurrentText(self.usage.subject.name)
         self.comboBox_sensor.setCurrentText(self.usage.sensor.name)
         self.dateEdit_start.setDate(self.usage.start_datetime.date())
-        self.dateEdit_end.setDate(self.end_datetime.date())
-        self.timeEdit_start.setTime(self.start_datetime.time())
-        self.timeEdit_end.setTime(self.end_datetime.time())
+        self.dateEdit_end.setDate(self.usage.end_datetime.date())
+        self.timeEdit_start.setTime(self.usage.start_datetime.time())
+        self.timeEdit_end.setTime(self.usage.end_datetime.time())
 
     def edit(self):
         subject_name = self.comboBox_subject.currentText()
@@ -80,7 +80,7 @@ class EditSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
             sensor_id = Sensor.get(Sensor.name == sensor_name)
 
             # Update the SensorUsage row
-            sensor_usage = SensorUsage.get_by_id(self.sensor_usage_id)
+            sensor_usage = SensorUsage.get_by_id(self.usage.id)
             sensor_usage.subject = subject_id
             sensor_usage.sensor = sensor_id
             sensor_usage.start_datetime = start_dt
