@@ -68,6 +68,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
         # Select current camera in combobox
         if selected_cam is not None:
+            #TODO: Going to Camera Settings > Edit > Cancel throws an error
             self.comboBox_camera.setCurrentText(selected_cam.name)
 
     def delete_camera(self):

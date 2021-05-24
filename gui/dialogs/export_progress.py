@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QMessageBox
 from gui.designer.progress_bar import Ui_Dialog
 from numpy import array_split
 import sys
+import os
 
 
 class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
@@ -20,7 +21,7 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
         self.worker.progress.connect(self.progress)
         self.worker.finished.connect(self.worker.deleteLater)
         self.worker.moveToThread(self.thread)
-        self.thread.start()
+        self.worker.start()
 
     def progress(self, percentage):
         self.progressBar.setProperty("value", percentage+1)
@@ -28,38 +29,14 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
             self.close()
 
     def abort(self):
-        print("Aborting...")
-
-    # def export(self, df, output_path):
-    #     df_split = array_split(self.df, 100)  # Divide into 100 (roughly) equal chunks.
-    #
-    #     try:
-    #         for i in range(100):
-    #             self.progressBar.setProperty("value", i + 1)
-    #             for j in range(1000):
-    #                 pass
-    #             df_split[i].to_csv(self.output_path, mode='a', header=False,
-    #                                index=False)  # mode='a' means append to file.
-    #
-    #         msg = QMessageBox()
-    #         msg.setIcon(QMessageBox.Information)
-    #         msg.setWindowTitle("Success!")
-    #         msg.setText("Export successful!")
-    #         # msg.setInformativeText("")
-    #         msg.setStandardButtons(QMessageBox.Ok)
-    #         msg.exec()
-    #         self.close()
-    #     except Exception as e:
-    #         msg = QMessageBox()
-    #         msg.setIcon(QMessageBox.Information)
-    #         msg.setWindowTitle("Error!")
-    #         msg.setText("An error occurred during export: " + str(e))
-    #         # msg.setInformativeText("")
-    #         msg.setStandardButtons(QMessageBox.Ok)
+        self.worker.quit()
+        self.close()
 
 
-class Worker(QObject):
-
+class Worker(QThread):
+    """
+    Worker to export the dataframe df to output_path.
+    """
     finished = pyqtSignal()
     progress = pyqtSignal(int)
 
@@ -70,20 +47,25 @@ class Worker(QObject):
 
     @pyqtSlot()
     def run(self):
-        """Long-running task."""
+        """Export the dataframe to a CSV file in chunks.
+
+        This loop separates the dataframe in 100 roughly equal parts and appends each part to the
+        previous parts, so that a progress update can be given in the form of a progress bar. This
+        is particularly useful for dataframes that encompass large amounts of time."""
+
         df_split = array_split(self.df, 100)  # Divide into 100 (roughly) equal chunks.
 
-        gettrace = getattr(sys, 'gettrace', None)
-        debug = gettrace() is not None  # Running in debug mode
+        debug = getattr(sys, 'gettrace', None)() is not None  # Check if the program is running in debug mode.
         if debug:
             print("Slowing down export progress bar for visualisation...")
+
         try:
             for i in range(100):
-                # self.progressBar.setProperty("value", i + 1)
-                if debug:
+                if debug:  # Slows down the progress bar to check if it works correctly.
                     for j in range(1000):
                         pass
-                df_split[i].to_csv(self.output_path, mode='a', header=False, index=False)  # mode='a' means append to file.
+                # Append each chunk to output_path CSV using mode='a' (append).
+                df_split[i].to_csv(self.output_path, mode='a', header=False, index=False)
                 self.progress.emit(i + 1)
 
             # msg = QMessageBox()

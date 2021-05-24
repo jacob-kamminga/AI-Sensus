@@ -147,19 +147,42 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         return file_path
 
-    def get_start_datetime(self) -> dt.datetime:
+    def get_start_datetime(self, utc=True) -> dt.datetime:
+        """
+        Retrieve the start datetime from the export dialog.
+
+        :param utc: Should it be converted to UTC or stay in local format.
+        :return: Start datetime either in UTC or local format.
+        """
         start_dt = self.dateEdit_start.dateTime()
         start_dt.setTime(self.timeEdit_start.time())
-        return self.project_timezone.localize(start_dt.toPyDateTime()) \
-            .astimezone(pytz.utc) \
-            .replace(second=0)
 
-    def get_end_datetime(self) -> dt.datetime:
+        start_pydt = start_dt.toPyDateTime()
+
+        if utc:
+            return self.project_timezone.localize(start_pydt) \
+                .astimezone(pytz.utc) \
+                .replace(second=0)
+        else:
+            return start_pydt
+
+    def get_end_datetime(self, utc=True) -> dt.datetime:
+        """
+        Retrieve the end datetime from the export dialog.
+
+        :param utc: Should it be converted to UTC or stay in local format.
+        :return: End datetime either in UTC or local format.
+        """
         end_dt = self.dateEdit_end.dateTime()
         end_dt.setTime(self.timeEdit_end.time())
-        return self.project_timezone.localize(end_dt.toPyDateTime()) \
-            .astimezone(pytz.utc) \
-            .replace(second=0)
+
+        end = end_dt.toPyDateTime()
+        if utc:
+            return self.project_timezone.localize(end) \
+                .astimezone(pytz.utc) \
+                .replace(second=0)
+        else:
+            return end
 
     def get_subject_ids(self) -> [int]:
         return [self.subjects_dict.get(item.text()) for item in self.listWidget_subjects.selectedItems()]
@@ -186,16 +209,19 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                                            SensorUsage.start_datetime.between(start_dt, end_dt) |
                                            SensorUsage.end_datetime.between(start_dt, end_dt) |
                                            (start_dt >= SensorUsage.start_datetime) & (
-                                                       start_dt <= SensorUsage.end_datetime) |
+                                                   start_dt <= SensorUsage.end_datetime) |
                                            (end_dt >= SensorUsage.start_datetime) & (end_dt <= SensorUsage.end_datetime)
                                    )
                                    ))
 
             if len(sensor_query) == 0:
+                start_dt_str = self.get_start_datetime(utc=False).strftime("%d-%m-%Y %H:%M:%S")
+                end_dt_str = self.get_end_datetime(utc=False).strftime("%d-%m-%Y %H:%M:%S")
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Warning)
-                msg.setWindowTitle("No labels within timespan.")
-                msg.setText(f"There are no labels found between {start_dt} and {end_dt}.")
+                msg.setWindowTitle("No labels within selected timespan.")
+                msg.setText(
+                    f"There are no labels found between {start_dt_str} and {end_dt_str}.")
                 msg.setStandardButtons(QMessageBox.Ok)
                 msg.exec()
                 return
@@ -226,5 +252,11 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
                     df = df.append(sensor_data.get_data())
 
                 file_path = self.prompt_save_location(subject_name + "_" + str(sensor_id))
+
+                # Because exporting uses append mode, the existing file has to be deleted first in case of
+                # the reuse of file name.
+                if Path.exists(Path(file_path)):
+                    os.remove(file_path)
+
                 export_dialog = ExportProgressDialog(df, file_path)
                 export_dialog.exec()
