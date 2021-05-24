@@ -3,7 +3,7 @@ from sqlite3 import IntegrityError
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
-from database.models import LabelType
+from database.models import LabelType, Label
 from gui.designer.label_settings import Ui_Dialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
@@ -95,7 +95,12 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
         self.settings_changed = True
         label_type = LabelType.get(LabelType.activity == remove_item)
+
+        # Delete label type and all existing associated labels
+        query = Label.delete().where(Label.label_type == label_type)
+        query.execute()
         label_type.delete_instance()
+
         self.comboBox_label.clear()
         self.label_type_dict.pop(remove_item)
         self.comboBox_label.addItems(self.label_type_dict.keys())
@@ -104,8 +109,7 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
     def label_changed(self, activity):
         if self.color_dict and self.comboBox_label.count():
             self.comboBox_color.setCurrentText(self.color_dict[activity])
-
-        self.lineEdit_keyboard_shortcut.setText(LabelType.get(LabelType.activity == activity).keyboard_shortcut)
+            self.lineEdit_keyboard_shortcut.setText(LabelType.get(LabelType.activity == activity).keyboard_shortcut)
 
     def color_changed(self, color):
         self.settings_changed = True

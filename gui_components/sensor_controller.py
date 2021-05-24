@@ -44,7 +44,6 @@ class SensorController:
         """ The datetime of the sensor data. """
         self.model_id: Optional[int] = None
         """ The model ID. """
-        self.sensor_model = None
         self.sensor_data_file = None
 
     def open_previous_file(self):

@@ -27,7 +27,6 @@ class SensorModelDialog(QDialog, Ui_Dialog):
     def init(self):
         all_models = SensorModel.select()
         self.models = dict((model.model_name, model.id) for model in all_models)
-        # self.models = dict((row[MODEL_NAME], row[ID]) for row in self.sensor_model_manager.get_all_models())
         self.fill_list()
 
     def fill_list(self):

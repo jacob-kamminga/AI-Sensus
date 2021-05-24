@@ -44,8 +44,8 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         new_sensor_name = self.lineEdit_new_sensor_name.text()
         if new_sensor_name != '':
             if self.sensor_model_id is None:
-                self.sensor_model_id = SensorDataFile.get(SensorDataFile.file_id_hash ==
-                                                          self.sensor_data_file.file_id_hash).id
+                sdf = SensorDataFile.get(SensorDataFile.file_id_hash == self.sensor_data_file.file_id_hash)
+                self.sensor_model_id = sdf.sensor.model.id
 
             # If sensor model unknown, prompt user
             if self.sensor_model_id is None:
@@ -54,8 +54,9 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                 dialog.show()
                 self.sensor_model_id = dialog.selected_model_id
                 if self.sensor_model_id is None:
+                    print('[select_sensor_dialog.py]: self.sensor_model_id is None')
                     # TODO: Show warning to user
-                    return
+
             # Prompt user for timezone of sensor
             sensor = Sensor(name=new_sensor_name, model=self.sensor_model_id)
             dialog = EditSensorDialog(sensor)
@@ -79,7 +80,7 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
             sensor = Sensor.get(Sensor.name == sensor_name)
             dialog = EditSensorDialog(sensor)
             dialog.exec()
-            dialog.show()
+
             self.load_sensors(sensor_name)
 
     def load_sensors(self, selected_sensor_name=None):
