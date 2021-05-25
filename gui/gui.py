@@ -486,7 +486,7 @@ class GUI(QMainWindow, Ui_MainWindow):
     def keyPressEvent(self, event) -> None:
         self.current_key_pressed = event.text()
         try:
-            if hasattr(self, 'plot'):
+            if hasattr(self, 'plot_controller'):
                 self.label_active_label_value.setText(
                     LabelType.get(LabelType.keyboard_shortcut == self.current_key_pressed).activity)
         except:
