@@ -79,7 +79,7 @@ class VideoController:
             try:
                 camera_id = Video.get(Video.file_name == self.file_name).camera
                 self.gui.camera_controller.change_camera(camera_id)
-            except DoesNotExist:
+            except Video.DoesNotExist:
                 self.gui.open_select_camera_dialog()
 
             if self.gui.camera_controller.camera is not None:

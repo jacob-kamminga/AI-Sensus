@@ -332,9 +332,9 @@ class PlotController:
                         self.label_dialog.show_dialog(label_shortcut)
 
                     if self.label_dialog.is_accepted:
-                        self.add_label_highlight(self.label_dialog.label.start,
-                                                 self.label_dialog.label.end,
-                                                 self.label_dialog.label.type)
+                        self.add_label_highlight(self.label_dialog.label.start_time,
+                                                 self.label_dialog.label.end_time,
+                                                 self.label_dialog.label.label_type)
                         self.gui.canvas.draw()
 
                 self.labeling = not self.labeling
