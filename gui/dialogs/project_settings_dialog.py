@@ -42,6 +42,8 @@ class ProjectSettingsDialog(QDialog, Ui_Dialog):
         # Fill timezone combobox
         self.comboBox_timezone.addItems(pytz.common_timezones)
 
+        isFile = self.config_file.is_file()
+
         if new_project or not self.config_file.is_file():
             self.create_new_project()
         else:
