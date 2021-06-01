@@ -44,7 +44,10 @@ COL_LABEL = 'Label'
 COL_TIME = 'Time'
 COL_TIMESTAMP = 'Timestamp'
 
-
+INIT_APP_CONFIG = {
+            PREVIOUS_PROJECT_DIR: "",
+            PROJECTS: []
+        }
 def user_data_dir(file_name):
     r"""
     Get OS specific data directory path for LabelingApp.
@@ -202,18 +205,37 @@ class GUI(QMainWindow, Ui_MainWindow):
         # attribute is set.  Clear text for next time.
         self.err_box.setText('')
 
+    def load_settings(self):
+
+        # Check if application config file exists
+        if self.app_config_file.is_file():
+            with self.app_config_file.open() as f:
+                self.app_config = json.load(f)
+
+            prev_project_dir_ = self.app_config.get(PREVIOUS_PROJECT_DIR)
+            if prev_project_dir_:
+                prev_project_dir = Path(self.app_config.get(PREVIOUS_PROJECT_DIR))
+
+                # Check if previous project directory exists
+                if prev_project_dir.is_dir():
+                    self.settings = ProjectSettingsDialog(prev_project_dir)
+
+        else:
+            # Create empty application config file
+            self.app_config_file.parent.mkdir(exist_ok=True)
+            self.app_config_file.touch()
+
+            with self.app_config_file.open('w') as f:
+                json.dump(INIT_APP_CONFIG, f)
+
     def show_welcome_dialog(self):
         """"
         Open the welcome dialog. The welcome dialog first checks if a project was already used during previous session.
         """
-        dialog = Welcome(self)  # pass self to access new and open project dialogs
-        if dialog.settings is None:
+        self.settings = self.load_settings()
+        while self.settings is None:  # Config was just created, so no previous project was found.
+            dialog = Welcome(self)  # pass self to access new and open project dialogs
             dialog.exec()
-
-        if self.settings is None and dialog.settings:  # A project was used during previous session
-            self.settings = dialog.settings
-        if self.settings is None:  # error, this should not happen
-            exit(0)
 
     def open_new_project_dialog(self):
         """
@@ -271,35 +293,40 @@ class GUI(QMainWindow, Ui_MainWindow):
         else:
             old_dir = ""
 
-        project_dir = QFileDialog.getExistingDirectory(
-            self,
-            "Select existing project directory...",
-            old_dir,
-            options=QFileDialog.ShowDirsOnly
-        )
+        project_name = None
+        while project_name is None:
+            project_dir = QFileDialog.getExistingDirectory(
+                self,
+                "Select existing project directory...",
+                old_dir,
+                options=QFileDialog.ShowDirsOnly
+            )
 
-        if project_dir:
+            if project_dir != '':
 
-            self.settings = ProjectSettingsDialog(Path(project_dir))
-            project_name = self.settings.get_setting('project_name')
+                settings = ProjectSettingsDialog(Path(project_dir))
 
-            if project_name is None:
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
-                msg.setWindowTitle("Not a project folder")
-                msg.setText("The selected directory is not an existing project. If you want to use the files in this "
-                            "folder please create a new project an load the files in.")
-                msg.setStandardButtons(QMessageBox.Ok)
-                msg.exec()
+                project_name = settings.get_setting('project_name')
+                # Check to see if the settings contain a name, and is a valid project.
+                if project_name is None:
+                    msg = QMessageBox()
+                    msg.setIcon(QMessageBox.Warning)
+                    msg.setWindowTitle("Not a project folder")
+                    msg.setText("The selected directory is not an existing project. If you want to use the files in this "
+                                "folder please create a new project an load the files in.")
+                    msg.setStandardButtons(QMessageBox.Ok)
+                    msg.exec()
+            else:  # Pressed Cancel.
                 return
 
-            # Reset gui components
-            self.reset_gui_components()
-            # Set project dir as most recent project dir
-            self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
-            self.save_app_config()
+        self.settings = settings
+        # Reset gui components
+        self.reset_gui_components()
+        # Set project dir as most recent project dir
+        self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
+        self.save_app_config()
 
-            # self.close()
+                # self.close()
 
     def reset_gui_components(self):
         """
