@@ -279,7 +279,19 @@ class GUI(QMainWindow, Ui_MainWindow):
         )
 
         if project_dir:
+
             self.settings = ProjectSettingsDialog(Path(project_dir))
+            project_name = self.settings.get_setting('project_name')
+
+            if project_name is None:
+                msg = QMessageBox()
+                msg.setIcon(QMessageBox.Warning)
+                msg.setWindowTitle("Not a project folder")
+                msg.setText("The selected directory is not an existing project. If you want to use the files in this "
+                            "folder please create a new project an load the files in.")
+                msg.setStandardButtons(QMessageBox.Ok)
+                msg.exec()
+                return
 
             # Reset gui components
             self.reset_gui_components()
@@ -331,7 +343,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.label_project_name_value.setText(project_name)
         self.setWindowTitle("AI Sensus - " + project_name)
 
-        #  TODO: Reset dataplot, labels, spinboxes...
+        # TODO: Reset dataplot, labels, spinboxes...
 
     def change_offset(self, offset: float):
         """
