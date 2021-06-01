@@ -17,7 +17,7 @@ import numpy as np
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
-from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, APP_CONFIG_FILE
+from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, APP_CONFIG_FILE, PROJECT_CONFIG_FILE
 from data_export import windowing as wd
 from database.models import Offset, LabelType
 from gui.designer.gui import Ui_MainWindow
@@ -232,7 +232,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """"
         Open the welcome dialog. The welcome dialog first checks if a project was already used during previous session.
         """
-        self.settings = self.load_settings()
+        self.load_settings()
         while self.settings is None:  # Config was just created, so no previous project was found.
             dialog = Welcome(self)  # pass self to access new and open project dialogs
             dialog.exec()
@@ -293,8 +293,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         else:
             old_dir = ""
 
-        project_name = None
-        while project_name is None:
+        project_exists = False
+        while not project_exists:
             project_dir = QFileDialog.getExistingDirectory(
                 self,
                 "Select existing project directory...",
@@ -303,12 +303,11 @@ class GUI(QMainWindow, Ui_MainWindow):
             )
 
             if project_dir != '':
-
-                settings = ProjectSettingsDialog(Path(project_dir))
-
-                project_name = settings.get_setting('project_name')
+                # settings = ProjectSettingsDialog(Path(project_dir))
+                config_file_dir = Path(project_dir).joinpath(PROJECT_CONFIG_FILE)
+                # project_name = settings.get_setting('project_name')
                 # Check to see if the settings contain a name, and is a valid project.
-                if project_name is None:
+                if not config_file_dir.is_file():
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Warning)
                     msg.setWindowTitle("Not a project folder")
@@ -316,17 +315,19 @@ class GUI(QMainWindow, Ui_MainWindow):
                                 "folder please create a new project an load the files in.")
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec()
+                else:
+                    project_exists = True
             else:  # Pressed Cancel.
                 return
 
-        self.settings = settings
+        self.settings = ProjectSettingsDialog(Path(project_dir))
         # Reset gui components
         self.reset_gui_components()
         # Set project dir as most recent project dir
         self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
         self.save_app_config()
 
-                # self.close()
+        # self.close()
 
     def reset_gui_components(self):
         """
