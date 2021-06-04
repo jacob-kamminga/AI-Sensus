@@ -198,12 +198,11 @@ class SensorController:
             self.init_functions()
             self.draw_graph()
             # self.update_camera_text()
-            try:
-                self.gui.label_sensor_data_filename.setText(
-                    self.file_path.parts[-3] + "/" + self.file_path.parts[-2] + "/" + self.file_path.parts[-1]
-                )
-            except:
-                pass
+
+            file_path = Path(self.file_path)
+            file_path_partial = "/".join(file_path.parts[-3:])
+            self.gui.label_video_filename.setText(file_path_partial)
+
             self.gui.update_camera_sensor_offset()
             self.gui.video_controller.sync_with_sensor_data()
 

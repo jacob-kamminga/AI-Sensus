@@ -96,12 +96,8 @@ class VideoController:
                     video.save()
 
                 file_path = Path(self.file_path)
-                try:
-                    self.gui.label_video_filename.setText(
-                        file_path.parts[-3] + "/" + file_path.parts[-2] + "/" + file_path.parts[-1]
-                    )
-                except:
-                    pass
+                file_path_partial = "/".join(file_path.parts[-3:])
+                self.gui.label_video_filename.setText(file_path_partial)
 
                 # Play the video in the QMediaPlayer and activate the associated widgets
                 self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
