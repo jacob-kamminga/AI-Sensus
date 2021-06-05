@@ -123,11 +123,13 @@ class SensorController:
                                    .where(Sensor.id == self.sensor_data_file.sensor)
                                    .get())
             except DoesNotExist:
-                sensor_model_id = None
-
-            # If not found, open a dialog where the user can select the sensor model
-            while sensor_model_id is None:
                 sensor_model_id = self.open_sensor_model_dialog()
+
+            if sensor_model_id is None:
+                return
+            # If not found, open a dialog where the user can select the sensor model
+            # while sensor_model_id is None:
+            #     sensor_model_id = self.open_sensor_model_dialog()
 
             # Retrieve the SensorData object that parses the sensor data file
             self.sensor_data = SensorData(self.file_path, self.settings, sensor_model_id)
