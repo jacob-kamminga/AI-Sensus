@@ -56,7 +56,11 @@ class SensorController:
                 self.file_path = previous_path
                 self.open_file()
 
-                if hasattr(self.gui, 'video') and self.gui.video_controller.project_dt is not None:
+                file_path = Path(self.file_path)
+                file_path_partial = "/".join(file_path.parts[-3:])
+                self.gui.label_sensor_data_filename.setText(file_path_partial)
+
+                if hasattr(self.gui, 'video_controller') and self.gui.video_controller.project_dt is not None:
                     self.gui.video_controller.set_position(0)
 
     def prompt_file(self):
@@ -201,7 +205,7 @@ class SensorController:
 
             file_path = Path(self.file_path)
             file_path_partial = "/".join(file_path.parts[-3:])
-            self.gui.label_video_filename.setText(file_path_partial)
+            self.gui.label_sensor_data_filename.setText(file_path_partial)
 
             self.gui.update_camera_sensor_offset()
             self.gui.video_controller.sync_with_sensor_data()
