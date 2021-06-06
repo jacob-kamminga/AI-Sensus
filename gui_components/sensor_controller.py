@@ -123,7 +123,21 @@ class SensorController:
                                    .where(Sensor.id == self.sensor_data_file.sensor)
                                    .get())
             except DoesNotExist:
-                sensor_model_id = self.open_sensor_model_dialog()
+                msg = QMessageBox()
+                msg.setWindowTitle("No sensor model selected")
+                msg.setIcon(QMessageBox.Warning)
+                msg.setText("No sensor model is associated with the previously loaded sensor data file:\n"
+                            f" {self.file_path}.\n\n"
+                            "Do you want to create/select one now?")
+                msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                msg.setEscapeButton(QMessageBox.No)
+                msg.setDefaultButton(QMessageBox.Yes)
+
+                return_val = msg.exec()
+                if return_val == QMessageBox.Yes:
+                    sensor_model_id = self.open_sensor_model_dialog()
+                else:
+                    return
 
             if sensor_model_id is None:
                 return
