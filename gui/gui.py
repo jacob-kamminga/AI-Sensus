@@ -17,7 +17,7 @@ import numpy as np
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
-from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, APP_CONFIG_FILE, PROJECT_CONFIG_FILE
+from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, APP_CONFIG_FILE
 from data_export import windowing as wd
 from database.models import Offset, LabelType
 from gui.designer.gui import Ui_MainWindow
@@ -327,7 +327,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
         self.save_app_config()
 
-        # self.close()
+                # self.close()
 
     def reset_gui_components(self):
         """
@@ -338,7 +338,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.mediaPlayer.setMedia(QMediaContent())
 
-        if hasattr(self, 'camera'):
+        if hasattr(self, 'camera_controller'):
             self.camera_controller.__init__(self)
         else:
             self.camera_controller = None
@@ -347,20 +347,20 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.figure.clear()
             self.canvas.draw()
 
-        if hasattr(self, 'plot'):
+        if hasattr(self, 'plot_controller'):
             # self.plot.reset()
             self.plot_controller.__init__(self)
         else:
             self.plot_controller = None
 
-        if hasattr(self, 'video'):
+        if hasattr(self, 'video_controller'):
             self.video_controller.__init__(self)
             self.video_controller.open_previous_file()
 
         else:
             self.video_controller = None
 
-        if hasattr(self, 'sensor_data_file'):
+        if hasattr(self, 'sensor_controller'):
             self.sensor_controller.__init__(self)
             self.sensor_controller.open_previous_file()
             self.update_camera_sensor_offset()
