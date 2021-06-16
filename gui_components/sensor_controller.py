@@ -56,7 +56,7 @@ class SensorController:
                 self.file_path = previous_path
                 self.open_file()
 
-                if hasattr(self.gui, 'video') and self.gui.video_controller.project_dt is not None:
+                if hasattr(self.gui, 'video_controller') and self.gui.video_controller.project_dt is not None:
                     self.gui.video_controller.set_position(0)
 
     def prompt_file(self):
@@ -118,12 +118,27 @@ class SensorController:
                                    .join(Sensor)
                                    .where(Sensor.id == self.sensor_data_file.sensor)
                                    .get())
-            except DoesNotExist:
-                sensor_model_id = None
-
             # If not found, open a dialog where the user can select the sensor model
-            while sensor_model_id is None:
-                sensor_model_id = self.open_sensor_model_dialog()
+            except DoesNotExist:
+                msg = QMessageBox()
+                msg.setWindowTitle("No sensor model selected")
+                msg.setIcon(QMessageBox.Warning)
+                msg.setText("While loading the (previously) selected sensor data file, no associated sensor model "
+                            "was found. Sensor data file:\n"
+                            f" {self.file_path}.\n\n"
+                            "Do you want to create/select one now?")
+                msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                msg.setEscapeButton(QMessageBox.No)
+                msg.setDefaultButton(QMessageBox.Yes)
+
+                return_val = msg.exec()
+                if return_val == QMessageBox.Yes:
+                    sensor_model_id = self.open_sensor_model_dialog()
+                else:
+                    return
+
+            if sensor_model_id is None:
+                return
 
             # Retrieve the SensorData object that parses the sensor data file
             self.sensor_data = SensorData(self.file_path, self.settings, sensor_model_id)
