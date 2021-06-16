@@ -1,6 +1,6 @@
 [Setup]
 AppName=Labeling App
-AppVersion=0.4
+AppVersion=0.5
 WizardStyle=modern
 DefaultDirName={autopf}\Labeling App
 DefaultGroupName=Labeling App

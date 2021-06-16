@@ -1,5 +1,4 @@
 import datetime as dt
-import datetime as dt
 import gc
 import math
 import os
@@ -297,7 +296,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def get_sensor_ids(self, subject_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
         sensor_usage_query = (SensorUsage
-                              .select()
+                              .select(SensorUsage.sensor)
                               .where((SensorUsage.subject == subject_id) &
                                      (
                                              SensorUsage.start_datetime.between(start_dt, end_dt) |
@@ -307,7 +306,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
                                              (end_dt >= SensorUsage.start_datetime) & (end_dt <= SensorUsage.end_datetime)
                                      )
                                      ))
-        return list(sensor_usage_query)
+        return [sensor_usage.sensor.id for sensor_usage in sensor_usage_query]
 
     def get_sensor_data_file_ids(self, sensor_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
         sdf_query = (SensorDataFile
@@ -317,7 +316,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
                                 start_dt.astimezone(pytz.utc).replace(tzinfo=None),
                                 end_dt.astimezone(pytz.utc).replace(tzinfo=None))
                             ))
-        return list(sdf_query)
+        return [sdf.id for sdf in sdf_query]
 
     def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
         file_path = self.get_file_path(sensor_data_file_id)
@@ -499,7 +498,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
                     # self.df.index = np.arange(0, len(self.df)+1)
                     # self.df = self.df.reindex(drop=True)
                     # Get color of this label
-                    self.label_color = LabelType.get_by_id(label_type).color
+                    self.label_color = LabelType.get(LabelType.activity == label_type).color
                     # Plot the data for each sensor ID in a new subplot
                     self.draw_graph(len(sensor_ids), plot_index + 1)
                     self.label_info_text.clear()
@@ -527,6 +526,6 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
             duration = self.x_max / self.sample_rate
             position_delta = math.ceil((10 / duration) * 100)
             new_position = self.horizontalSlider_time.value() - position_delta
-            if new_position < 0: new_position = 0
+            new_position = 0 if new_position < 0 else new_position
             self.horizontalSlider_time.setSliderPosition(new_position)
             self.update_plot_axis()
