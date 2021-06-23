@@ -17,7 +17,7 @@ import numpy as np
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
-from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, APP_CONFIG_FILE
+from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, APP_CONFIG_FILE, PROJECT_CONFIG_FILE
 from data_export import windowing as wd
 from database.models import Offset, LabelType
 from gui.designer.gui import Ui_MainWindow
