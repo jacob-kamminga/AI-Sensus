@@ -11,7 +11,7 @@ from constants import COL_ABS_DATETIME
 from database.models import LabelType, Label
 from gui.dialogs.label_dialog import LabelSpecs
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
-from gui_components.sensor_controller import SensorController
+from controllers.sensor_controller import SensorController
 
 LABEL_START_TIME_INDEX = 0
 LABEL_END_TIME_INDEX = 1

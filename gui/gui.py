@@ -34,10 +34,10 @@ from gui.dialogs.sensor_usage_dialog import SensorUsageDialog
 from gui.dialogs.subject_dialog import SubjectDialog
 from gui.dialogs.visual_analysis import VisualAnalysisDialog
 from gui.dialogs.welcome_dialog import Welcome
-from gui_components.camera_controller import CameraController
-from gui_components.plot_controller import PlotController
-from gui_components.sensor_controller import SensorController
-from gui_components.video_controller import VideoController
+from controllers.camera_controller import CameraController
+from controllers.plot_controller import PlotController
+from controllers.sensor_controller import SensorController
+from controllers.video_controller import VideoController
 from machine_learning.classifier import Classifier, make_predictions
 
 COL_LABEL = 'Label'
