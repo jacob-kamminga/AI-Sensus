@@ -8,8 +8,6 @@ class CameraController:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettingsDialog = gui.settings
-
         self.camera = None
 
     def change_camera(self, camera_id: int):
@@ -22,6 +20,10 @@ class CameraController:
 
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()
+
+    @staticmethod
+    def save_camera(camera: Camera):
+        camera.save()
 
     # def delete_camera(self):
     #     """

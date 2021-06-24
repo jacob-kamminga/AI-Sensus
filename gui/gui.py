@@ -243,7 +243,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         new_project_dialog = NewProject()
         new_project_dialog.exec()
-        project_name = new_project_dialog.project_name
+        project_name = new_project_dialog.project_name  # Not MVC, but unnecessary to change.
 
         if project_name:
             project_dir = QFileDialog.getExistingDirectory(
@@ -427,10 +427,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         dialog.exec()
         # dialog.show()
 
-        if dialog.camera is not None:
+        current_camera = self.camera_controller.camera
+        if current_camera is not None:
             if self.video_controller.file_name is not None:
-                self.video_controller.update_camera(dialog.camera.id)
-            self.camera_controller.change_camera(dialog.camera.id)
+                self.video_controller.update_camera(current_camera.id)
+            self.camera_controller.change_camera(current_camera.id)
 
     def open_label_settings_dialog(self):
         """

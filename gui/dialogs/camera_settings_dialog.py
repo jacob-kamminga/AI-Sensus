@@ -1,6 +1,7 @@
 import pytz
 from PyQt5 import QtWidgets
 
+from controllers.camera_controller import CameraController
 from database.models import Camera
 from gui.designer.camera_settings import Ui_Dialog
 
@@ -11,24 +12,24 @@ CAMERA_TIMEZONE_INDEX = 2
 
 class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, camera: Camera):
+    def __init__(self, selected_camera: Camera):
         super().__init__()
         self.setupUi(self)
-        self.camera = camera
+        self.selected_camera = selected_camera
 
-        if self.camera.manual_offset:
-            self.doubleSpinBox_manual_offset.setValue(self.camera.manual_offset)
+        if self.selected_camera.manual_offset:
+            self.doubleSpinBox_manual_offset.setValue(self.selected_camera.manual_offset)
 
         # Pre-fill name in edit box
-        self.lineEdit_change_camera_name.setText(self.camera.name)
+        self.lineEdit_change_camera_name.setText(self.selected_camera.name)
 
         # Add timezones to combobox
         self.listWidget_timezones.addItems(pytz.common_timezones)
 
         # Select the timezone of the current camera
-        tz_index = pytz.common_timezones.index(self.camera.timezone)
+        tz_index = pytz.common_timezones.index(self.selected_camera.timezone)
         self.listWidget_timezones.setCurrentRow(tz_index)
-        self.lineEdit_timezone.setText(self.camera.timezone)
+        self.lineEdit_timezone.setText(self.selected_camera.timezone)
 
         # Connect UI elements
         self.lineEdit_timezone.textChanged.connect(self.filter_timezone_rows)
@@ -36,10 +37,10 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.pushButton_save_camera_settings.clicked.connect(self.save_camera_settings)
         self.pushButton_cancel_camera_settings.clicked.connect(self.close)
 
-    def load_timezones(self, text: str):
-        if self.camera_dict and self.comboBox_camera.count():
-            index = pytz.common_timezones.index(self.camera_dict[text])
-            self.listWidget_timezones.setCurrentRow(index)
+    # def load_timezones(self, text: str):  # Currently not used.
+    #     if self.camera_dict and self.comboBox_camera.count():
+    #         index = pytz.common_timezones.index(self.camera_dict[text])
+    #         self.listWidget_timezones.setCurrentRow(index)
 
     def filter_timezone_rows(self):
         """
@@ -54,10 +55,14 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
                 self.listWidget_timezones.setRowHidden(i, True)
 
     def save_camera_settings(self):
-        self.camera.name = self.lineEdit_change_camera_name.text()
-        self.camera.timezone = self.listWidget_timezones.selectedItems()[0].text()
-        self.camera.manual_offset = self.doubleSpinBox_manual_offset.value()
-        self.camera.save()
+        """Retrieve the (edited) camera name, timezone and manual offset and write to the database."""
+        camera = self.selected_camera
+        camera.name = self.lineEdit_change_camera_name.text()
+        camera.timezone = self.listWidget_timezones.selectedItems()[0].text()
+        camera.manual_offset = self.doubleSpinBox_manual_offset.value()
+
+        CameraController.save_camera(camera)
+        # self.selected_camera.save()
         self.close()
     # def enable_timezone_pushbutton(self):
     #     self.pushButton_save_timezone.setEnabled(True)
