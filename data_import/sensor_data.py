@@ -8,12 +8,11 @@ from PyQt5.QtWidgets import QMessageBox
 import parse_function.custom_function_parser as parser
 from constants import COL_ABS_DATETIME, RELATIVE_TIME_ITEM, ABSOLUTE_TIME_ITEM
 from data_import import sensor as sens, column_metadata as cm
+from database.models import *
 from date_utils import utc_to_local
 from machine_learning.classifier import CLASSIFIER_NAN
 from models.sensor_metadata import SensorMetadata
 from parse_function.parse_exception import ParseException
-from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
-from database.models import *
 
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1
@@ -23,25 +22,24 @@ COLUMN_TIMESTAMP = COL_ABS_DATETIME
 
 class SensorData:
 
-    def __init__(self, file_path: Path, settings: ProjectSettingsDialog, sensor_model_id):
+    def __init__(self, project_controller, file_path: Path, sensor_model_id):
         # Initialize primitives
-        self.settings = settings
         self.file_path = file_path
+        self.project_controller = project_controller
 
         self.sensor_model_id = sensor_model_id
         self.sensor_model = SensorModel.get_by_id(sensor_model_id)
         self.sensor_name = None
         self.metadata = SensorMetadata(self.file_path, self.sensor_model, sensor_model_id)
         self.col_metadata = dict()
-        self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
+        self.project_timezone = pytz.timezone(self.project_controller.get_setting('timezone'))
 
         # Parse metadata and data
-        self._settings_dict = settings.settings_dict
         self._df = None
         self.parse()
 
     def __copy__(self):
-        new = type(self)(self.file_path, self.settings, self.sensor_model_id)
+        new = type(self)(self.project_controller, self.file_path, self.sensor_model_id)
         new.__dict__.update(self.__dict__)
         return new
 
@@ -92,7 +90,7 @@ class SensorData:
             if self.sensor_model.relative_absolute == RELATIVE_TIME_ITEM:
                 try:
                     self.normalize_rel_datetime_column()
-                except TypeError as e:
+                except TypeError:
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Critical)
                     msg.setWindowTitle("Error")
@@ -102,6 +100,7 @@ class SensorData:
                                            "The data will be parsed as absolute.")
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec()
+                    # TODO: Change relative/absolute value in database to relative.
 
     def set_column_metadata(self, columns):
         """
@@ -109,25 +108,25 @@ class SensorData:
         """
         for name in columns:
             # parse data_type
-            data_type = (self._settings_dict[name + "_data_type"]
-                         if name + "_data_type" in self._settings_dict.keys() else None)
+            data_type = (self.project_controller.settings_dict[name + "_data_type"]
+                         if name + "_data_type" in self.project_controller.settings_dict.keys() else None)
 
             # parse sensor:
             # sensor name
-            sensor_name = (self._settings_dict[name + "_sensor_name"]
-                           if name + "_sensor_name" in self._settings_dict.keys() else None)
+            sensor_name = (self.project_controller.settings_dict[name + "_sensor_name"]
+                           if name + "_sensor_name" in self.project_controller.settings_dict.keys() else None)
 
             # sampling rate
-            sr = (self._settings_dict[name + "_sampling_rate"]
-                  if name + "_sampling_rate" in self._settings_dict.keys() else None)
+            sr = (self.project_controller.settings_dict[name + "_sampling_rate"]
+                  if name + "_sampling_rate" in self.project_controller.settings_dict.keys() else None)
 
             # unit of measurement
-            unit = (self._settings_dict[name + "_unit"]
-                    if name + "unit" in self._settings_dict.keys() else None)
+            unit = (self.project_controller.settings_dict[name + "_unit"]
+                    if name + "unit" in self.project_controller.settings_dict.keys() else None)
 
             # conversion rate
-            conversion = (self._settings_dict[name + "_conversion"]
-                          if name + "_conversion" in self._settings_dict.keys() else None)
+            conversion = (self.project_controller.settings_dict[name + "_conversion"]
+                          if name + "_conversion" in self.project_controller.settings_dict.keys() else None)
 
             # construct sensor
             sensor = sens.Sensor(sensor_name, sr, unit, conversion)
@@ -195,11 +194,12 @@ class SensorData:
                     msg.setWindowTitle("Invalid datetime string format")
                     msg.setText("Error: " + str(e))
                     msg.setInformativeText("The sensor datetime string format you entered is invalid. "
-                                           f"Please change it to the correct format under Sensor > Sensor models > {self.sensor_name} > View settings.")
+                                           f"Please change it to the correct format under Sensor > Sensor models > "
+                                           f"{self.sensor_name} > View settings.")
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec()
                     return False
-                except AttributeError as e:
+                except AttributeError:
                     # Relative time format could not be parsed.
                     self.sensor_model.relative_absolute = ABSOLUTE_TIME_ITEM
 

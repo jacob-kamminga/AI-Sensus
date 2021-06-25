@@ -22,7 +22,7 @@ class VideoController:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettingsDialog = gui.settings
+        self.project_controller = gui.project_controller
         self.file_name = None
         self.file_path = None
 
@@ -37,7 +37,7 @@ class VideoController:
     # def reset(self, gui):
 
     def open_previous_file(self):
-        previous_path = self.settings.get_setting('last_videofile')
+        previous_path = self.project_controller.get_setting('last_videofile')
 
         if previous_path is not None:
             if os.path.isfile(previous_path):
@@ -50,7 +50,7 @@ class VideoController:
         Opens a file dialog that lets the user select a file.
         """
         # Check if last used path is known
-        path = self.settings.get_setting('last_videofile')
+        path = self.project_controller.get_setting('last_videofile')
 
         if path is None:
             path = ""
@@ -71,7 +71,7 @@ class VideoController:
         """
         if self.file_path is not None and os.path.isfile(self.file_path):
             # Save the path for next time
-            self.settings.set_setting('last_videofile', self.file_path)
+            self.project_controller.set_setting('last_videofile', self.file_path)
 
             self.file_name = ntpath.basename(self.file_path)
 
@@ -121,7 +121,7 @@ class VideoController:
 
     def update_timezone(self):
         if self.utc_dt is not None:
-            self.project_dt = utc_to_local(self.utc_dt, pytz.timezone(self.settings.get_setting('timezone')))
+            self.project_dt = utc_to_local(self.utc_dt, pytz.timezone(self.project_controller.get_setting('timezone')))
 
     def update_camera(self, camera_id: int):
         if self.id_ is not None:

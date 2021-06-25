@@ -33,12 +33,11 @@ COL_TIMESTAMP = 'Timestamp'
 
 class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettingsDialog, datetime: dt.datetime = None):
+    def __init__(self, project_controller, datetime: dt.datetime = None):
         super().__init__()
         self.setupUi(self)
         self.setWindowTitle("Visual Inspection")
-        self.settings = settings
-        self.settings_dict = settings.settings_dict
+        self.project_controller = project_controller
 
         # Create scrolling key shortcuts
         self.shortcut_plus_10s = QShortcut(Qt.Key_Right, self)
@@ -184,7 +183,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         self.comboBox_functions.clear()
 
         # Retrieve the formulas that are associated with the project, and store them in the dictionary
-        stored_formulas = self.settings.get_setting('formulas')
+        stored_formulas = self.project_controller.get_setting('formulas')
         for formula_name in stored_formulas:
             try:
                 self.add_column_from_func(formula_name, stored_formulas[formula_name])
@@ -242,14 +241,12 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
             return False
 
     def change_plot_width(self, value):  # TODO: An error occurs where there is an infinite loop of change_plot_width
-        # self.settings.set_setting('plot_width', value)
         self.plot_width = value
 
         if self.df is not None:
             self.update_plot_axis()
 
     def change_plot_height(self, value):
-        # self.settings.set_setting('plot_height_factor', value)
         self.plot_height_factor = value
         if self.df is not None:
             self.update_plot_axis()
@@ -331,11 +328,12 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
 
         if model_id >= 0 and sensor_id >= 0:
             sensor_timezone = pytz.timezone(Sensor.get_by_id(sensor_id).timezone)
-            sensor_data = SensorData(Path(file_path), self.settings, model_id)
+            sensor_data = SensorData(self.project_controller, Path(file_path), model_id)
             sensor_data.metadata.sensor_timezone = sensor_timezone
             # Parse the utc datetime of the sensor data
             sensor_data.metadata.parse_datetime()
             sensor_data.parse()
+
         # Sensor model unknown
         else:
             sensor_data = None
@@ -397,7 +395,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         start_dt = start_dt.toPyDateTime()
         # return  start_dt
         if not start_dt.tzinfo:
-            return pytz.timezone(self.settings.get_setting('timezone')).localize(start_dt)
+            return pytz.timezone(self.project_controller.get_setting('timezone')).localize(start_dt)
         else:
             return start_dt
 
@@ -411,7 +409,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         end_dt = end_dt.toPyDateTime()
         # return end_dt
         if not end_dt.tzinfo:
-            return pytz.timezone(self.settings.get_setting('timezone')).localize(end_dt)
+            return pytz.timezone(self.project_controller.get_setting('timezone')).localize(end_dt)
         else:
             return end_dt
 
@@ -485,18 +483,20 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
                             # plt.show()
                             del sensor_data, block
                             gc.collect()
-                        except MemoryError as e:
+                        except MemoryError:
                             QMessageBox.critical(self, "Memory error", "Please try again with a smaller time period")
                             self.label_info_text.clear()
                             return
 
                     # Fill functions combobox for this data
                     self.init_functions()
+
                     # Create new index to avoid gaps in plotting
                     # self.df = self.df.reset_index(drop=True, inplace=True)
                     # self.df.reset_index(drop=True, inplace=True)
                     # self.df.index = np.arange(0, len(self.df)+1)
                     # self.df = self.df.reindex(drop=True)
+
                     # Get color of this label
                     self.label_color = LabelType.get(LabelType.activity == label_type).color
                     # Plot the data for each sensor ID in a new subplot

@@ -12,10 +12,9 @@ from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 class SensorModelNameDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettingsDialog, model=None, model_id=None, test_file=None, parent=None):
+    def __init__(self, model=None, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
-        self.settings = settings
         self.model_id = model_id
         self.test_file = test_file
         self.parent = parent
@@ -93,7 +92,6 @@ class SensorModelNameDialog(QDialog, Ui_Dialog):
         if model_name != '':
             self.model[MODEL_NAME] = model_name
             dialog = SensorModelDateDialog(
-                self.settings,
                 self.model,
                 model_id=self.model_id,
                 test_file=self.test_file,

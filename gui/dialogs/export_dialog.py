@@ -14,9 +14,6 @@ from data_import.sensor_data import SensorData
 from database.models import SensorUsage, SensorDataFile, Subject, Label, LabelType, Sensor, SensorModel
 from gui.designer.export_new import Ui_Dialog
 from gui.dialogs.export_progress import ExportProgressDialog
-from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
-
-from numpy import array_split
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -37,13 +34,12 @@ def get_labels(sensor_data_file_id: int, start_dt: dt.datetime, end_dt: dt.datet
 
 class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettingsDialog, datetime: dt.datetime = None):
+    def __init__(self, project_controller, datetime: dt.datetime = None):
         super().__init__()
         self.setupUi(self)
 
-        self.settings = settings
-        self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
-        self.settings_dict = settings.settings_dict
+        self.project_controller = project_controller
+        self.project_timezone = pytz.timezone(project_controller.get_setting('timezone'))
 
         self.subjects = Subject.select()
         self.subjects_dict = dict()
@@ -84,7 +80,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         if model_id >= 0 and sensor_id >= 0:
             sensor_timezone = pytz.timezone(Sensor.get_by_id(sensor_id).timezone)
-            sensor_data = SensorData(Path(file_path), self.settings, model_id)
+            sensor_data = SensorData(self.project_controller, Path(file_path), model_id)
             sensor_data.metadata.sensor_timezone = sensor_timezone
             # Parse the utc datetime of the sensor data
             sensor_data.metadata.parse_datetime()
@@ -143,7 +139,8 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
     def prompt_save_location(self, name_suggestion: str):
         # Open QFileDialog
         file_path, _ = QFileDialog.getSaveFileName(self, "Save file",
-                                                   self.settings.project_dir.as_posix() + "\\" + name_suggestion + ".csv")
+                                                   self.project_controller.project_dir.as_posix() + "\\" +
+                                                   name_suggestion + ".csv")
 
         return file_path
 

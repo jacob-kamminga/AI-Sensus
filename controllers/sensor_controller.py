@@ -27,9 +27,8 @@ class SensorController:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettingsDialog = gui.settings
         self.file_path: Optional[Path] = None
-
+        self.project_controller = gui.project_controller
         self.file_name = None
 
         self.file_id_hash = None
@@ -47,7 +46,7 @@ class SensorController:
         self.sensor_data_file = None
 
     def open_previous_file(self):
-        previous_path = self.settings.get_setting(PREVIOUS_SENSOR_DATA_FILE)
+        previous_path = self.project_controller.get_setting(PREVIOUS_SENSOR_DATA_FILE)
 
         if previous_path:
             previous_path = Path(previous_path)
@@ -63,7 +62,7 @@ class SensorController:
         """
         Opens a file dialog that lets the user select a file.
         """
-        path = self.settings.get_setting(PREVIOUS_SENSOR_DATA_FILE)
+        path = self.project_controller.get_setting(PREVIOUS_SENSOR_DATA_FILE)
 
         if path is None:
             path = ""
@@ -81,10 +80,8 @@ class SensorController:
         self.open_file()
 
     def open_sensor_model_dialog(self):
-        dialog = SensorModelDialog(self.settings)
+        dialog = SensorModelDialog()
         dialog.exec()
-        # dialog.show()
-
         return dialog.selected_model_id
 
     def open_file(self):
@@ -93,7 +90,7 @@ class SensorController:
         """
         if self.file_path and self.file_path.is_file():
             # Store the selected file path in the configuration
-            self.settings.set_setting(PREVIOUS_SENSOR_DATA_FILE, self.file_path.as_posix())
+            self.project_controller.set_setting(PREVIOUS_SENSOR_DATA_FILE, self.file_path.as_posix())
 
             self.file_name = ntpath.basename(self.file_path.as_posix())
             self.file_id_hash = self.create_file_id(self.file_path)
@@ -141,7 +138,7 @@ class SensorController:
                 return
 
             # Retrieve the SensorData object that parses the sensor data file
-            self.sensor_data = SensorData(self.file_path, self.settings, sensor_model_id)
+            self.sensor_data = SensorData(self.project_controller, self.file_path, sensor_model_id)
             # Try to load sensor name from either metadata or DB
             if self.sensor_data.metadata.sensor_name:
                 sensor_name = self.sensor_data.metadata.sensor_name
@@ -183,7 +180,7 @@ class SensorController:
             self.sensor_data.parse()
 
             # Retrieve the formulas that are associated with this sensor data file, and store them in the dictionary
-            stored_formulas = self.settings.get_setting('formulas')
+            stored_formulas = self.project_controller.get_setting('formulas')
 
             for formula_name in stored_formulas:
                 try:
@@ -223,6 +220,7 @@ class SensorController:
             self.gui.video_controller.sync_with_sensor_data()
 
     def init_functions(self):
+        # TODO: Move to plot_controller.py
         # Add every column in the DataFrame to the possible Data Series that can be plotted, except for time,
         # and plot the first one
         self.gui.comboBox_functions.clear()
@@ -245,6 +243,8 @@ class SensorController:
         self.sensor_data_file.save()
 
     def draw_graph(self):
+        # TODO: Move to plot_controller.py
+
         # Reset the figure and add a new subplot to it
         self.gui.figure.clear()
         self.gui.plot_controller.data_plot = self.gui.figure.add_subplot(1, 1, 1)
@@ -258,9 +258,9 @@ class SensorController:
         x_window_start = self.gui.plot_controller.x_min - (self.gui.plot_controller.plot_width / 2)
         x_window_end = self.gui.plot_controller.x_min + (self.gui.plot_controller.plot_width / 2)
 
-        if self.settings.get_setting("plot_height_factor") is None:
+        if self.project_controller.get_setting("plot_height_factor") is None:
             self.gui.plot_controller.plot_height_factor = 1.0
-            self.settings.set_setting("plot_height_factor", self.gui.plot_controller.plot_height_factor)
+            self.project_controller.set_setting("plot_height_factor", self.gui.plot_controller.plot_height_factor)
 
         # Set the axis of the data plot
         self.gui.plot_controller.data_plot.axis([
@@ -278,6 +278,7 @@ class SensorController:
         self.gui.canvas.draw()
 
     def update_camera_text(self):
+        # TODO: MVC
         camera_name = self.gui.label_camera_name_value.text()
 
         if camera_name:

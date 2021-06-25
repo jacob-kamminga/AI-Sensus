@@ -8,10 +8,9 @@ from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 class SensorModelColumnNamesDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettingsDialog, model: {}, model_id=None, test_file=None, parent=None):
+    def __init__(self, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
-        self.settings = settings
         self.model_id = model_id
         self.test_file = test_file
         self.parent = parent
@@ -30,7 +29,6 @@ class SensorModelColumnNamesDialog(QDialog, Ui_Dialog):
         self.model[COL_NAMES_ROW] = self.spinBox_row.value() - 1
 
         dialog = SensorModelCommentStyleDialog(
-            self.settings,
             self.model,
             model_id=self.model_id,
             test_file=self.test_file,
@@ -42,7 +40,6 @@ class SensorModelColumnNamesDialog(QDialog, Ui_Dialog):
     def open_previous_dialog(self):
         from gui.dialogs.new_sensor_model_id_dialog import SensorModelIdDialog
         dialog = SensorModelIdDialog(
-            self.settings,
             self.model,
             model_id=self.model_id,
             test_file=self.test_file,

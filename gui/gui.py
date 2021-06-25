@@ -38,6 +38,7 @@ from controllers.camera_controller import CameraController
 from controllers.plot_controller import PlotController
 from controllers.sensor_controller import SensorController
 from controllers.video_controller import VideoController
+from controllers.project_controller import ProjectController
 from machine_learning.classifier import Classifier, make_predictions
 
 COL_LABEL = 'Label'
@@ -48,6 +49,7 @@ INIT_APP_CONFIG = {
             PREVIOUS_PROJECT_DIR: "",
             PROJECTS: []
         }
+
 def user_data_dir(file_name):
     r"""
     Get OS specific data directory path for LabelingApp.
@@ -69,7 +71,7 @@ def user_data_dir(file_name):
         os_path = getenv("XDG_DATA_HOME", "~/.local/share")
 
     # join with LabelingApp dir
-    path = Path(os_path) / "Labeling App"
+    path = Path(os_path) / "Labeling App MVC"
 
     return path.expanduser() / file_name
 
@@ -85,13 +87,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         # To avoid creating multiple error boxes
         self.err_box = None
 
-        self.settings: Optional[ProjectSettingsDialog] = None
-
         self.app_config_file = user_data_dir(APP_CONFIG_FILE)
         self.app_config = {}
 
+        self.project_controller = ProjectController()
         self.show_welcome_dialog()
-        # update_db_structure(self.settings)
+        # update_db_structure(self.settings)  # function of self.settings has been moved to project_controller
 
         # GUI components
         self.video_controller = VideoController(self)
@@ -180,7 +181,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.video_controller.open_previous_file()
         self.sensor_controller.open_previous_file()
 
-        project_name = self.settings.get_setting('project_name')
+        project_name = self.project_controller.get_setting('project_name')
         self.label_project_name_value.setText(project_name)
         self.setWindowTitle("AI Sensus - " + project_name)
 
@@ -218,7 +219,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
                 # Check if previous project directory exists
                 if prev_project_dir.is_dir():
-                    self.settings = ProjectSettingsDialog(prev_project_dir)
+                    self.project_controller.load(prev_project_dir, new_project=False)
 
         else:
             # Create empty application config file
@@ -233,7 +234,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         Open the welcome dialog. The welcome dialog first checks if a project was already used during previous session.
         """
         self.load_settings()
-        while self.settings is None:  # Config was just created, so no previous project was found.
+        while self.project_controller.project_dir is None:  # Config was just created, so no previous project was found.
             dialog = Welcome(self)  # pass self to access new and open project dialogs
             dialog.exec()
 
@@ -256,10 +257,13 @@ class GUI(QMainWindow, Ui_MainWindow):
                 # Add project name to project directory
                 project_dir = Path(project_dir).joinpath(project_name)
 
-                self.settings = ProjectSettingsDialog(project_dir)
-                self.settings.set_setting('project_name', project_name)
+                self.project_controller.load(project_dir, new_project=True)
+                self.project_controller.set_setting('project_name', project_name)
 
-                self.settings.exec()
+                dialog = ProjectSettingsDialog(self)
+                dialog.exec()
+
+                # self.project_controller.create_new_project(project_dir, project_name)
 
                 # # Create database
                 # try:
@@ -288,8 +292,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         Open dialog for selecting an existing project.
 
         """
-        if self.settings is not None:
-            old_dir = str(self.settings.project_dir)
+        if self.project_controller.project_dir is not None:
+            old_dir = str(self.project_controller.project_dir)
         else:
             old_dir = ""
 
@@ -303,10 +307,8 @@ class GUI(QMainWindow, Ui_MainWindow):
             )
 
             if project_dir != '':
-                # settings = ProjectSettingsDialog(Path(project_dir))
                 config_file_dir = Path(project_dir).joinpath(PROJECT_CONFIG_FILE)
-                # project_name = settings.get_setting('project_name')
-                # Check to see if the settings contain a name, and is a valid project.
+
                 if not config_file_dir.is_file():
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Warning)
@@ -320,14 +322,13 @@ class GUI(QMainWindow, Ui_MainWindow):
             else:  # Pressed Cancel.
                 return
 
-        self.settings = ProjectSettingsDialog(Path(project_dir))
+        self.project_controller.load(Path(project_dir))
         # Reset gui components
         self.reset_gui_components()
         # Set project dir as most recent project dir
         self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
         self.save_app_config()
 
-                # self.close()
 
     def reset_gui_components(self):
         """
@@ -337,6 +338,16 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
 
         self.mediaPlayer.setMedia(QMediaContent())
+
+        self.label_project_name_value.clear()
+        self.label_video_date_value.clear()
+        self.label_video_time_value.clear()
+        self.label_camera_name_value.clear()
+        self.label_active_label_value.clear()
+        self.comboBox_functions.clear()
+        self.label_current_function_value.clear()
+        self.label_video_filename.clear()
+        self.label_sensor_data_filename.clear()
 
         if hasattr(self, 'camera_controller'):
             self.camera_controller.__init__(self)
@@ -367,11 +378,9 @@ class GUI(QMainWindow, Ui_MainWindow):
         else:
             self.sensor_controller = None
 
-        project_name = self.settings.get_setting('project_name')
+        project_name = self.project_controller.get_setting('project_name')
         self.label_project_name_value.setText(project_name)
         self.setWindowTitle("AI Sensus - " + project_name)
-
-        # TODO: Reset dataplot, labels, spinboxes...
 
     def change_offset(self, offset: float):
         """
@@ -437,9 +446,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Opens the label settings_dict dialog window.
         """
-        dialog = LabelSettingsDialog(self.settings)
+        dialog = LabelSettingsDialog(self)
         dialog.exec()
-        # dialog.show()
 
         # Upon window close
         if dialog.settings_changed:
@@ -449,7 +457,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Open the subject mapping dialog window.
         """
-        dialog = SubjectDialog(self.settings)
+        dialog = SubjectDialog()
         dialog.exec()
         # dialog.show()
 
@@ -476,14 +484,12 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Open the sensor model dialog.
         """
-        dialog = SensorModelDialog(self.settings)
+        dialog = SensorModelDialog()
         dialog.exec()
-        # dialog.show()
 
     def open_sensor_usage_dialog(self):
-        dialog = SensorUsageDialog(self.settings)
+        dialog = SensorUsageDialog(self)
         dialog.exec()
-        # dialog.show()
 
     def open_export(self):
         """
@@ -491,22 +497,16 @@ class GUI(QMainWindow, Ui_MainWindow):
         accordingly.
         """
         dialog = ExportDialog(
-            self.settings,
+            self.project_controller,
             self.sensor_controller.utc_dt
         )
         dialog.exec()
-        # dialog.show()
 
     def open_project_settings_dialog(self):
-        if self.app_config.get(PREVIOUS_PROJECT_DIR):
-            prev_project_dir = Path(self.app_config.get(PREVIOUS_PROJECT_DIR))
-
-            # Check if previous project directory exists
-            if prev_project_dir.is_dir():
-                self.settings = ProjectSettingsDialog(prev_project_dir)
-                self.settings.exec()
-                if self.settings.settings_changed:
-                    self.reset_gui_components()
+        dialog = ProjectSettingsDialog(self)
+        dialog.exec()
+        if dialog.settings_changed:
+            self.reset_gui_components()
 
     def open_visual_inspection_dialog(self):
         """
@@ -519,7 +519,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             file_date = None
 
         dialog = VisualAnalysisDialog(
-            self.settings,
+            self.project_controller,
             file_date
         )
         dialog.exec()

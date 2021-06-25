@@ -1,10 +1,8 @@
 import datetime as dt
-from typing import Optional
 
 import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDateTime
-from PyQt5.uic.properties import QtGui
 
 from database.models import LabelType, Label
 from gui.designer.label_specs import Ui_LabelSpecs

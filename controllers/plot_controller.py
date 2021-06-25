@@ -10,7 +10,6 @@ from pandas.core.dtypes.common import is_numeric_dtype
 from constants import COL_ABS_DATETIME
 from database.models import LabelType, Label
 from gui.dialogs.label_dialog import LabelSpecs
-from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from controllers.sensor_controller import SensorController
 
 LABEL_START_TIME_INDEX = 0
@@ -29,14 +28,14 @@ class PlotController:
 
     def __init__(self, gui):
         self.gui = gui
-        self.settings: ProjectSettingsDialog = gui.settings
+        self.project_controller = gui.project_controller
         self.sensor_controller: SensorController = gui.sensor_controller
-        self.project_timezone = pytz.timezone(self.settings.get_setting('timezone'))
+        self.project_timezone = pytz.timezone(self.project_controller.get_setting('timezone'))
 
         # self.reset()
-        self.formulas = self.settings.get_setting('formulas')
-        self.plot_width = self.settings.get_setting('plot_width')
-        self.plot_height_factor = self.settings.get_setting('plot_height_factor')
+        self.formulas = self.project_controller.get_setting('formulas')
+        self.plot_width = self.project_controller.get_setting('plot_width')
+        self.plot_height_factor = self.project_controller.get_setting('plot_height_factor')
 
         self.data_plot = None
         self.current_plot = None
@@ -87,9 +86,9 @@ class PlotController:
             self.gui.comboBox_functions.addItem(self.gui.lineEdit_function_name.text())
 
             self.formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
-            stored_formulas = self.settings.get_setting("formulas")
+            stored_formulas = self.project_controller.get_setting("formulas")
             stored_formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
-            self.settings.set_setting("formulas", stored_formulas)
+            self.project_controller.set_setting("formulas", stored_formulas)
             self.gui.lineEdit_function_regex.clear()
             self.gui.lineEdit_function_name.clear()
         except Exception as e:
@@ -138,7 +137,7 @@ class PlotController:
             if res == QMessageBox.Ok:
                 # Delete the selected plot from settings
                 self.formulas.pop(selected_plot)
-                self.settings.set_setting('formulas', self.formulas)
+                self.project_controller.set_setting('formulas', self.formulas)
 
                 # Delete the selected plot from the combobox and update the plot
                 self.gui.comboBox_functions.removeItem(index)
@@ -146,14 +145,14 @@ class PlotController:
                 self.change_plot()
 
     def change_plot_width(self, value):  # TODO: An error occurs where there is an infinite loop of change_plot_width
-        self.settings.set_setting('plot_width', value)
+        self.project_controller.set_setting('plot_width', value)
         self.plot_width = value
 
         if self.sensor_controller.sensor_data is not None:
             self.update_plot_axis()
 
     def change_plot_height(self, value):
-        self.settings.set_setting('plot_height_factor', value)
+        self.project_controller.set_setting('plot_height_factor', value)
         self.plot_height_factor = value
 
     def update_plot_axis(self, position=-1.0):
@@ -241,7 +240,7 @@ class PlotController:
         label_type = LabelType.get_by_id(label_type_id)
         label_start_num = date2num(label_start)
         label_end_num = date2num(label_end)
-        alpha = self.settings.get_setting('label_opacity') / 100
+        alpha = self.project_controller.get_setting('label_opacity') / 100
         span = self.data_plot.axvspan(label_start_num,
                                       label_end_num,
                                       facecolor=label_type.color,

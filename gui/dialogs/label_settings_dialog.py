@@ -5,19 +5,17 @@ from PyQt5.QtWidgets import QMessageBox
 
 from database.models import LabelType, Label
 from gui.designer.label_settings import Ui_Dialog
-from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
-
 
 class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettingsDialog):
+    def __init__(self, gui):
         super().__init__()
         self.setupUi(self)
-        self.settings = settings
+        self.gui = gui
 
         self.settings_changed = False
 
-        opacity = settings.get_setting("label_opacity")
+        opacity = gui.project_controller.get_setting("label_opacity")
         colors = ['blue', 'deepskyblue', 'cyan', 'green', 'lime', 'red', 'yellow', 'orange', 'magenta', 'grey', 'black']
 
         self.comboBox_color.addItems(colors)
@@ -88,7 +86,7 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         if QMessageBox.warning(self,
                                'Heads up!',
                                'Removing the label will remove all annotations associated with it. '
-                               'Are you sure you want to delete ' + remove_item + '?',
+                               f'Are you sure you want to delete the label \"{remove_item}\"?',
                                QMessageBox.Ok | QMessageBox.Cancel
                                ) == QMessageBox.Cancel:
             return
@@ -123,25 +121,26 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def opacity_changed(self, value):
         self.settings_changed = True
-        self.settings.set_setting("label_opacity", value)
+        self.gui.project_controller.set_setting("label_opacity", value)
 
     def keyboard_shortcut_changed(self, keyboard_shortcut):
         self.settings_changed = True
         activity = self.comboBox_label.currentText()
-        keyboard_shortcut = keyboard_shortcut.strip(' ')
-        try:
-            if keyboard_shortcut == "":
-                keyboard_shortcut = None
-                # self.label_type_manager.remove_keyboard_shortcut(self.comboBox_label.currentText())
-            label_type = LabelType.get(LabelType.activity == activity)
-            label_type.keyboard_shortcut = keyboard_shortcut
-            label_type.save()
-        except IntegrityError:
-            if keyboard_shortcut == "":
-                return
-            existing_mapping = LabelType.get(LabelType.keyboard_shortcut == keyboard_shortcut).activity
-            QMessageBox.warning(self, "Shortcut already assigned",
-                                "This shortcut is already assigned to: "+existing_mapping)
-            self.lineEdit_keyboard_shortcut.clear()
+        if activity != '':
+            keyboard_shortcut = keyboard_shortcut.strip(' ')
+            try:
+                if keyboard_shortcut == "":
+                    keyboard_shortcut = None
+                    # self.label_type_manager.remove_keyboard_shortcut(self.comboBox_label.currentText())
+                label_type = LabelType.get(LabelType.activity == activity)
+                label_type.keyboard_shortcut = keyboard_shortcut
+                label_type.save()
+            except IntegrityError:
+                if keyboard_shortcut == "":
+                    return
+                existing_mapping = LabelType.get(LabelType.keyboard_shortcut == keyboard_shortcut).activity
+                QMessageBox.warning(self, "Shortcut already assigned",
+                                    "This shortcut is already assigned to: "+existing_mapping)
+                self.lineEdit_keyboard_shortcut.clear()
 
 

@@ -8,10 +8,9 @@ from database.models import SensorModel
 
 class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettingsDialog, model: {} = None, model_id=None, test_file=None, parent=None):
+    def __init__(self, model: {} = None, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
-        self.settings = settings
         self.model_id = model_id
         self.test_file = test_file
         self.parent = parent
@@ -118,7 +117,6 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
     def previous(self):
         from gui.dialogs.new_sensor_model_comment_style_dialog import SensorModelCommentStyleDialog
         dialog = SensorModelCommentStyleDialog(
-            self.settings,
             self.model,
             model_id=self.model_id,
             test_file=self.test_file,
@@ -130,7 +128,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
     def edit(self):
         from gui.dialogs.new_sensor_model_name_dialog import SensorModelNameDialog
 
-        dialog = SensorModelNameDialog(self.settings, model=self.model, model_id=self.model_id, test_file=self.test_file, parent=self.parent)
+        dialog = SensorModelNameDialog(model=self.model, model_id=self.model_id, test_file=self.test_file, parent=self.parent)
         self.close()
         dialog.exec()
 
@@ -139,8 +137,9 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         msg.setIcon(QMessageBox.Warning)
         msg.setText("Are you sure you want to delete this model?")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        msg.buttonClicked.connect(self.remove)
-        msg.exec()
+        res = msg.exec()
+        if res == QMessageBox.Ok:
+            self.remove()
 
     def remove(self):
         sensor_model = SensorModel.get_by_id(self.model_id)

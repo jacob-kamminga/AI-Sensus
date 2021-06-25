@@ -8,10 +8,9 @@ from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettingsDialog, model: {}, model_id=None, test_file=None, parent=None):
+    def __init__(self, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
-        self.settings = settings
         self.model_id = model_id
         self.test_file = test_file
         self.parent = parent
@@ -73,7 +72,6 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
         self.model[FORMAT_STRING] = self.lineEdit_timestamp_formatstring.text()
 
         dialog = SensorModelIdDialog(
-            self.settings,
             self.model,
             model_id=self.model_id,
             test_file=self.test_file,
@@ -86,7 +84,6 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
         from gui.dialogs.new_sensor_model_name_dialog import SensorModelNameDialog
 
         dialog = SensorModelNameDialog(
-            self.settings,
             self.model,
             model_id=self.model_id,
             test_file=self.test_file,

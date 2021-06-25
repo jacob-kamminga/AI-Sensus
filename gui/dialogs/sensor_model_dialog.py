@@ -9,10 +9,9 @@ from database.models import *
 
 class SensorModelDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, settings: ProjectSettingsDialog):
+    def __init__(self):
         super().__init__()
         self.setupUi(self)
-        self.settings = settings
 
         self.models = None
         self.selected_model_id = None
@@ -41,12 +40,12 @@ class SensorModelDialog(QDialog, Ui_Dialog):
             self.selected_model_id = self.models[selected_model_name]
 
     def new_sensor_model_name_dialog(self):
-        dialog = SensorModelNameDialog(self.settings, parent=self)
+        dialog = SensorModelNameDialog(parent=self)
         dialog.exec()
 
     def edit_sensor_model_name_dialog(self):
         if len(self.listWidget_models.selectedItems()) > 0:
             selected_model_name = self.listWidget_models.selectedItems()[0].text()
             selected_model_id = self.models[selected_model_name]
-            dialog = SensorModelFinalDialog(self.settings, model_id=selected_model_id, parent=self)
+            dialog = SensorModelFinalDialog(model_id=selected_model_id, parent=self)
             dialog.exec()

@@ -12,11 +12,11 @@ from gui.dialogs.new_sensor_usage_dialog import NewSensorUsageDialog
 
 class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, settings):
+    def __init__(self, gui):
         super().__init__()
         self.setupUi(self)
-
-        self.project_timezone = pytz.timezone(settings.get_setting('timezone'))
+        self.project_controller = gui.project_controller
+        self.project_timezone = pytz.timezone(self.project_controller.get_setting('timezone'))
 
         self.subjects = Subject.select()
         self.subjects_dict = dict((subject.id, subject.name) for subject in self.subjects)
