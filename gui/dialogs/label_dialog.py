@@ -4,6 +4,7 @@ from typing import Optional
 import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDateTime
+from PyQt5.uic.properties import QtGui
 
 from database.models import LabelType, Label
 from gui.designer.label_specs import Ui_LabelSpecs
@@ -31,24 +32,28 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
         # Connect methods to listeners
         self.accepted.connect(self.add_label_to_db)
         self.comboBox_labels.currentTextChanged.connect(self.update_label_type)
+        self.comboBox_labels.currentTextChanged.connect(self.toggle_confirm_annotation)
 
         # Add items to the labels combobox
         self.comboBox_labels.addItems(activities)
+
+        self.toggle_confirm_annotation()
 
     def update_label_type(self, activity: str):
         label_type = LabelType.get(LabelType.activity == activity).id
         self.label.label_type = label_type
 
     def add_label_to_db(self):
-        # Convert start and end times to UTC
-        start_time_local = self.sensor_timezone.localize(self.dateTimeEdit_start.dateTime().toPyDateTime())
-        self.label.start_time = start_time_local.astimezone(pytz.utc).replace(tzinfo=None)
-        end_time_local = self.sensor_timezone.localize(self.dateTimeEdit_end.dateTime().toPyDateTime())
-        self.label.end_time = end_time_local.astimezone(pytz.utc).replace(tzinfo=None)
+        if self.label is not None:
+            # Convert start and end times to UTC
+            start_time_local = self.sensor_timezone.localize(self.dateTimeEdit_start.dateTime().toPyDateTime())
+            self.label.start_time = start_time_local.astimezone(pytz.utc).replace(tzinfo=None)
+            end_time_local = self.sensor_timezone.localize(self.dateTimeEdit_end.dateTime().toPyDateTime())
+            self.label.end_time = end_time_local.astimezone(pytz.utc).replace(tzinfo=None)
 
-        if self.label.label_type is not None:
-            # Save the label to the database
-            self.is_accepted = self.label.save()
+            if self.label.label_type is not None:
+                # Save the label to the database
+                self.is_accepted = self.label.save()
 
     def show_dialog(self, shortcut_label):
         if self.label.start_time.tzinfo is None:
@@ -72,3 +77,10 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
             self.add_label_to_db()
         else:
             self.exec()
+
+    def toggle_confirm_annotation(self):
+        OK_button = self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok)
+        if self.comboBox_labels.currentText() == '':
+            OK_button.setEnabled(False)
+        else:
+            OK_button.setEnabled(True)
