@@ -303,14 +303,14 @@ class SensorController:
         # Output: Hash of 10 blocks of 128 bits of size as string plus file size as string
         file_size = os.path.getsize(file_path)
         start_index = int(file_size / 2)
-        with open(file_path, 'r') as f:
+        with file_path.open(mode='r') as f:
             f.seek(start_index)
             n = 1
             md5 = hashlib.md5()
             while True:
                 data = f.read(block_size)
                 n += 1
-                if (n == 10):
+                if n == 10:
                     break
                 md5.update(data.encode('utf-8'))
         return '{}{}'.format(md5.hexdigest()[0:9], str(file_size))

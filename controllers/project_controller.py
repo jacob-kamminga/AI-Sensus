@@ -19,15 +19,13 @@ INIT_PROJECT_CONFIG = {
 
 class ProjectController:
 
-    def __init__(self):
+    def __init__(self, isTestProject: bool = False):
+        self.isTestProject = isTestProject
         self.project_dir = None
         self.config_file = None
         self.database_file = None
         self.settings_dict = {}
         self.settings_changed = False
-
-        # self.comboBox_timezone.currentTextChanged.connect(self.save_timezone)
-        # self.buttonBox.accepted.connect(self.save)
 
     def load(self, project_dir, new_project=False):
         if project_dir is not None:
@@ -62,23 +60,15 @@ class ProjectController:
         self.settings_dict = INIT_PROJECT_CONFIG
         self.save()
 
-        # self.load_timezone()
-
-    # def load_timezone(self):
-    #     self.comboBox_timezone.setCurrentText(self.settings_dict.get('timezone'))
-
-    def save_timezone(self, timezone):
-        self.settings_dict['timezone'] = timezone
-
     def load_config(self):
         """Loads the saved setting dictionary back into this class from a file"""
-        with open(self.config_file, 'r') as f:
+        with self.config_file.open(mode='r') as f:
             self.settings_dict = json.load(f)
             # self.load_timezone()
 
     def save(self) -> None:
         """Saves the current settings_dict dictionary to a file"""
-        with open(self.config_file, 'w') as f:
+        with self.config_file.open(mode='w') as f:
             json.dump(self.settings_dict, f)
         self.settings_changed = True
 

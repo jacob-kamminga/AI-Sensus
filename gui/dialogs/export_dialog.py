@@ -185,8 +185,8 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         return [self.subjects_dict.get(item.text()) for item in self.listWidget_subjects.selectedItems()]
 
     @staticmethod
-    def save_to_csv(label_data, file_path):
-        with open(file_path, 'w', newline='') as out:
+    def save_to_csv(label_data, file_path: Path):
+        with file_path.open(mode='w', newline='') as out:
             csv_out = csv.writer(out)
             csv_out.writerow(["Start", "End", "Activity", "Sensor ID"])
             csv_out.writerows(label_data)

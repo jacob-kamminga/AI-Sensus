@@ -401,6 +401,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                 and self.sensor_controller.sensor_data_file is not None \
                 and self.camera_controller.camera is not None:
             try:
+                # TODO: When sensor model is not loaded properly, self.sensor_controller.sensor_data_file.datetime is a datetime STRING, not a datetime object.
                 offset = Offset.get(Offset.camera == self.camera_controller.camera.id,
                                     Offset.sensor == self.sensor_controller.sensor_data_file.sensor,
                                     Offset.added == self.sensor_controller.sensor_data_file.datetime.date())

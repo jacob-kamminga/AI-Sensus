@@ -25,7 +25,7 @@ class SensorMetadata:
         comment = self.sensor_model.comment_style
         header_rows = []
 
-        with open(self.file_path, 'r') as f:
+        with self.file_path.open(mode='r') as f:
             # Parse all
             for i in range(self.sensor_model.col_names_row + 1):
                 line = f.readline()
