@@ -11,19 +11,13 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 QDATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss.zzz"
 
 
-class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
+class LabelDialog(QtWidgets.QDialog, Ui_LabelSpecs):
 
     def __init__(self, sensor_data_file: int, sensor_timezone):
         super().__init__()
         self.setupUi(self)
 
         self.sensor_timezone = sensor_timezone
-        self.label_types = LabelType.select()
-        activities = []
-
-        for label_type in LabelType.select():
-            activities.append(label_type.activity)
-
         self.label = Label(sensor_data_file=sensor_data_file)
         self.is_accepted = False
 
@@ -32,8 +26,8 @@ class LabelSpecs(QtWidgets.QDialog, Ui_LabelSpecs):
         self.comboBox_labels.currentTextChanged.connect(self.update_label_type)
         self.comboBox_labels.currentTextChanged.connect(self.toggle_confirm_annotation)
 
-        # Add items to the labels combobox
-        self.comboBox_labels.addItems(activities)
+        # Add activities to the labels combobox
+        self.comboBox_labels.addItems([label_type.activity for label_type in LabelType.select()])
 
         self.toggle_confirm_annotation()
 
