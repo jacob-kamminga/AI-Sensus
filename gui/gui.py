@@ -22,7 +22,7 @@ from data_export import windowing as wd
 from database.models import Offset, LabelType
 from gui.designer.gui import Ui_MainWindow
 from gui.dialogs.export_dialog import ExportDialog
-from gui.dialogs.label_dialog import LabelSpecs
+from gui.dialogs.label_dialog import LabelDialog
 from gui.dialogs.label_settings_dialog import LabelSettingsDialog
 from gui.dialogs.machine_learning_dialog import MachineLearningDialog
 from gui.dialogs.new_project_dialog import NewProject
@@ -414,12 +414,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the label dialog window.
         """
         if not self.sensor_controller.sensor_data:
-            QMessageBox.information(self, "Warning", "You need to import sensor data first.", QMessageBox.Ok)
+            QMessageBox.Warning(self,
+                                    "Warning",
+                                    "You need to import sensor data first.",
+                                    QMessageBox.Ok)
         else:
-            dialog = LabelSpecs(self.sensor_controller.sensor_data_file.id,
-                                self.sensor_controller.sensor_data.metadata.sensor_timezone)
+            dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
+                                 self.sensor_controller.sensor_data.metadata.sensor_timezone)
             dialog.exec()
-            # dialog.show()
 
             if dialog.is_accepted:
                 self.add_label_highlight(dialog.label.start,
@@ -435,7 +437,6 @@ class GUI(QMainWindow, Ui_MainWindow):
             dialog.setWindowTitle(self.video_controller.file_name)
 
         dialog.exec()
-        # dialog.show()
 
         current_camera = self.camera_controller.camera
         if current_camera is not None:
@@ -460,7 +461,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         dialog = SubjectDialog()
         dialog.exec()
-        # dialog.show()
 
     def open_select_sensor_dialog(self, model_id=None):
         """
@@ -506,8 +506,8 @@ class GUI(QMainWindow, Ui_MainWindow):
     def open_project_settings_dialog(self):
         dialog = ProjectSettingsDialog(self)
         dialog.exec()
-        if dialog.settings_changed:
-            self.reset_gui_components()
+
+        self.reset_gui_components()
 
     def open_visual_inspection_dialog(self):
         """

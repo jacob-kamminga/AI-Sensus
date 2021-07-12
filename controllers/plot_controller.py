@@ -9,7 +9,7 @@ from pandas.core.dtypes.common import is_numeric_dtype
 
 from constants import COL_ABS_DATETIME
 from database.models import LabelType, Label
-from gui.dialogs.label_dialog import LabelSpecs
+from gui.dialogs.label_dialog import LabelDialog
 from controllers.sensor_controller import SensorController
 
 LABEL_START_TIME_INDEX = 0
@@ -52,7 +52,7 @@ class PlotController:
         self.y_min = None
         self.y_max = None
 
-        self.label_dialog: Optional[LabelSpecs] = None
+        self.label_dialog: Optional[LabelDialog] = None
         self.label_dialog = None
 
         # Initialize the boolean that keeps track if the user is labeling with the right-mouse button
@@ -272,16 +272,16 @@ class PlotController:
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
             if event.button == MouseButton.LEFT:
-                self.label_dialog = LabelSpecs(self.sensor_controller.sensor_data_file.id,
-                                               self.sensor_controller.sensor_data.metadata.sensor_timezone)
+                self.label_dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
+                                                self.sensor_controller.sensor_data.metadata.sensor_timezone)
 
                 self.label_dialog.label.start_time = x_data_dt
 
             # If the right mouse button is used, check if this is the first or second time
             elif event.button == MouseButton.RIGHT:
                 if not self.labeling:
-                    self.label_dialog = LabelSpecs(self.sensor_controller.sensor_data_file.id,
-                                                   self.sensor_controller.sensor_data.metadata.sensor_timezone)
+                    self.label_dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
+                                                    self.sensor_controller.sensor_data.metadata.sensor_timezone)
                     self.label_dialog.label.start_time = x_data_dt
                 # If it is the second time, check if the user wants to delete the label or if the label should start
                 # or end at the start or end of another label

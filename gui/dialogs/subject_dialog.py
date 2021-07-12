@@ -51,7 +51,6 @@ class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         """
         dialog = NewSubjectDialog()
         dialog.exec()
-        dialog.show()
 
         name = dialog.new_subject_name
         color = dialog.new_subject_color

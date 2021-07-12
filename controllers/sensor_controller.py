@@ -105,6 +105,10 @@ class SensorController:
                 }
             )[0]
 
+            if type(self.sensor_data_file.datetime) == str:
+                self.sensor_data_file.datetime = dt.datetime.strptime(self.sensor_data_file.datetime,
+                                                                      "%Y-%m-%d %H:%M:%S.%f%z")
+
             # Reset the dictionary that maps function names to functions
             self.gui.plot_controller.formula_dict = dict()
 
@@ -196,7 +200,7 @@ class SensorController:
             if not self.sensor_data.add_abs_dt_col():
                 return
             # Save the starting time of the sensor data in a DateTime object
-            self.sensor_data_file.datetime = self.sensor_data.metadata.utc_dt
+            self.sensor_data_file.datetime = self.sensor_data.metadata.utc_dt.replace(tzinfo=None)
 
             # Retrieve the DataFrame with all the raw sensor data
             self.df = self.sensor_data.get_data()
