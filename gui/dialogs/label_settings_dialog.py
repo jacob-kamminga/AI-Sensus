@@ -1,10 +1,13 @@
-from sqlite3 import IntegrityError
+from peewee import IntegrityError
 
+import peewee
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox
 
+from controllers.annotation_controller import NonUniqueShortcutException, NonUniqueActivityNameException
 from database.models import LabelType, Label
 from gui.designer.label_settings import Ui_Dialog
+
 
 class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
 
@@ -58,18 +61,20 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.settings_changed = True
         new_activity = self.lineEdit_new_label.text()
         new_color = self.comboBox_new_label_color.currentText()
-        new_keyboard_shortcut = self.lineEdit_new_keyboard_shortcut.text().strip(' ')
+        new_keyboard_shortcut = self.lineEdit_new_keyboard_shortcut.text().strip()
 
-        if self.lineEdit_new_label.text():
+        if new_activity and new_color:
             try:
-                LabelType(activity=new_activity, color=new_color, description="",
-                          keyboard_shortcut=new_keyboard_shortcut
-                          ).save()
-            except IntegrityError:
-                QMessageBox.warning(self, "Name or shortcut already assigned", "Names and shortcuts must be unique")
+                self.gui.annotation_controller.save_label_to_db(new_activity, new_color, new_keyboard_shortcut)
+
+            except NonUniqueShortcutException as e:
+                QMessageBox.warning(self, "Shortcut already assigned",
+                                    f"The shortcut \'{e.shortcut}\' is already assigned to "
+                                    f"the activity \"{e.activity}\".")
                 return
-            except:
-                QMessageBox.warning(self, "Unknown error", "Label was not added")
+            except NonUniqueActivityNameException as e:
+                QMessageBox.warning(self, "Activity name already assigned",
+                                    f"The activity \"{e.activity}\" already exists.")
                 return
 
             self.label_type_dict[new_activity] = {"id": LabelType.get(LabelType.activity == new_activity).id,
@@ -82,25 +87,20 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             self.lineEdit_new_keyboard_shortcut.clear()
 
     def delete_label(self):
-        remove_item = self.comboBox_label.currentText()
+        activity = self.comboBox_label.currentText()
         if QMessageBox.warning(self,
                                'Heads up!',
                                'Removing the label will remove all annotations associated with it. '
-                               f'Are you sure you want to delete the label \"{remove_item}\"?',
+                               f'Are you sure you want to delete the label \"{activity}\"?',
                                QMessageBox.Ok | QMessageBox.Cancel
                                ) == QMessageBox.Cancel:
             return
 
         self.settings_changed = True
-        label_type = LabelType.get(LabelType.activity == remove_item)
-
-        # Delete label type and all existing associated labels
-        query = Label.delete().where(Label.label_type == label_type)
-        query.execute()
-        label_type.delete_instance()
+        self.remove_label(activity)
 
         self.comboBox_label.clear()
-        self.label_type_dict.pop(remove_item)
+        self.label_type_dict.pop(activity)
         self.comboBox_label.addItems(self.label_type_dict.keys())
         self.settings_changed = True
 
@@ -112,8 +112,8 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
     def color_changed(self, color):
         self.settings_changed = True
         activity = self.comboBox_label.currentText()
-        
-        if activity:
+
+        if activity is not None:
             label_type = LabelType.get(LabelType.activity == activity)
             label_type.color = color
             label_type.save()
@@ -123,24 +123,33 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         self.settings_changed = True
         self.gui.project_controller.set_setting("label_opacity", value)
 
-    def keyboard_shortcut_changed(self, keyboard_shortcut):
+    def keyboard_shortcut_changed(self, keyboard_shortcut) -> None:
+        '''
+        Called when an existing activity's keyboard shortcut is changed in the label setting dialog.
+        This method ensures that removal of the existing shortcut is handled properly.
+
+        :param keyboard_shortcut: the character that has replaced the existing shortcut.
+        :return:
+        '''
         self.settings_changed = True
         activity = self.comboBox_label.currentText()
+
         if activity != '':
-            keyboard_shortcut = keyboard_shortcut.strip(' ')
+            keyboard_shortcut = keyboard_shortcut.strip()  # A space will become None and so isn't a valid shortcut.
             try:
                 if keyboard_shortcut == "":
                     keyboard_shortcut = None
-                    # self.label_type_manager.remove_keyboard_shortcut(self.comboBox_label.currentText())
                 label_type = LabelType.get(LabelType.activity == activity)
                 label_type.keyboard_shortcut = keyboard_shortcut
                 label_type.save()
             except IntegrityError:
-                if keyboard_shortcut == "":
+                # This will be thrown whenever no shortcut is given, since all activities without a shortcut will
+                # all have the SAME shortcut: "None", which is non-unique, thus raising an IntegrityError.
+                if keyboard_shortcut is None:
                     return
-                existing_mapping = LabelType.get(LabelType.keyboard_shortcut == keyboard_shortcut).activity
-                QMessageBox.warning(self, "Shortcut already assigned",
-                                    "This shortcut is already assigned to: "+existing_mapping)
-                self.lineEdit_keyboard_shortcut.clear()
-
-
+                else:
+                    activity_with_shortcut = LabelType.get(LabelType.keyboard_shortcut == keyboard_shortcut).activity
+                    QMessageBox.warning(self, "Shortcut already assigned",
+                                        f"The shortcut \'{keyboard_shortcut}\' is already assigned to "
+                                        f"the activity \"{activity_with_shortcut}\".")
+                    self.lineEdit_keyboard_shortcut.clear()

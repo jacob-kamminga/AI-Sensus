@@ -39,6 +39,7 @@ from controllers.plot_controller import PlotController
 from controllers.sensor_controller import SensorController
 from controllers.video_controller import VideoController
 from controllers.project_controller import ProjectController
+from controllers.annotation_controller import AnnotationController
 from machine_learning.classifier import Classifier, make_predictions
 
 COL_LABEL = 'Label'
@@ -99,6 +100,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.sensor_controller = SensorController(self)
         self.plot_controller = PlotController(self)
         self.camera_controller = CameraController(self)
+        self.annotation_controller = AnnotationController(self)
 
         # Create video key shortcuts
         self.shortcut_plus_10s = QShortcut(Qt.Key_Right, self)
@@ -497,17 +499,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         Open the export dialog window, and if a subject and a file location and name are chosen, export the data
         accordingly.
         """
-        dialog = ExportDialog(
-            self.project_controller,
-            self.sensor_controller.utc_dt
-        )
+        dialog = ExportDialog(self)
         dialog.exec()
 
     def open_project_settings_dialog(self):
         dialog = ProjectSettingsDialog(self)
         dialog.exec()
-
-        self.reset_gui_components()
+        if dialog.timezone_changed:
+            self.reset_gui_components()
 
     def open_visual_inspection_dialog(self):
         """
