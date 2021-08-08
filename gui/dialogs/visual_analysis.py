@@ -22,7 +22,7 @@ from constants import COL_ABS_DATETIME
 from data_import.sensor_data import SensorData
 from database.models import Subject, LabelType, SensorUsage, SensorDataFile, Sensor, SensorModel
 from gui.designer.visual_analysis import Ui_Dialog
-from gui.dialogs.export_dialog import get_labels
+from controllers.sensor_controller import get_labels
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from parse_function.parse_exception import ParseException
 

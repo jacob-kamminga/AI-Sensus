@@ -29,7 +29,7 @@ class PlotController:
     def __init__(self, gui):
         self.gui = gui
         self.project_controller = gui.project_controller
-        self.sensor_controller: SensorController = gui.sensor_controller
+        self.sensor_controller = gui.sensor_controller
         self.project_timezone = pytz.timezone(self.project_controller.get_setting('timezone'))
 
         # self.reset()
