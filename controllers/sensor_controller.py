@@ -10,11 +10,11 @@ import pandas as pd
 import pytz
 from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
-from peewee import DoesNotExist
+from peewee import DoesNotExist, JOIN
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
-from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset
+from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Subject, SensorUsage, Label, LabelType
 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
@@ -76,7 +76,6 @@ class SensorController:
         # Get the user input from a dialog window
         self.file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Sensor Data", path, filter="csv (*.csv)")
         self.file_path = Path(self.file_path)
-
         self.open_file()
 
     def open_sensor_model_dialog(self):
@@ -114,11 +113,13 @@ class SensorController:
 
             # Retrieve the sensor model ID from the database
             try:
-                sensor_model_id = (SensorModel
-                                   .select(SensorModel.id)
-                                   .join(Sensor)
-                                   .where(Sensor.id == self.sensor_data_file.sensor)
-                                   .get())
+                sensor_model = (SensorModel
+                                .select(SensorModel.id)
+                                .join(Sensor, JOIN.LEFT_OUTER)
+                                .where(SensorModel.id == self.sensor_data_file.sensor.id)
+                                .get())
+                sensor_model_id = sensor_model.id
+
             # If not found, open a dialog where the user can select the sensor model
             except DoesNotExist:
                 msg = QMessageBox()
@@ -152,10 +153,15 @@ class SensorController:
                     sensor_name = Sensor.get_by_id(self.sensor_data_file.sensor).name
                 except DoesNotExist:
                     sensor_name = None
+                    QMessageBox.warning(self.gui, "No associated sensor found",
+                                        "There is currently no sensor associated with the sensor data file. "
+                                        "Please select the sensor that should be associated with the "
+                                        f"sensor data file \"{self.sensor_data_file.file_path}\"")
 
             # When sensor ID (name) cannot be parsed it has to be manually linked to datafile by user
             while sensor_name is None:
-                sensor_name = self.gui.open_select_sensor_dialog(self.model_id)
+                self.gui.open_select_sensor_dialog()
+                sensor_name = self.sensor_data_file.sensor.name
                 # Verify that user indeed selected a sensor ID
                 if sensor_name is None:
                     msg = QMessageBox()
@@ -270,8 +276,10 @@ class SensorController:
         self.gui.plot_controller.data_plot.axis([
             x_window_start,
             x_window_end,
-            self.gui.plot_controller.y_min - ((self.gui.plot_controller.plot_height_factor - 1) * self.gui.plot_controller.y_min),
-            self.gui.plot_controller.y_max + ((self.gui.plot_controller.plot_height_factor - 1) * self.gui.plot_controller.y_max)
+            self.gui.plot_controller.y_min - (
+                    (self.gui.plot_controller.plot_height_factor - 1) * self.gui.plot_controller.y_min),
+            self.gui.plot_controller.y_max + (
+                    (self.gui.plot_controller.plot_height_factor - 1) * self.gui.plot_controller.y_max)
         ])
 
         # Start the timer that makes the graph scroll smoothly
@@ -318,3 +326,153 @@ class SensorController:
                     break
                 md5.update(data.encode('utf-8'))
         return '{}{}'.format(md5.hexdigest()[0:9], str(file_size))
+
+    def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
+        file_path = self.get_file_path(sensor_data_file_id)
+
+        query = (SensorDataFile
+                 .select()
+                 .join(Sensor, JOIN.LEFT_OUTER)
+                 .join(SensorModel, JOIN.LEFT_OUTER)
+                 .where(SensorDataFile.id == sensor_data_file_id)
+                 .get()
+                 )
+        print(query)
+        model_id = query.sensor.model.id
+        sensor_id = SensorDataFile.get_by_id(sensor_data_file_id).sensor.id
+
+        if model_id >= 0 and sensor_id >= 0:
+            sensor_timezone = pytz.timezone(Sensor.get_by_id(sensor_id).timezone)
+            sensor_data = SensorData(self.project_controller, Path(file_path), model_id)
+            sensor_data.metadata.sensor_timezone = sensor_timezone
+            # Parse the utc datetime of the sensor data
+            sensor_data.metadata.parse_datetime()
+            sensor_data.parse()
+        # Sensor model unknown
+        else:
+            sensor_data = None
+
+        return sensor_data
+
+    def get_file_path(self, sensor_data_file_id: int) -> str:
+        """
+        Check whether the file paths in the database are still valid and update if necessary.
+
+        :param sensor_data_file_id: The list of file names
+        """
+        file_path = SensorDataFile.get_by_id(sensor_data_file_id).file_path
+
+        # Check whether the file path is still valid
+        if os.path.isfile(file_path):
+            return file_path
+        else:
+            # Invalid:
+            # Prompt the user for the correct file path
+            file_name = SensorDataFile.get_by_id(sensor_data_file_id).file_name
+            new_file_path = self.prompt_file_location(file_name, file_path)
+
+            # Update path in database
+            sdf = SensorDataFile.get(SensorDataFile.file_name == file_name)
+            sdf.file_path = file_path
+            sdf.save()
+
+            return new_file_path
+
+    def prompt_file_location(self, file_name: str, old_path: str) -> str:
+        """
+        Open a QFileDialog in which the user can select a new file path
+
+        :param file_name: The file name
+        :param old_path: The old (invalid) file path
+        :return: The new (valid) file path
+        """
+        # Split path to obtain the base path
+        base_path = old_path.rsplit('/', 1)[0]
+
+        if not os.path.isdir(base_path):
+            base_path = QDir.homePath()
+
+        # Open QFileDialog
+        dialog = QFileDialog()
+        dialog.setNameFilter(file_name)
+        new_path, _ = dialog.getOpenFileName(self.gui, "Open Sensor Data", base_path, filter="csv (*.csv)")
+
+        return new_path
+
+    def prompt_save_location(self, name_suggestion: str):
+        # Open QFileDialog
+        file_path, _ = QFileDialog.getSaveFileName(self.gui, "Save file",
+                                                   self.project_controller.project_dir.as_posix() + "\\" +
+                                                   name_suggestion + ".csv")
+
+        return file_path
+
+    def export(self, subject_ids: [int], start_dt: dt.datetime, end_dt: dt.datetime,
+               start_dt_local: dt.datetime, end_dt_local: dt.datetime):
+
+        for subject_id in subject_ids:
+            subject_name = Subject.get_by_id(subject_id).name
+            sensor_query = (SensorUsage
+                            .select(SensorUsage.sensor)
+                            .where((SensorUsage.subject == subject_id) &
+                                   (
+                                           SensorUsage.start_datetime.between(start_dt, end_dt) |
+                                           SensorUsage.end_datetime.between(start_dt, end_dt) |
+                                           (start_dt >= SensorUsage.start_datetime) & (
+                                                   start_dt <= SensorUsage.end_datetime) |
+                                           (end_dt >= SensorUsage.start_datetime) & (end_dt <= SensorUsage.end_datetime)
+                                   )
+                                   ))
+
+            if len(sensor_query) == 0:
+                QMessageBox(
+                    QMessageBox.Warning,
+                    "No labels within selected timespan.",
+                    f"There are no labels found between {start_dt_local.strftime('%d-%m-%Y %H:%M:%S')} "
+                    f"and {end_dt_local.strftime('%d-%m-%Y %H:%M:%S')}.",
+                    QMessageBox.Ok
+                ).exec()
+                return
+
+            for sensor_usage in sensor_query:
+                sensor_id = sensor_usage.sensor.id
+
+                sdf_query = (SensorDataFile
+                             .select(SensorDataFile.id)
+                             .where((SensorDataFile.sensor == sensor_id) &
+                                    SensorDataFile.datetime.between(start_dt, end_dt)))
+
+                # TODO: Verify if this should be here: this will make a file with a unique subject-sensorid combination.
+                df: pd.DataFrame = pd.DataFrame()
+
+                for file in sdf_query:
+                    file_id = file.id
+                    labels = get_labels(file_id, start_dt, end_dt)
+                    sensor_data = self.get_sensor_data(file_id)
+
+                    if sensor_data is None:
+                        raise Exception('Sensor data not found')
+
+                    if not sensor_data.add_abs_dt_col(use_utc=True):
+                        return
+
+                    sensor_data.filter_between_dates(start_dt, end_dt)
+                    sensor_data.add_labels(labels)
+
+                    # TODO: Indefinite loading bar / loop over deze call plaatsen.
+                    data = sensor_data.get_data()
+                    df = df.append(data)
+
+                yield df, subject_name, sensor_id
+
+
+def get_labels(sensor_data_file_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
+    labels = (Label
+              .select(Label.start_time, Label.end_time, LabelType.activity)
+              .join(LabelType)
+              .where(Label.sensor_data_file == sensor_data_file_id &
+                     (Label.start_time.between(start_dt, end_dt) |
+                      Label.end_time.between(start_dt, end_dt))))
+    return [{'start': label.start_time.replace(tzinfo=pytz.utc),
+             'end': label.end_time.replace(tzinfo=pytz.utc),
+             'activity': label.label_type.activity} for label in labels]

@@ -5,7 +5,7 @@ from database.models import SensorDataFile, Sensor
 from gui.designer.select_sensor import Ui_Dialog
 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
-from peewee import OperationalError
+from peewee import OperationalError, DoesNotExist
 
 SENSOR_ID_INDEX = 0
 SENSOR_NAME_INDEX = 1
@@ -14,13 +14,14 @@ SENSOR_TIMEZONE_INDEX = 3
 
 class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, gui, model_id=None):
+    def __init__(self, gui):
         super().__init__()
         self.setupUi(self)
+
         self.sensor_controller = gui.sensor_controller
         self.selected_sensor_id = None
         self.selected_sensor_name = None
-        self.sensor_model_id = model_id
+        self.sensor_model_id = None
 
         # Fill sensor dictionary and add sensor names to combobox
         self.sensor_dict = dict()
@@ -42,12 +43,13 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
     def add_sensor(self):
         new_sensor_name = self.lineEdit_new_sensor_name.text()
         if new_sensor_name != '':
-            if self.sensor_model_id is None:
-                sdf = Sensor.get(SensorDataFile.file_id_hash == self.sensor_controller.file_id_hash)
+            # Get the id of the current SensorModel, i.e. the SensorModel that is associated with the current
+            # SensorDataFile.
+            try:
+                sdf = SensorDataFile.get(SensorDataFile.file_id_hash == self.sensor_controller.file_id_hash)
                 self.sensor_model_id = sdf.sensor.model.id
-                print()
-            # If sensor model unknown, prompt user
-            if self.sensor_model_id is None:
+            except DoesNotExist:
+                # Something went wrong in finding the right SensorModel, so prompt the user to fix it manually.
                 dialog = SensorModelDialog()
                 dialog.exec()
                 dialog.show()

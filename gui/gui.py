@@ -464,11 +464,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         dialog = SubjectDialog()
         dialog.exec()
 
-    def open_select_sensor_dialog(self, model_id=None):
+    def open_select_sensor_dialog(self):
         """
         Open the select sensor dialog window.
         """
-        dialog = SelectSensorDialog(self, model_id)
+        dialog = SelectSensorDialog(self)
 
         if self.sensor_controller is not None:
             if self.sensor_controller.file_name is not None:
@@ -479,9 +479,9 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         if dialog.selected_sensor_id is not None:
             self.sensor_controller.update_sensor(dialog.selected_sensor_id)
-            return dialog.selected_sensor_name
-        else:
-            return None
+        #     return dialog.selected_sensor_name
+        # else:
+        #     return None
 
     def open_sensor_model_dialog(self):
         """
