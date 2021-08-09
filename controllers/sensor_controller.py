@@ -16,6 +16,7 @@ from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
 from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Subject, SensorUsage, Label, LabelType
 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
+from gui.dialogs.export_progress import ExportProgressDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
 
@@ -463,7 +464,19 @@ class SensorController:
                     data = sensor_data.get_data()
                     df = df.append(data)
 
-                yield df, subject_name, sensor_id
+                file_path = self.gui.sensor_controller.prompt_save_location(subject_name + "_" + str(sensor_id))
+
+                # Because exporting uses append mode, the existing file has to be deleted first in case of
+                # the reuse of file name.
+                try:
+                    if Path.exists(Path(file_path)):
+                        os.remove(file_path)
+                except FileNotFoundError:  # Export was cancelled on file location prompt.
+                    continue
+
+                # Since the actual writing to disk happens inside the dialog, this is currently not MVC compliant.
+                export_dialog = ExportProgressDialog(df, file_path)
+                export_dialog.exec()
 
 
 def get_labels(sensor_data_file_id: int, start_dt: dt.datetime, end_dt: dt.datetime):

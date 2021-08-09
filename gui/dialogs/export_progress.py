@@ -1,10 +1,9 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QObject, pyqtSignal, QThread, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, QThread, pyqtSlot
 from PyQt5.QtWidgets import QMessageBox
 from gui.designer.progress_bar import Ui_Dialog
 from numpy import array_split
 import sys
-import os
 
 
 class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
@@ -62,27 +61,18 @@ class Worker(QThread):
         try:
             for i in range(100):
                 if debug:  # Slows down the progress bar to check if it works correctly.
-                    for j in range(1000):
+                    for j in range(100):
                         pass
+
                 # Append each chunk to output_path CSV using mode='a' (append).
                 df_split[i].to_csv(self.output_path, mode='a', header=False, index=False)
                 self.progress.emit(i + 1)
-
-            # msg = QMessageBox()
-            # msg.setIcon(QMessageBox.Information)
-            # msg.setWindowTitle("Success!")
-            # msg.setText("Export successful!")
-            # # msg.setInformativeText("")
-            # msg.setStandardButtons(QMessageBox.Ok)
-            # msg.exec()
-            # # self.close()
 
         except Exception as e:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
             msg.setWindowTitle("Error!")
             msg.setText("An error occurred during export: " + str(e))
-            # msg.setInformativeText("")
             msg.setStandardButtons(QMessageBox.Ok)
 
         self.finished.emit()
