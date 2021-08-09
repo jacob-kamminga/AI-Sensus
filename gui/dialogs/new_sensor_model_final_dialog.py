@@ -135,6 +135,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
     def remove_warning(self):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
+        msg.setWindowTitle("Heads up!")
         msg.setText("Are you sure you want to delete this model?")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         res = msg.exec()
