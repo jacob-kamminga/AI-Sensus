@@ -32,7 +32,7 @@ from gui.dialogs.select_sensor_dialog import SelectSensorDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
 from gui.dialogs.sensor_usage_dialog import SensorUsageDialog
 from gui.dialogs.subject_dialog import SubjectDialog
-from gui.dialogs.visual_analysis import VisualAnalysisDialog
+from gui.dialogs.visual_analysis_dialog import VisualAnalysisDialog
 from gui.dialogs.welcome_dialog import Welcome
 from controllers.camera_controller import CameraController
 from controllers.plot_controller import PlotController

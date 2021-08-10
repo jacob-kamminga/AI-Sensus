@@ -16,7 +16,7 @@ from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
 from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Subject, SensorUsage, Label, LabelType
 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
-from gui.dialogs.export_progress import ExportProgressDialog
+from gui.dialogs.export_progress_dialog import ExportProgressDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
 
