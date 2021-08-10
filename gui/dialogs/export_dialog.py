@@ -7,6 +7,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
 
 from database.models import Subject
+from date_utils import naive_to_utc
 from gui.designer.export_new import Ui_Dialog
 
 COL_LABEL = 'Label'
@@ -94,9 +95,9 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         subject_ids = self.get_subject_ids()
         start_dt_local = self.get_start_datetime()
-        start_dt = self.dt_to_utc(start_dt_local)
+        start_dt = naive_to_utc(start_dt_local, self.project_timezone)
         end_dt_local = self.get_end_datetime()
-        end_dt = self.dt_to_utc(end_dt_local)
+        end_dt = naive_to_utc(end_dt_local, self.project_timezone)
 
         self.gui.sensor_controller.export(subject_ids, start_dt, end_dt, start_dt_local, end_dt_local)
 
