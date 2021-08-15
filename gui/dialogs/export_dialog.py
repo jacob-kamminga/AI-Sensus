@@ -9,6 +9,7 @@ from PyQt5.QtCore import QDate, QTime
 from database.models import Subject
 from date_utils import naive_to_utc
 from gui.designer.export_new import Ui_Dialog
+from gui.dialogs.export_progress_dialog import ExportProgressDialog
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
@@ -99,6 +100,9 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         end_dt_local = self.get_end_datetime()
         end_dt = naive_to_utc(end_dt_local, self.project_timezone)
 
-        self.gui.sensor_controller.export(subject_ids, start_dt, end_dt, start_dt_local, end_dt_local)
-
-        self.close()
+        try:
+            export_progess_dialog = ExportProgressDialog(self.gui, subject_ids, start_dt, end_dt)
+            export_progess_dialog.exec()
+        except RuntimeError:
+            # User cancelled (one of the) the file path prompt or there are no labels in the given timespan.
+            pass

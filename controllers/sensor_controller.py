@@ -14,10 +14,8 @@ from peewee import DoesNotExist, JOIN
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
-from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Subject, SensorUsage, Label, LabelType
+from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Label, LabelType
 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
-from gui.dialogs.export_progress_dialog import ExportProgressDialog
-from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
 
 
@@ -338,7 +336,7 @@ class SensorController:
                  .where(SensorDataFile.id == sensor_data_file_id)
                  .get()
                  )
-        print(query)
+
         model_id = query.sensor.model.id
         sensor_id = SensorDataFile.get_by_id(sensor_data_file_id).sensor.id
 
@@ -411,81 +409,16 @@ class SensorController:
     def export(self, subject_ids: [int], start_dt: dt.datetime, end_dt: dt.datetime,
                start_dt_local: dt.datetime, end_dt_local: dt.datetime):
 
-        for subject_id in subject_ids:
-            subject_name = Subject.get_by_id(subject_id).name
-            sensor_query = (SensorUsage
-                            .select(SensorUsage.sensor)
-                            .where((SensorUsage.subject == subject_id) &
-                                   (
-                                           SensorUsage.start_datetime.between(start_dt, end_dt) |
-                                           SensorUsage.end_datetime.between(start_dt, end_dt) |
-                                           (start_dt >= SensorUsage.start_datetime) & (
-                                                   start_dt <= SensorUsage.end_datetime) |
-                                           (end_dt >= SensorUsage.start_datetime) & (end_dt <= SensorUsage.end_datetime)
-                                   )
-                                   ))
+        pass
 
-            if len(sensor_query) == 0:
-                QMessageBox(
-                    QMessageBox.Warning,
-                    "No labels within selected timespan.",
-                    f"There are no labels found between {start_dt_local.strftime('%d-%m-%Y %H:%M:%S')} "
-                    f"and {end_dt_local.strftime('%d-%m-%Y %H:%M:%S')}.",
-                    QMessageBox.Ok
-                ).exec()
-                return
-
-            for sensor_usage in sensor_query:
-                sensor_id = sensor_usage.sensor.id
-
-                sdf_query = (SensorDataFile
-                             .select(SensorDataFile.id)
-                             .where((SensorDataFile.sensor == sensor_id) &
-                                    SensorDataFile.datetime.between(start_dt, end_dt)))
-
-                # TODO: Verify if this should be here: this will make a file with a unique subject-sensorid combination.
-                df: pd.DataFrame = pd.DataFrame()
-
-                for file in sdf_query:
-                    file_id = file.id
-                    labels = get_labels(file_id, start_dt, end_dt)
-                    sensor_data = self.get_sensor_data(file_id)
-
-                    if sensor_data is None:
-                        raise Exception('Sensor data not found')
-
-                    if not sensor_data.add_abs_dt_col(use_utc=True):
-                        return
-
-                    sensor_data.filter_between_dates(start_dt, end_dt)
-                    sensor_data.add_labels(labels)
-
-                    # TODO: Indefinite loading bar / loop over deze call plaatsen.
-                    data = sensor_data.get_data()
-                    df = df.append(data)
-
-                file_path = self.gui.sensor_controller.prompt_save_location(subject_name + "_" + str(sensor_id))
-
-                # Because exporting uses append mode, the existing file has to be deleted first in case of
-                # the reuse of file name.
-                try:
-                    if Path.exists(Path(file_path)):
-                        os.remove(file_path)
-                except FileNotFoundError:  # Export was cancelled on file location prompt.
-                    continue
-
-                # Since the actual writing to disk happens inside the dialog, this is currently not MVC compliant.
-                export_dialog = ExportProgressDialog(df, file_path)
-                export_dialog.exec()
-
-
-def get_labels(sensor_data_file_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
+def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
     labels = (Label
               .select(Label.start_time, Label.end_time, LabelType.activity)
               .join(LabelType)
-              .where(Label.sensor_data_file == sensor_data_file_id &
+              .where(Label.sensor_data_file == sdf_id &
                      (Label.start_time.between(start_dt, end_dt) |
                       Label.end_time.between(start_dt, end_dt))))
     return [{'start': label.start_time.replace(tzinfo=pytz.utc),
              'end': label.end_time.replace(tzinfo=pytz.utc),
              'activity': label.label_type.activity} for label in labels]
+

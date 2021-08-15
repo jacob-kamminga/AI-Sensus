@@ -1,7 +1,5 @@
 import datetime as dt
-
 import pytz
-
 
 def naive_to_utc(naive_dt: dt.datetime, timezone: pytz.timezone):
     """
