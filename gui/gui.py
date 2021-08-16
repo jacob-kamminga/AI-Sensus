@@ -238,7 +238,9 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.load_settings()
         while self.project_controller.project_dir is None:  # Config was just created, so no previous project was found.
             dialog = Welcome(self)  # pass self to access new and open project dialogs
-            dialog.exec()
+            res = dialog.exec()
+            if res == 0:  # User closed the window.
+                sys.exit(0)
 
     def open_new_project_dialog(self):
         """
