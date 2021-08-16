@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QDialog
 from gui.designer.welcome import Ui_Dialog
 
 
-class Welcome(QDialog, Ui_Dialog):
+class WelcomeDialog(QDialog, Ui_Dialog):
 
     def __init__(self, gui):
         super().__init__()

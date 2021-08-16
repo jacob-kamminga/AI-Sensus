@@ -1,8 +1,4 @@
-import pytz
-
 from database.models import Camera
-from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
-
 
 class CameraController:
 
@@ -20,10 +16,6 @@ class CameraController:
 
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()
-
-    @staticmethod
-    def save_camera(camera: Camera):
-        camera.save()
 
     # def delete_camera(self):
     #     """

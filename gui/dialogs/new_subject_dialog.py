@@ -40,9 +40,8 @@ class NewSubjectDialog(QtWidgets.QDialog, Ui_Dialog):
             self.new_subject_size = self.lineEdit_size.text()
             self.new_subject_extra_info = self.plainTextEdit_extra_info.toPlainText()
 
-            subject = Subject(name=self.new_subject_name, color=self.new_subject_color, size=self.new_subject_size,
-                              extra_info=self.new_subject_extra_info)
-            subject.save()
+            self.gui.annotation_controller.add_subject(self.new_subject_name, self.new_subject_color,
+                                                       self.new_subject_size, self.new_subject_extra_info)
 
     def check_unique(self, name):
         if name in self.existing_names:

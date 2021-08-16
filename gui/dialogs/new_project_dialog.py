@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog, QErrorMessage, QMessageBox
 from gui.designer.new_project_name import Ui_Dialog
 
 
-class NewProject(QDialog, Ui_Dialog):
+class NewProjectDialog(QDialog, Ui_Dialog):
 
     def __init__(self):
         super().__init__()

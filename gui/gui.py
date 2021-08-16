@@ -25,7 +25,7 @@ from gui.dialogs.export_dialog import ExportDialog
 from gui.dialogs.label_dialog import LabelDialog
 from gui.dialogs.label_settings_dialog import LabelSettingsDialog
 from gui.dialogs.machine_learning_dialog import MachineLearningDialog
-from gui.dialogs.new_project_dialog import NewProject
+from gui.dialogs.new_project_dialog import NewProjectDialog
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui.dialogs.select_camera_dialog import SelectCameraDialog
 from gui.dialogs.select_sensor_dialog import SelectSensorDialog
@@ -33,48 +33,19 @@ from gui.dialogs.sensor_model_dialog import SensorModelDialog
 from gui.dialogs.sensor_usage_dialog import SensorUsageDialog
 from gui.dialogs.subject_dialog import SubjectDialog
 from gui.dialogs.visual_analysis_dialog import VisualAnalysisDialog
-from gui.dialogs.welcome_dialog import Welcome
+from gui.dialogs.welcome_dialog import WelcomeDialog
 from controllers.camera_controller import CameraController
 from controllers.plot_controller import PlotController
 from controllers.sensor_controller import SensorController
 from controllers.video_controller import VideoController
 from controllers.project_controller import ProjectController
 from controllers.annotation_controller import AnnotationController
+from controllers.app_controller import AppController
 from machine_learning.classifier import Classifier, make_predictions
 
 COL_LABEL = 'Label'
 COL_TIME = 'Time'
 COL_TIMESTAMP = 'Timestamp'
-
-INIT_APP_CONFIG = {
-            PREVIOUS_PROJECT_DIR: "",
-            PROJECTS: []
-        }
-
-def user_data_dir(file_name):
-    r"""
-    Get OS specific data directory path for LabelingApp.
-    Typical user data directories are:
-        macOS:    ~/Library/Application Support/LabelingApp
-        Unix:     ~/.local/share/LabelingApp   # or in $XDG_DATA_HOME, if defined
-        Win 10:   C:\Users\<username>\AppData\Roaming\LabelingApp
-    For Unix, we follow the XDG spec and support $XDG_DATA_HOME if defined.
-    :param file_name: file to be fetched from the data dir
-    :return: full path to the user-specific data dir
-    """
-    # get os specific path
-    if sys.platform.startswith("win"):
-        os_path = getenv("APPDATA")
-    elif sys.platform.startswith("darwin"):
-        os_path = "~/Library/Application Support"
-    else:
-        # linux
-        os_path = getenv("XDG_DATA_HOME", "~/.local/share")
-
-    # join with LabelingApp dir
-    path = Path(os_path) / "Labeling App MVC"
-
-    return path.expanduser() / file_name
 
 
 class GUI(QMainWindow, Ui_MainWindow):
@@ -82,20 +53,23 @@ class GUI(QMainWindow, Ui_MainWindow):
     def __init__(self):
         super().__init__()
         self.setupUi(self)
-        register_matplotlib_converters()
 
         # Error handling
         # To avoid creating multiple error boxes
         self.err_box = None
 
-        self.app_config_file = user_data_dir(APP_CONFIG_FILE)
-        self.app_config = {}
+        self.app_controller = AppController(self)
 
-        self.project_controller = ProjectController()
-        self.show_welcome_dialog()
+        self.project_controller = ProjectController(self)
+        if self.app_controller.prev_project_dir is not None:
+           self.project_controller.load(self.app_controller.prev_project_dir, new_project=False)
+
         # update_db_structure(self.settings)  # function of self.settings has been moved to project_controller
 
+    def init_project(self):
         # GUI components
+        register_matplotlib_converters()
+
         self.video_controller = VideoController(self)
         self.sensor_controller = SensorController(self)
         self.plot_controller = PlotController(self)
@@ -133,7 +107,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionExit.triggered.connect(qApp.quit)
 
         self.lineEdit_function_regex.returnPressed.connect(self.plot_controller.new_plot)
-        self.doubleSpinBox_video_offset.valueChanged.connect(self.change_offset)
+        self.doubleSpinBox_video_offset.valueChanged.connect(self.sensor_controller.change_offset)
         self.doubleSpinBox_video_offset.setMaximum(43200)  # 12 hours range
         self.doubleSpinBox_video_offset.setMinimum(-43200)
         self.doubleSpinBox_speed.valueChanged.connect(self.video_controller.change_speed)
@@ -187,6 +161,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.label_project_name_value.setText(project_name)
         self.setWindowTitle("AI Sensus - " + project_name)
 
+
     def std_err_post(self, msg):
         """
         This method receives stderr text strings as a pyqtSlot.
@@ -194,102 +169,43 @@ class GUI(QMainWindow, Ui_MainWindow):
         if self.err_box is None:
             self.err_box = QMessageBox()
             # Both OK and window delete fire the 'finished' signal
-            self.err_box.finished.connect(self.clear)
+            self.err_box.finished.connect(self.clear_err_box)
+
         # A single error is sent as a string of separate stderr .write() messages,
         # so concatenate them.
         self.err_box.setText(self.err_box.text() + msg)
+
         # .show() is used here because .exec() or .exec_() create multiple
         # MessageBoxes.
         self.err_box.show()
 
-    def clear(self):
+    def clear_err_box(self):
         # QMessageBox doesn't seem to be actually destroyed when closed, just hidden.
         # This is true even if destroy() is called or if the Qt.WA_DeleteOnClose
         # attribute is set.  Clear text for next time.
         self.err_box.setText('')
 
-    def load_settings(self):
-
-        # Check if application config file exists
-        if self.app_config_file.is_file():
-            with self.app_config_file.open() as f:
-                self.app_config = json.load(f)
-
-            prev_project_dir_ = self.app_config.get(PREVIOUS_PROJECT_DIR)
-            if prev_project_dir_:
-                prev_project_dir = Path(self.app_config.get(PREVIOUS_PROJECT_DIR))
-
-                # Check if previous project directory exists
-                if prev_project_dir.is_dir():
-                    self.project_controller.load(prev_project_dir, new_project=False)
-
-        else:
-            # Create empty application config file
-            self.app_config_file.parent.mkdir(exist_ok=True)
-            self.app_config_file.touch()
-
-            with self.app_config_file.open('w') as f:
-                json.dump(INIT_APP_CONFIG, f)
-
     def show_welcome_dialog(self):
         """"
         Open the welcome dialog. The welcome dialog first checks if a project was already used during previous session.
         """
-        self.load_settings()
         while self.project_controller.project_dir is None:  # Config was just created, so no previous project was found.
-            dialog = Welcome(self)  # pass self to access new and open project dialogs
-            res = dialog.exec()
-            if res == 0:  # User closed the window.
-                sys.exit(0)
+            welcome_dialog = WelcomeDialog(self)  # pass self to access new and open project dialogs
+            welcome_dialog.exec()
 
     def open_new_project_dialog(self):
         """
         Open the new project name dialog.
         """
-        new_project_dialog = NewProject()
+        new_project_dialog = NewProjectDialog()
         new_project_dialog.exec()
-        project_name = new_project_dialog.project_name  # Not MVC, but unnecessary to change.
+        self.project_controller.create_new_project(new_project_dialog.project_name)
 
-        if project_name:
-            project_dir = QFileDialog.getExistingDirectory(
-                self,
-                "Select new project directory... A folder will be created",
-                options=QFileDialog.ShowDirsOnly
-            )
+        # Reset video and sensordata
+        self.reset_gui_components()
 
-            if project_dir:
-                # Add project name to project directory
-                project_dir = Path(project_dir).joinpath(project_name)
-
-                self.project_controller.load(project_dir, new_project=True)
-                self.project_controller.set_setting('project_name', project_name)
-
-                dialog = ProjectSettingsDialog(self)
-                dialog.exec()
-
-                # self.project_controller.create_new_project(project_dir, project_name)
-
-                # # Create database
-                # try:
-                #     conn = sqlite3.connect(project_dir.joinpath(PROJECT_DATABASE_FILE).as_posix())
-                #     create_database(conn)
-                # except sqlite3.Error as e:
-                #     print(e)
-
-                # Reset video and sensordata
-                self.reset_gui_components()
-
-                # Save project in app config
-                self.app_config.setdefault(PROJECTS, []).append({
-                    PROJECT_NAME: project_name,
-                    PROJECT_DIR: str(project_dir)
-                })
-                self.app_config[PREVIOUS_PROJECT_DIR] = str(project_dir)
-                self.save_app_config()
-
-    def save_app_config(self):
-        with self.app_config_file.open('w') as f:
-            json.dump(self.app_config, f)
+        dialog = ProjectSettingsDialog(self)
+        dialog.exec()
 
     def open_existing_project_dialog(self):
         """
@@ -326,21 +242,14 @@ class GUI(QMainWindow, Ui_MainWindow):
             else:  # Pressed Cancel.
                 return
 
-        self.project_controller.load(Path(project_dir))
-        # Reset gui components
+        self.project_controller.open_existing_project(project_dir)
         self.reset_gui_components()
-        # Set project dir as most recent project dir
-        self.app_config[PREVIOUS_PROJECT_DIR] = project_dir
-        self.save_app_config()
-
 
     def reset_gui_components(self):
         """
-        When opening an existing or starting a new project, the gui components need to be reset to the new project
-        to connect the correct DB's
-        :return:
+        When opening an existing or starting a new project, the GUI components need to be reset. This may also be
+        required after the timezone settings change.
         """
-
         self.mediaPlayer.setMedia(QMediaContent())
 
         self.label_project_name_value.clear()
@@ -386,20 +295,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.label_project_name_value.setText(project_name)
         self.setWindowTitle("AI Sensus - " + project_name)
 
-    def change_offset(self, offset: float):
-        """
-        Updates the offset in the database.
-        """
-        if self.sensor_controller.sensor_data_file.sensor is not None:
-            date = self.sensor_controller.sensor_data_file.datetime.date()
-
-            (Offset
-             .replace(camera=self.camera_controller.camera.id,
-                      sensor=self.sensor_controller.sensor_data_file.sensor,
-                      offset=offset,
-                      added=date)
-             .execute())
-
     def update_camera_sensor_offset(self):
         if self.sensor_controller is not None \
                 and self.sensor_controller.sensor_data_file is not None \
@@ -418,19 +313,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         Opens the label dialog window.
         """
         if not self.sensor_controller.sensor_data:
-            QMessageBox.Warning(self,
-                                    "Warning",
-                                    "You need to import sensor data first.",
-                                    QMessageBox.Ok)
+            QMessageBox.Warning(self, "No sensor data found", "You need to import sensor data first.")
         else:
             dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
                                  self.sensor_controller.sensor_data.metadata.sensor_timezone)
             dialog.exec()
 
             if dialog.is_accepted:
-                self.add_label_highlight(dialog.label.start,
-                                         dialog.label.end,
-                                         dialog.label.label)
+                self.add_label_highlight(dialog.label.start, dialog.label.end, dialog.label.label)
 
     def open_select_camera_dialog(self):
         """
@@ -477,13 +367,10 @@ class GUI(QMainWindow, Ui_MainWindow):
                 dialog.setWindowTitle(self.sensor_controller.file_name)
 
         dialog.exec()
-        # dialog.show()
 
         if dialog.selected_sensor_id is not None:
             self.sensor_controller.update_sensor(dialog.selected_sensor_id)
-        #     return dialog.selected_sensor_name
-        # else:
-        #     return None
+
 
     def open_sensor_model_dialog(self):
         """
@@ -561,11 +448,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         features = []
 
         if dialog.is_accepted:
-            # save current position in the video
+            # Save current position in the video
             original_position = self.mediaPlayer.position()
 
             at_least_1_column = False
-            # for each selected column, add new column names to the lists for machine learning
+            # For each selected column, add new column names to the lists for machine learning
             for column in columns:
                 if dialog.column_dict[column]:
                     at_least_1_column = True
@@ -585,13 +472,13 @@ class GUI(QMainWindow, Ui_MainWindow):
 
                 self.label_data.set_sensor_id(self.sensor_data_file.sensor_id)
 
-            # show a window to tell the user that the classifier is running
+            # Show a window to tell the user that the classifier is running
             working_msg = QDialog()
             working_msg.setWindowTitle("Loading...")
             working_msg.resize(200, 0)
             working_msg.open()
 
-            # run the classifier
+            # Run the classifier
             self.ml_dataframe = self.sensor_data_file.sensor_data.__copy__()
             self.ml_dataframe.add_timestamp_column(COL_TIME, COL_TIMESTAMP)
             labels = self.plot.label_manager.get_labels_by_file_and_date(self.sensor_data_file.sensor_id,
@@ -607,7 +494,7 @@ class GUI(QMainWindow, Ui_MainWindow):
             self.ml_classifier.set_features(features)
             res = self.ml_classifier.classify()
 
-            # close the info window
+            # Close the info window
             working_msg.close()
 
             self.video.play()
@@ -615,11 +502,11 @@ class GUI(QMainWindow, Ui_MainWindow):
             for prediction in make_predictions(res):
                 label, start_dt, end_dt = prediction['label'], datetime.fromisoformat(prediction['begin']), \
                                           datetime.fromisoformat(prediction['end'])
-                # convert datetime times to time in seconds, which is used on the x-axis of the data-plot
+                # Convert datetime times to time in seconds, which is used on the x-axis of the data-plot
                 start = (start_dt - self.sensor_data_file.utc_dt).total_seconds()
                 end = (end_dt - self.sensor_data_file.utc_dt).total_seconds()
 
-                # add highlight to data-plot and play video in a loop
+                # Add highlight to data-plot and play video in a loop
                 span, text = self.add_suggestion_highlight(start, end, label)
                 self.loop = (int((start + self.doubleSpinBox_video_offset.value()) * 1000),
                              int((end + self.doubleSpinBox_video_offset.value()) * 1000))
@@ -631,7 +518,7 @@ class GUI(QMainWindow, Ui_MainWindow):
                     self.timer.stop()
                     self.plot.update_plot_axis(position=start + self.doubleSpinBox_video_offset.value())
 
-                # ask user to accept or reject the suggested label
+                # Ask user to accept or reject the suggested label
                 msg = QMessageBox()
                 msg.setIcon(QMessageBox.Question)
                 msg.setWindowTitle("Label suggestion")
@@ -671,6 +558,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
 
 def add_seconds_to_datetime(date_time: datetime, seconds: float):
+    # Unused?
     """
     Returns a datetime object after adding the specified number of seconds to it.
 

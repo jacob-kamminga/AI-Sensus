@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import QApplication
 
 from gui import gui
 
-
 class StdErrHandler(QtCore.QObject):
     """
     This class provides an alternate write() method for stderr messages.
@@ -24,12 +23,14 @@ class StdErrHandler(QtCore.QObject):
 def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
 
-
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    project = gui.GUI()
-    # project.setWindowTitle("AI Sensus")
-    project.show()
+
+    main_window = gui.GUI()
+    if main_window.app_controller.prev_project_dir is None:
+        main_window.show_welcome_dialog()
+    main_window.init_project()
+    main_window.show()
 
     # Check if running in normal mode or debug mode.
     gettrace = getattr(sys, 'gettrace', None)
@@ -44,7 +45,7 @@ if __name__ == '__main__':
         sys.stderr = std_err_handler
 
         # Connect err_msg signal to message box method in main window
-        std_err_handler.err_msg.connect(project.std_err_post)
+        std_err_handler.err_msg.connect(main_window.std_err_post)
 
     elif gettrace():  # Running in debug mode.
         print("Running in debug mode.")

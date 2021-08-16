@@ -307,6 +307,20 @@ class SensorController:
             self.sensor_data_file.sensor = sensor_id
             self.sensor_data_file.save()
 
+    def change_offset(self, offset: float):
+        """
+        Updates the time offset in the database.
+        """
+        if self.sensor_data_file.sensor is not None:
+            date = self.sensor_data_file.datetime.date()
+
+            (Offset
+             .replace(camera=self.gui.camera_controller.camera.id,
+                      sensor=self.sensor_data_file.sensor,
+                      offset=offset,
+                      added=date)
+             .execute())
+
     def create_file_id(self, file_path, block_size=256):
         # Function that takes a file and returns the first 10 characters of a hash of
         # 10 times block size in the middle of the file

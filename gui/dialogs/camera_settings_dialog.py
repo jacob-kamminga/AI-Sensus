@@ -61,5 +61,5 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         camera.timezone = self.listWidget_timezones.selectedItems()[0].text()
         camera.manual_offset = self.doubleSpinBox_manual_offset.value()
 
-        CameraController.save_camera(camera)
+        camera.save()
         self.close()

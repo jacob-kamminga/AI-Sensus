@@ -1,6 +1,6 @@
 import peewee
 
-from database.models import Label, LabelType
+from database.models import Label, LabelType, Subject
 
 
 class AnnotationController:
@@ -30,12 +30,17 @@ class AnnotationController:
 
         LabelType(activity=activity, color=color, description="", keyboard_shortcut=shortcut).save()
 
-    def remove_label(self, remove_item):
-        label_type = LabelType.get(LabelType.activity == remove_item)
+    def remove_label(self, activity):
+        label_type = LabelType.get(LabelType.activity == activity)
         # Delete label type and all existing associated labels
         query = Label.delete().where(Label.label_type == label_type)
         query.execute()
         label_type.delete_instance()
+
+    def add_subject(self, subject_name, subject_color, subject_size, subject_info):
+        # May at some point need its own controller.
+        subject = Subject(name=subject_name, color=subject_color, size=subject_size, extra_info=subject_info)
+        subject.save()
 
 class NonUniqueShortcutException(Exception):
 

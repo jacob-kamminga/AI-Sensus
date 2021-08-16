@@ -43,7 +43,6 @@ class VideoController:
             if os.path.isfile(previous_path):
                 self.file_path = previous_path
                 self.open_file()
-        # else:
 
     def prompt_file(self):
         """
