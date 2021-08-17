@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QMessageBox
 from matplotlib.backend_bases import MouseButton
 from matplotlib.dates import date2num, num2date
 from pandas.core.dtypes.common import is_numeric_dtype
+from peewee import DoesNotExist
 
 from constants import COL_ABS_DATETIME
 from database.models import LabelType, Label
@@ -390,9 +391,12 @@ class PlotController:
                     self.delete_label(delete_label)
                 else:
                     if self.gui.current_key_pressed:
-                        label_shortcut = (LabelType
-                                          .get(LabelType.keyboard_shortcut == self.gui.current_key_pressed)
-                                          ).id
+                        try:
+                            label_shortcut = (LabelType
+                                              .get(LabelType.keyboard_shortcut == self.gui.current_key_pressed)
+                                              ).id
+                        except DoesNotExist:
+                            label_shortcut = None
                     else:
                         label_shortcut = None
 

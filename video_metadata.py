@@ -124,7 +124,7 @@ def parse_video_begin_time(file_path, camera_timezone) -> datetime.datetime:
     # TODO handle case where no start time for video was found
     # raise StartTimeNotFoundException
 
-    # TODO invesitgate (vooral op exiftool site) if convention is that tag is always UTC time except when timezone info explcitly present in timestamp tag
+    # TODO investigate (vooral op exiftool site) if convention is that tag is always UTC time except when timezone info explcitly present in timestamp tag
 
     # Loop over known datetime string formats used as tags to find the correct format to be parsed. When reading,
     # ExifTool converts all date and time information to standard EXIF format, so this is also the way it is
