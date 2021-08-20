@@ -103,12 +103,14 @@ class AppController:
         with self.app_config_file.open('w') as f:
             json.dump(INIT_APP_CONFIG, f)
 
+
 class MissingProjectDirectoryError(Exception):
     """
     This error is raised when the previous project directory is missing.
     """
     def __init__(self, directory):
         self.directory = directory
+
 
 class CorruptAppConfigError(Exception):
     """

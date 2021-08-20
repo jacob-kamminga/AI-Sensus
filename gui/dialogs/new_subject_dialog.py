@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets
 
+from controllers.annotation_controller import AnnotationController
 from database.models import Subject
 from gui.designer.new_subject import Ui_Dialog
 
@@ -11,9 +12,10 @@ SUBJECT_EXTRA_INFO_INDEX = 3
 
 class NewSubjectDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self):
+    def __init__(self, annotation_controller: AnnotationController):
         super().__init__()
         self.setupUi(self)
+        self.annotation_controller = annotation_controller
 
         self.new_subject_name = None
         self.new_subject_color = None
@@ -40,8 +42,12 @@ class NewSubjectDialog(QtWidgets.QDialog, Ui_Dialog):
             self.new_subject_size = self.lineEdit_size.text()
             self.new_subject_extra_info = self.plainTextEdit_extra_info.toPlainText()
 
-            self.gui.annotation_controller.add_subject(self.new_subject_name, self.new_subject_color,
-                                                       self.new_subject_size, self.new_subject_extra_info)
+            self.annotation_controller.add_subject(
+                self.new_subject_name,
+                self.new_subject_color,
+                self.new_subject_size,
+                self.new_subject_extra_info
+            )
 
     def check_unique(self, name):
         if name in self.existing_names:

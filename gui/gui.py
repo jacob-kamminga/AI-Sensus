@@ -353,34 +353,31 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Open the subject mapping dialog window.
         """
-        dialog = SubjectDialog()
+        dialog = SubjectDialog(self.annotation_controller)
         dialog.exec()
 
     def open_select_sensor_dialog(self):
         """
         Open the select sensor dialog window.
         """
-        dialog = SelectSensorDialog(self)
+        if self.sensor_controller is not None and self.sensor_controller.file_name is not None:
+            dialog = SelectSensorDialog(self.sensor_controller)
+            dialog.setWindowTitle(self.sensor_controller.file_name)
+            dialog.exec()
 
-        if self.sensor_controller is not None:
-            if self.sensor_controller.file_name is not None:
-                dialog.setWindowTitle(self.sensor_controller.file_name)
-
-        dialog.exec()
-
-        if dialog.selected_sensor_id is not None:
-            self.sensor_controller.update_sensor(dialog.selected_sensor_id)
+            if dialog.selected_sensor_id is not None:
+                self.sensor_controller.update_sensor(dialog.selected_sensor_id)
 
 
     def open_sensor_model_dialog(self):
         """
         Open the sensor model dialog.
         """
-        dialog = SensorModelDialog()
+        dialog = SensorModelDialog(self.sensor_controller)
         dialog.exec()
 
     def open_sensor_usage_dialog(self):
-        dialog = SensorUsageDialog(self)
+        dialog = SensorUsageDialog(self.project_controller, self.sensor_controller)
         dialog.exec()
 
     def open_export(self):

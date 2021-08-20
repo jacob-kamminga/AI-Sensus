@@ -1,16 +1,17 @@
 from PyQt5 import QtWidgets
 
 from constants import *
+from controllers.sensor_controller import SensorController
 from gui.designer.new_sensor_model_date import Ui_Dialog
 from gui.dialogs.new_sensor_model_id_dialog import SensorModelIdDialog
-from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 
 
 class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, model: {}, model_id=None, test_file=None, parent=None):
+    def __init__(self, sensor_controller: SensorController, model: {}, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
+        self.sensor_controller = sensor_controller
         self.model_id = model_id
         self.test_file = test_file
         self.parent = parent
@@ -72,6 +73,7 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
         self.model[FORMAT_STRING] = self.lineEdit_timestamp_formatstring.text()
 
         dialog = SensorModelIdDialog(
+            self.sensor_controller,
             self.model,
             model_id=self.model_id,
             test_file=self.test_file,
@@ -84,6 +86,7 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
         from gui.dialogs.new_sensor_model_name_dialog import SensorModelNameDialog
 
         dialog = SensorModelNameDialog(
+            self.sensor_controller,
             self.model,
             model_id=self.model_id,
             test_file=self.test_file,

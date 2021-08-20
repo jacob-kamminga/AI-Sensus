@@ -20,7 +20,7 @@ class CameraSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
         if self.selected_camera.manual_offset:
             self.doubleSpinBox_manual_offset.setValue(self.selected_camera.manual_offset)
 
-        # Pre-fill name in edit box
+        # Pre-fill name in on_accepted box
         self.lineEdit_change_camera_name.setText(self.selected_camera.name)
 
         # Add timezones to combobox

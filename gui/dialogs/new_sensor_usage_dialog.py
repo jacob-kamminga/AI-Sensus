@@ -2,16 +2,18 @@ import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
 
+from controllers.sensor_controller import SensorController
 from database.models import SensorUsage, Subject, Sensor
 from gui.designer.new_subject_sensor_map import Ui_Dialog
 
 
 class NewSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, subjects_dict: dict, sensors_dict: dict, project_timezone):
+    def __init__(self, sensor_controller: SensorController, subjects_dict: dict, sensors_dict: dict, project_timezone):
         super().__init__()
         self.setupUi(self)
 
+        self.sensor_controller = sensor_controller
         self.subjects_dict = subjects_dict
         self.sensors_dict = sensors_dict
         self.project_timezone = project_timezone

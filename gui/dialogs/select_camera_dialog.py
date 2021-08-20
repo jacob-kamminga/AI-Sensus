@@ -91,7 +91,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             self.comboBox_camera.setCurrentText(camera_name)  # Set the new camera as the selected camera.
             self.edit_camera(self.get_selected_camera().id)
 
-            # Clear the line edit field
+            # Clear the line on_accepted field
             self.lineEdit_new_camera_name.clear()
 
     def use_camera(self, camera_id: int):
@@ -102,7 +102,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         self.close()
 
     def edit_camera(self, camera_id: int):
-        """Open the edit dialog for the selected camera and load it to """
+        """Open the on_accepted dialog for the selected camera and load it to """
         selected_camera = get_camera_from_id(camera_id)
         dialog = CameraSettingsDialog(selected_camera)  # Open the setting dialogs to allow for changes.
         dialog.exec()

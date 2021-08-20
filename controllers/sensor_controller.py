@@ -14,9 +14,7 @@ from peewee import DoesNotExist, JOIN
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
-from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Label, LabelType
-from gui.dialogs.edit_sensor_dialog import EditSensorDialog
-from gui.dialogs.sensor_model_dialog import SensorModelDialog
+from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Label, LabelType, SensorUsage, Subject
 
 
 class SensorController:
@@ -59,7 +57,7 @@ class SensorController:
 
     def prompt_file(self):
         """
-        Opens a file dialog that lets the user select a file.
+        Open a file dialog that lets the user select a file.
         """
         path = self.project_controller.get_setting(PREVIOUS_SENSOR_DATA_FILE)
 
@@ -77,14 +75,84 @@ class SensorController:
         self.file_path = Path(self.file_path)
         self.open_file()
 
+    @staticmethod
+    def add_sensor(name, sensor_model) -> bool:
+        from gui.dialogs.edit_sensor_dialog import EditSensorDialog
+        sensor = Sensor(name=name, sensor_model=sensor_model)
+        dialog = EditSensorDialog(sensor)
+        dialog.exec()
+
+        return dialog.saved
+
+    @staticmethod
+    def edit_sensor(sensor, timezone) -> bool:
+        """ Edit and save a sensor in the database. """
+        try:
+            sensor.timezone = timezone
+            sensor.save()
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def edit_sensor_usage(
+            sensor_usage: SensorUsage,
+            subject: Subject,
+            sensor: Sensor,
+            start_dt: dt.datetime,
+            end_dt: dt.datetime
+    ) -> bool:
+        """ Edit and save a sensor usage in the database. """
+        try:
+            sensor_usage.subject = subject
+            sensor_usage.sensor = sensor
+            sensor_usage.start_datetime = start_dt
+            sensor_usage.end_datetime = end_dt
+            sensor_usage.save()
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def delete_sensor_usage(
+            sensor_usage: SensorUsage
+    ) -> bool:
+        """ Delete a sensor usage instance. """
+        try:
+            sensor_usage.delete_instance()
+            return True
+        except:
+            return False
+
     def open_sensor_model_dialog(self):
-        dialog = SensorModelDialog()
+        from gui.dialogs.sensor_model_dialog import SensorModelDialog
+        dialog = SensorModelDialog(self)
         dialog.exec()
         return dialog.selected_model_id
 
+    @staticmethod
+    def save_sensor_model(sensor_model: SensorModel) -> bool:
+        """ Save a sensor model instance to the database. """
+        try:
+            sensor_model.save()
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def delete_sensor_model(
+            sensor_model: SensorModel
+    ) -> bool:
+        """ Delete a sensor model instance. """
+        try:
+            sensor_model.delete_instance()
+            return True
+        except:
+            return False
+
     def open_file(self):
         """
-        Opens the file specified by self.file_path and sets the sensor data.
+        Open the file specified by self.file_path and set the sensor data.
         """
         if self.file_path and self.file_path.is_file():
             # Store the selected file path in the configuration
@@ -178,6 +246,7 @@ class SensorController:
 
             while sensor.timezone is None:
                 # Prompt user for timezone of sensor
+                from gui.dialogs.edit_sensor_dialog import EditSensorDialog
                 dialog = EditSensorDialog(sensor)
                 dialog.exec()
 

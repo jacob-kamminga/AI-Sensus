@@ -1,16 +1,17 @@
 from PyQt5.QtWidgets import QDialog, QMessageBox
 
 from constants import *
+from controllers.sensor_controller import SensorController
 from gui.designer.new_sensor_model_final import Ui_Dialog
-from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from database.models import SensorModel
 
 
 class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
-    def __init__(self, model: {} = None, model_id=None, test_file=None, parent=None):
+    def __init__(self, sensor_controller: SensorController, model: {} = None, model_id=None, test_file=None, parent=None):
         super().__init__()
         self.setupUi(self)
+        self.sensor_controller = sensor_controller
         self.model_id = model_id
         self.test_file = test_file
         self.parent = parent
@@ -18,7 +19,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         if model is not None:
             self.model = model
 
-            # Hide edit/remove button
+            # Hide on_accepted/remove button
             self.pushButton_edit.hide()
             self.pushButton_remove.hide()
         elif model_id is not None:
@@ -117,6 +118,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
     def previous(self):
         from gui.dialogs.new_sensor_model_comment_style_dialog import SensorModelCommentStyleDialog
         dialog = SensorModelCommentStyleDialog(
+            self.sensor_controller,
             self.model,
             model_id=self.model_id,
             test_file=self.test_file,
@@ -127,8 +129,13 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
     def edit(self):
         from gui.dialogs.new_sensor_model_name_dialog import SensorModelNameDialog
-
-        dialog = SensorModelNameDialog(model=self.model, model_id=self.model_id, test_file=self.test_file, parent=self.parent)
+        dialog = SensorModelNameDialog(
+            self.sensor_controller,
+            model=self.model,
+            model_id=self.model_id,
+            test_file=self.test_file,
+            parent=self.parent
+        )
         self.close()
         dialog.exec()
 

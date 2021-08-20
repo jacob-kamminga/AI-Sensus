@@ -1,5 +1,6 @@
 from PyQt5 import QtWidgets
 
+from controllers.annotation_controller import AnnotationController
 from database.models import Subject
 from gui.designer.subject import Ui_Dialog
 from gui.dialogs.new_subject_dialog import NewSubjectDialog
@@ -12,9 +13,10 @@ SUBJECT_EXTRA_INFO_INDEX = 4
 
 class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self):
+    def __init__(self, annotation_controller: AnnotationController):
         super().__init__()
         self.setupUi(self)
+        self.annotation_controller = annotation_controller
 
         self.subjects = dict()
 
@@ -49,7 +51,7 @@ class SubjectDialog(QtWidgets.QDialog, Ui_Dialog):
         """
         Opens the new subject dialog window.
         """
-        dialog = NewSubjectDialog()
+        dialog = NewSubjectDialog(self.annotation_controller)
         dialog.exec()
 
         name = dialog.new_subject_name

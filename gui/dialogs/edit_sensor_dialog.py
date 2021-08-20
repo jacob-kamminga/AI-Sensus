@@ -1,6 +1,7 @@
 import pytz
 from PyQt5 import QtWidgets
 
+from controllers.sensor_controller import SensorController
 from database.models import Sensor
 from gui.designer.edit_sensor import Ui_Dialog
 
@@ -15,29 +16,34 @@ DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, sensor: Sensor):
+    def __init__(self, sensor_controller: SensorController, sensor: Sensor):
         super().__init__()
         self.setupUi(self)
+        self.init_gui()
 
+        self.sensor_controller = sensor_controller
         self.sensor = sensor
+        self.value_changed = False
         self.saved = False
-
-        # Fill the combobox with timezones
-        self.comboBox_timezone.addItems(pytz.common_timezones)
 
         # Fill the fields with the sensor that is currently selected
         self.load_sensor()
 
-        self.buttonBox.accepted.connect(self.save_to_db)
+        self.comboBox_timezone.currentIndexChanged.connect(self.on_value_changed)
+        self.buttonBox.accepted.connect(self.on_accepted)
+
+    def init_gui(self) -> None:
+        """ Initializes the GUI. """
+        self.comboBox_timezone.addItems(pytz.common_timezones)
 
     def load_sensor(self):
         self.label_sensor_id_val.setText(self.sensor.name)
         self.comboBox_timezone.setCurrentText(self.sensor.timezone)
 
-    def save_to_db(self):
-        selected_timezone = self.comboBox_timezone.currentText()
+    def on_value_changed(self) -> None:
+        self.value_changed = True
 
-        if selected_timezone != self.sensor.timezone:
-            self.sensor.timezone = selected_timezone
-            rows_modified = self.sensor.save()
-            self.saved = rows_modified > 0
+    def on_accepted(self):
+        if self.value_changed:
+            selected_timezone = self.comboBox_timezone.currentText()
+            self.saved = self.sensor_controller.edit_sensor(self.sensor, selected_timezone)
