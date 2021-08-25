@@ -62,7 +62,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.project_controller = ProjectController(self)
         if self.app_controller.prev_project_dir is not None:
-           self.project_controller.load(self.app_controller.prev_project_dir, new_project=False)
+           self.project_controller.load_or_create(self.app_controller.prev_project_dir, new_project=False)
 
         # update_db_structure(self.settings)  # function of self.settings has been moved to project_controller
 
