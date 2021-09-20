@@ -38,6 +38,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         self.setupUi(self)
         self.camera_controller = gui.camera_controller
         self.camera = None
+        self.gui = gui
 
         # Fill camera dictionary and add camera names to combobox
         # self.camera_dict = dict()  # Unused
@@ -75,7 +76,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         # Adding a camera manually and programatically is easier. The ID gets created automatically, a name doesn't.
         if camera_name != '':
             try:
-                Camera.create(name=camera_name)
+                camera_name = self.gui.camera_controller.add_camera(camera_name)
             except peewee.IntegrityError:
                 QMessageBox(
                     QMessageBox.Warning,
@@ -84,8 +85,6 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
                     f"(ID={Camera.get(Camera.name == camera_name)}). Please choose a different name.",
                     QMessageBox.Ok
                 ).exec()
-                self.lineEdit_new_camera_name.clear()
-                return
 
             self.comboBox_camera.addItem(camera_name)  # Add the new camera to the list
             self.comboBox_camera.setCurrentText(camera_name)  # Set the new camera as the selected camera.
