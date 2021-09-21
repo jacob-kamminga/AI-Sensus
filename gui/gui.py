@@ -1,23 +1,26 @@
-import json
-import sys
 from datetime import datetime
 from datetime import timedelta
-from os import getenv
 from pathlib import Path
-from typing import Optional
 
 import matplotlib.animation
 import matplotlib.pyplot as plt
+import numpy as np
 from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QFileDialog, qApp, QDialog
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
-import numpy as np
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
 
-from constants import PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR, APP_CONFIG_FILE, PROJECT_CONFIG_FILE
+from constants import PROJECT_CONFIG_FILE
+from controllers.annotation_controller import AnnotationController
+from controllers.app_controller import AppController
+from controllers.camera_controller import CameraController
+from controllers.plot_controller import PlotController
+from controllers.project_controller import ProjectController
+from controllers.sensor_controller import SensorController
+from controllers.video_controller import VideoController
 from data_export import windowing as wd
 from database.models import Offset, LabelType
 from gui.designer.gui import Ui_MainWindow
@@ -34,13 +37,6 @@ from gui.dialogs.sensor_usage_dialog import SensorUsageDialog
 from gui.dialogs.subject_dialog import SubjectDialog
 from gui.dialogs.visual_analysis_dialog import VisualAnalysisDialog
 from gui.dialogs.welcome_dialog import WelcomeDialog
-from controllers.camera_controller import CameraController
-from controllers.plot_controller import PlotController
-from controllers.sensor_controller import SensorController
-from controllers.video_controller import VideoController
-from controllers.project_controller import ProjectController
-from controllers.annotation_controller import AnnotationController
-from controllers.app_controller import AppController
 from machine_learning.classifier import Classifier, make_predictions
 
 COL_LABEL = 'Label'
@@ -50,7 +46,7 @@ COL_TIMESTAMP = 'Timestamp'
 
 class GUI(QMainWindow, Ui_MainWindow):
 
-    def __init__(self):
+    def __init__(self, app_config_file=None):
         super().__init__()
         self.setupUi(self)
 
@@ -58,11 +54,11 @@ class GUI(QMainWindow, Ui_MainWindow):
         # To avoid creating multiple error boxes
         self.err_box = None
 
-        self.app_controller = AppController(self)
+        self.app_controller = AppController(self, app_config_file)
 
         self.project_controller = ProjectController(self)
         if self.app_controller.prev_project_dir is not None:
-           self.project_controller.load_or_create(self.app_controller.prev_project_dir, new_project=False)
+            self.project_controller.load_or_create(self.app_controller.prev_project_dir, new_project=False)
 
         # update_db_structure(self.settings)  # function of self.settings has been moved to project_controller
 
@@ -161,7 +157,6 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.label_project_name_value.setText(project_name)
         self.setWindowTitle("AI Sensus - " + project_name)
 
-
     def std_err_post(self, msg):
         """
         This method receives stderr text strings as a pyqtSlot.
@@ -233,17 +228,18 @@ class GUI(QMainWindow, Ui_MainWindow):
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Warning)
                     msg.setWindowTitle("Not a project folder")
-                    msg.setText("The selected directory is not an existing project. If you want to use the files in this "
-                                "folder please create a new project an load the files in.")
+                    msg.setText(
+                        "The selected directory is not an existing project. If you want to use the files in this "
+                        "folder please create a new project an load the files in.")
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec()
                 else:
                     project_exists = True
             else:  # Pressed Cancel.
                 return
-
-        self.project_controller.open_existing_project(project_dir)
-        self.reset_gui_components()
+        else:
+            self.project_controller.open_existing_project(project_dir)
+            self.reset_gui_components()
 
     def reset_gui_components(self):
         """
@@ -367,7 +363,6 @@ class GUI(QMainWindow, Ui_MainWindow):
 
             if dialog.selected_sensor_id is not None:
                 self.sensor_controller.update_sensor(dialog.selected_sensor_id)
-
 
     def open_sensor_model_dialog(self):
         """

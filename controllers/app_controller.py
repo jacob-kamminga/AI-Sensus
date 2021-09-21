@@ -35,13 +35,13 @@ def user_data_dir(file_name):
 
 class AppController:
 
-    def __init__(self, gui):
+    def __init__(self, gui, app_config_file):
         self.gui = gui
         self.project_name = None
         self.project_dir = None
         self.prev_project_dir = None
 
-        self.app_config_file = user_data_dir(APP_CONFIG_FILE)
+        self.app_config_file = app_config_file if app_config_file is not None else user_data_dir(APP_CONFIG_FILE)
         self.app_config = {}
 
         try:
