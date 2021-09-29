@@ -46,10 +46,11 @@ COL_TIMESTAMP = 'Timestamp'
 
 class GUI(QMainWindow, Ui_MainWindow):
 
-    def __init__(self, app_config_file=None):
+    def __init__(self, app_config_file=None, testing=False):
         super().__init__()
         self.setupUi(self)
 
+        self.testing = testing
         # Error handling
         # To avoid creating multiple error boxes
         self.err_box = None
@@ -154,8 +155,20 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.sensor_controller.open_previous_file()
 
         project_name = self.project_controller.get_setting('project_name')
-        self.label_project_name_value.setText(project_name)
-        self.setWindowTitle("AI Sensus - " + project_name)
+
+        if not self.testing:
+            if self.sensor_controller.df is not None:
+                self.sensor_controller.draw_graph()
+
+            try:
+                self.label_sensor_data_filename.setText(
+                    self.file_path.parts[-3] + "/" + self.file_path.parts[-2] + "/" + self.file_path.parts[-1]
+                )
+            except:
+                pass
+
+            self.label_project_name_value.setText(project_name)
+            self.setWindowTitle("AI Sensus - " + project_name)
 
     def std_err_post(self, msg):
         """
@@ -356,9 +369,10 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Open the select sensor dialog window.
         """
-        if self.sensor_controller is not None and self.sensor_controller.file_name is not None:
+        if self.sensor_controller is not None:# and self.sensor_controller.file_name is not None:
             dialog = SelectSensorDialog(self.sensor_controller)
-            dialog.setWindowTitle(self.sensor_controller.file_name)
+            file_name = self.sensor_controller.file_name
+            dialog.setWindowTitle(file_name if file_name is not None else "Sensor")
             dialog.exec()
 
             if dialog.selected_sensor_id is not None:

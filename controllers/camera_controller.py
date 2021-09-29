@@ -1,4 +1,5 @@
 import peewee
+import pytz
 from PyQt5.QtWidgets import QMessageBox
 
 from database.models import Camera
@@ -20,10 +21,21 @@ class CameraController:
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()
 
-    @staticmethod
-    def add_camera(camera_name: str):
+    def add_camera(self, camera_name: str, timezone: pytz.timezone = None, manual_offset: int = None):
+        if timezone is None:
+            project_tz = self.gui.project_controller.get_setting('timezone')
+            if project_tz is not None:
+                timezone = project_tz
+            else:
+                timezone = 'UTC'
+
+        if manual_offset is None:
+            manual_offset = 0
         try:
-            Camera.create(name=camera_name)
+            Camera.create(name=camera_name,
+                          timezone=timezone,
+                          manual_offset=manual_offset)
+
         except peewee.IntegrityError:
             raise
 
