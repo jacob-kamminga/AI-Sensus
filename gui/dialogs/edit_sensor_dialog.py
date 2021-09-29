@@ -44,6 +44,5 @@ class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.value_changed = True
 
     def on_accepted(self):
-        if self.value_changed:
-            selected_timezone = self.comboBox_timezone.currentText()
-            self.saved = self.sensor_controller.edit_sensor(self.sensor, selected_timezone)
+        selected_timezone = self.comboBox_timezone.currentText()
+        self.saved = self.sensor_controller.edit_sensor(self.sensor, selected_timezone)

@@ -1,4 +1,5 @@
 import peewee
+import pytz
 
 import database.models
 from PyQt5 import QtWidgets
@@ -76,7 +77,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         # Adding a camera manually and programatically is easier. The ID gets created automatically, a name doesn't.
         if camera_name != '':
             try:
-                camera_name = self.gui.camera_controller.add_camera(camera_name)
+                self.gui.camera_controller.add_camera(camera_name)
             except peewee.IntegrityError:
                 QMessageBox(
                     QMessageBox.Warning,

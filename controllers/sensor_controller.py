@@ -76,13 +76,10 @@ class SensorController:
         self.open_file()
 
     @staticmethod
-    def add_sensor(name, sensor_model) -> bool:
-        from gui.dialogs.edit_sensor_dialog import EditSensorDialog
-        sensor = Sensor(name=name, sensor_model=sensor_model)
-        dialog = EditSensorDialog(sensor)
-        dialog.exec()
-
-        return dialog.saved
+    def add_sensor(name, sensor_model, timezone=None) -> Sensor:
+        sensor = Sensor(name=name, model=sensor_model, timezone=timezone)
+        sensor.save()
+        return sensor
 
     @staticmethod
     def edit_sensor(sensor, timezone) -> bool:
@@ -91,7 +88,7 @@ class SensorController:
             sensor.timezone = timezone
             sensor.save()
             return True
-        except:
+        except Exception:
             return False
 
     @staticmethod
@@ -150,26 +147,39 @@ class SensorController:
         except:
             return False
 
-    def open_file(self):
+    def get_or_create_sdf(self, file_path):
+        # This also happens in open_file(), but this can also be used for unittests.
+        self.file_name = file_path.name
+        self.file_path = file_path
+
+        self.file_name = ntpath.basename(self.file_path.as_posix())
+        self.file_id_hash = self.create_file_id(self.file_path)
+
+        # Get or create the sensor data file model instance
+        sdf = SensorDataFile.get_or_create(
+            file_id_hash=self.file_id_hash,
+            defaults={
+                'file_name': self.file_name,
+                'file_path': self.file_path,
+                'sensor': -1,
+            }
+        )[0]
+
+        return sdf
+
+    def open_file(self, file_path: Path = None):
         """
         Open the file specified by self.file_path and set the sensor data.
         """
+
+        if file_path is not None:
+            self.file_path = file_path
+
         if self.file_path and self.file_path.is_file():
             # Store the selected file path in the configuration
             self.project_controller.set_setting(PREVIOUS_SENSOR_DATA_FILE, self.file_path.as_posix())
 
-            self.file_name = ntpath.basename(self.file_path.as_posix())
-            self.file_id_hash = self.create_file_id(self.file_path)
-
-            # Get or create the sensor data file model instance
-            self.sensor_data_file = SensorDataFile.get_or_create(
-                file_id_hash=self.file_id_hash,
-                defaults={
-                    'file_name': self.file_name,
-                    'file_path': self.file_path,
-                    'sensor': -1,
-                }
-            )[0]
+            self.sensor_data_file = self.get_or_create_sdf(self.file_path)
 
             if type(self.sensor_data_file.datetime) == str:
                 self.sensor_data_file.datetime = dt.datetime.strptime(self.sensor_data_file.datetime,
@@ -247,7 +257,7 @@ class SensorController:
             while sensor.timezone is None:
                 # Prompt user for timezone of sensor
                 from gui.dialogs.edit_sensor_dialog import EditSensorDialog
-                dialog = EditSensorDialog(sensor)
+                dialog = EditSensorDialog(self, sensor)
                 dialog.exec()
 
             self.sensor_data.metadata.sensor_timezone = pytz.timezone(sensor.timezone)
@@ -286,14 +296,7 @@ class SensorController:
 
             # self.gui.setCursor(QtGui.QCursor(0))
             self.init_functions()
-            self.draw_graph()
-            # self.update_camera_text()
-            try:
-                self.gui.label_sensor_data_filename.setText(
-                    self.file_path.parts[-3] + "/" + self.file_path.parts[-2] + "/" + self.file_path.parts[-1]
-                )
-            except:
-                pass
+
             self.gui.update_camera_sensor_offset()
             self.gui.video_controller.sync_with_sensor_data()
 
@@ -397,7 +400,7 @@ class SensorController:
         # Output: Hash of 10 blocks of 128 bits of size as string plus file size as string
         file_size = os.path.getsize(file_path)
         start_index = int(file_size / 2)
-        with file_path.open(mode='r') as f:
+        with file_path.open(mode='r', errors="ignore") as f:
             f.seek(start_index)
             n = 1
             md5 = hashlib.md5()
@@ -494,6 +497,7 @@ class SensorController:
 
         pass
 
+
 def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
     labels = (Label
               .select(Label.start_time, Label.end_time, LabelType.activity)
@@ -504,4 +508,3 @@ def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
     return [{'start': label.start_time.replace(tzinfo=pytz.utc),
              'end': label.end_time.replace(tzinfo=pytz.utc),
              'activity': label.label_type.activity} for label in labels]
-

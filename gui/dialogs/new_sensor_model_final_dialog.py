@@ -112,7 +112,7 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
         self.close()
 
-        if self.parent is not None:
+        if self.parent is not None and hasattr(self.parent, "init"):
             self.parent.init()
 
     def previous(self):

@@ -13,6 +13,8 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         super().__init__()
         self.setupUi(self)
 
+        self.closed_by_user = False
+
         self.sensor_controller = sensor_controller
         self.models = None
         self.selected_model_id = None
@@ -23,6 +25,7 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         self.pushButton_new.pressed.connect(self.new_sensor_model_name_dialog)
         self.pushButton_settings.pressed.connect(self.edit_sensor_model_name_dialog)
         self.buttonBox.accepted.connect(self.set_selected_model)
+        self.buttonBox.rejected.connect(self.close)
 
     def init_gui(self):
         all_models = SensorModel.select()
@@ -48,3 +51,6 @@ class SensorModelDialog(QDialog, Ui_Dialog):
             selected_model_id = self.models[selected_model_name]
             dialog = SensorModelFinalDialog(self.sensor_controller, model_id=selected_model_id, parent=self)
             dialog.exec()
+
+    def closeEvent(self, event):
+        self.closed_by_user = True

@@ -52,18 +52,24 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                 # Prompt user to select sensor data file
                 dialog = SensorModelDialog(self.sensor_controller)
                 dialog.exec()
-                dialog.show()
+
+                if dialog.closed_by_user:
+                    return
+
                 self.sensor_model = dialog.selected_model_id
                 if self.sensor_model is None:
                     print('[select_sensor_dialog.py]: self.sensor_model_id is None')
                     # TODO: Show warning to user
 
-            saved = self.sensor_controller.add_sensor(name, self.sensor_model)
+            sensor = self.sensor_controller.add_sensor(name, self.sensor_model)
+            dialog = EditSensorDialog(self.sensor_controller, sensor)
+            dialog.exec()
 
-            if saved:
+            if dialog.saved:
                 self.comboBox_sensor.addItem(name)
                 self.comboBox_sensor.setCurrentText(name)
                 self.lineEdit_new_sensor_name.clear()
+
 
     def use_sensor(self):
         self.selected_sensor_name = self.comboBox_sensor.currentText()

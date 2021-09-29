@@ -191,7 +191,7 @@ class Ui_MainWindow(object):
         font.setWeight(75)
         self.label_camera_name.setFont(font)
         self.label_camera_name.setTextFormat(QtCore.Qt.AutoText)
-        self.label_camera_name.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignHCenter)
+        self.label_camera_name.setAlignment(QtCore.Qt.AlignBottom | QtCore.Qt.AlignHCenter)
         self.label_camera_name.setObjectName("label_camera_name")
         self.verticalLayout_settings.addWidget(self.label_camera_name)
         self.label_camera_name_value = QtWidgets.QLabel(self.layoutWidget2)
@@ -204,7 +204,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_video_offset = QtWidgets.QHBoxLayout()
         self.horizontalLayout_video_offset.setObjectName("horizontalLayout_video_offset")
         self.label_video_offset = QtWidgets.QLabel(self.layoutWidget2)
-        self.label_video_offset.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.label_video_offset.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.label_video_offset.setObjectName("label_video_offset")
         self.horizontalLayout_video_offset.addWidget(self.label_video_offset)
         self.doubleSpinBox_video_offset = QtWidgets.QDoubleSpinBox(self.layoutWidget2)
@@ -441,12 +441,14 @@ class Ui_MainWindow(object):
         self.actionOpen_Project.setText(_translate("MainWindow", "Open Project"))
         self.actionProject_Settings.setText(_translate("MainWindow", "Project Settings"))
         self.actionVIsual_Inspection.setText(_translate("MainWindow", "Visual Inspection"))
+
+
 from PyQt5.QtMultimedia import QMediaPlayer
 from PyQt5.QtMultimediaWidgets import QVideoWidget
 
-
 if __name__ == "__main__":
     import sys
+
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()

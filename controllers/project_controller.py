@@ -62,6 +62,10 @@ class ProjectController:
             [Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, SensorUsage, Subject,
              Offset])
 
+    @staticmethod
+    def close_db():
+        db.close()
+
     def create_new_project(self, new_project_name, new_project_dir=None):
         if new_project_name is not None:
             if new_project_dir is None:
@@ -79,6 +83,7 @@ class ProjectController:
             self.project_name = new_project_name
             self.project_dir = new_project_dir
             self.set_setting('project_name', self.project_name)
+            self.gui.app_controller.set_setting("previous_project_dir", new_project_dir.as_posix())
 
             # self.project_controller.create_new_project(project_dir, project_name)
 

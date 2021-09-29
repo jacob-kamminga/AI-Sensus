@@ -2,6 +2,8 @@ import json
 import sys
 from os import getenv
 from pathlib import Path
+from typing import Any
+
 from PyQt5.QtWidgets import QMessageBox
 from constants import APP_CONFIG_FILE, PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR
 from controllers.project_controller import INIT_APP_CONFIG
@@ -53,6 +55,17 @@ class AppController:
             QMessageBox.critical(self.gui, "Project directory is missing",
                                  f"The directory \"{e.directory}\" could not be found. If you deleted the directory, "
                                  f"you can ignore this.")
+
+    def set_setting(self, setting: str, new_value: Any) -> None:
+        """
+        Adds or changes a setting with the given name.
+
+        :param setting: The project setting to change
+        :param new_value: The value the setting should get
+        """
+
+        self.app_config[setting] = new_value
+        self.save_app_config()
 
     def save_app_config(self):
         """Write the app configuration dictionary in JSON format to the user directory."""
