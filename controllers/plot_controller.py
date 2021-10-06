@@ -7,7 +7,7 @@ from matplotlib.backend_bases import MouseButton
 from matplotlib.dates import date2num, num2date
 from pandas.core.dtypes.common import is_numeric_dtype
 
-from constants import COL_ABS_DATETIME
+from constants import ABSOLUTE_DATETIME
 from database.models import LabelType, Label
 from gui.dialogs.label_dialog import LabelDialog
 from controllers.sensor_controller import SensorController
@@ -53,7 +53,6 @@ class PlotController:
         self.y_max = None
 
         self.label_dialog: Optional[LabelDialog] = None
-        self.label_dialog = None
 
         # Initialize the boolean that keeps track if the user is labeling with the right-mouse button
         self.labeling = False
@@ -194,8 +193,8 @@ class PlotController:
         self.data_plot.clear()
 
         # Get the boundaries of the plot axis
-        self.x_min_dt = self.sensor_controller.df[COL_ABS_DATETIME].min()
-        self.x_max_dt = self.sensor_controller.df[COL_ABS_DATETIME].max()
+        self.x_min_dt = self.sensor_controller.df[ABSOLUTE_DATETIME].min()
+        self.x_max_dt = self.sensor_controller.df[ABSOLUTE_DATETIME].max()
         self.x_min = date2num(self.x_min_dt)
         self.x_max = date2num(self.x_max_dt)
         if self.x_min == self.x_max:
@@ -212,7 +211,7 @@ class PlotController:
 
         # Plot the graph
         self.data_plot.plot(
-            self.sensor_controller.df[COL_ABS_DATETIME],
+            self.sensor_controller.df[ABSOLUTE_DATETIME],
             self.sensor_controller.df[self.current_plot],
             ',-',
             linewidth=1,
@@ -267,7 +266,7 @@ class PlotController:
         """
         if self.sensor_controller.sensor_data is not None:
             # Convert the x-position to a Python datetime localized as UTC
-            x_data_dt = num2date(event.xdata).astimezone(pytz.utc)
+            x_datetime = num2date(event.xdata).astimezone(pytz.utc)
 
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
@@ -275,25 +274,25 @@ class PlotController:
                 self.label_dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
                                                 self.sensor_controller.sensor_data.metadata.sensor_timezone)
 
-                self.label_dialog.label.start_time = x_data_dt
+                self.label_dialog.label.start_time = x_datetime
 
             # If the right mouse button is used, check if this is the first or second time
             elif event.button == MouseButton.RIGHT:
                 if not self.labeling:
                     self.label_dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
                                                     self.sensor_controller.sensor_data.metadata.sensor_timezone)
-                    self.label_dialog.label.start_time = x_data_dt
+                    self.label_dialog.label.start_time = x_datetime
                 # If it is the second time, check if the user wants to delete the label or if the label should start
                 # or end at the start or end of another label
                 else:
                     deleting = False
                     delete_label = None
 
-                    if x_data_dt < self.label_dialog.label.start_time:
+                    if x_datetime < self.label_dialog.label.start_time:
                         self.label_dialog.label.end_time = self.label_dialog.label.start_time
-                        self.label_dialog.label.start_time = x_data_dt
+                        self.label_dialog.label.start_time = x_datetime
                     else:
-                        self.label_dialog.label.end_time = x_data_dt
+                        self.label_dialog.label.end_time = x_datetime
 
                     new_start = self.label_dialog.label.start_time.replace(tzinfo=None)
                     new_end = self.label_dialog.label.end_time.replace(tzinfo=None)

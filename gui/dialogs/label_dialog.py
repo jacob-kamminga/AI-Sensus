@@ -5,6 +5,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDateTime
 
 from database.models import LabelType, Label
+from date_utils import naive_to_utc
 from gui.designer.label_specs import Ui_LabelSpecs
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
@@ -37,11 +38,12 @@ class LabelDialog(QtWidgets.QDialog, Ui_LabelSpecs):
 
     def add_label_to_db(self):
         if self.label is not None:
+            start_datetime = self.dateTimeEdit_start.dateTime().toPyDateTime()
+            end_datetime = self.dateTimeEdit_end.dateTime().toPyDateTime()
+
             # Convert start and end times to UTC
-            start_time_local = self.sensor_timezone.localize(self.dateTimeEdit_start.dateTime().toPyDateTime())
-            self.label.start_time = start_time_local.astimezone(pytz.utc).replace(tzinfo=None)
-            end_time_local = self.sensor_timezone.localize(self.dateTimeEdit_end.dateTime().toPyDateTime())
-            self.label.end_time = end_time_local.astimezone(pytz.utc).replace(tzinfo=None)
+            self.label.start_time = naive_to_utc(start_datetime, self.sensor_timezone)
+            self.label.end_time = naive_to_utc(end_datetime, self.sensor_timezone)
 
             if self.label.label_type is not None:
                 # Save the label to the database

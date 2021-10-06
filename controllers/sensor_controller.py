@@ -10,11 +10,12 @@ import pandas as pd
 import pytz
 from PyQt5.QtCore import QDir
 from PyQt5.QtWidgets import QFileDialog, QMessageBox
-from peewee import DoesNotExist, JOIN
+from peewee import DoesNotExist, JOIN, PeeweeException
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
 from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Label, LabelType, SensorUsage, Subject
+from date_utils import naive_to_utc
 
 
 class SensorController:
@@ -27,6 +28,7 @@ class SensorController:
         self.file_path: Optional[Path] = None
         self.project_controller = gui.project_controller
         self.file_name = None
+        self.project_timezone = pytz.timezone(self.project_controller.get_setting('timezone'))
 
         self.file_id_hash = None
         """" The hashed ID, used to recognize the file independent from location on disk """
@@ -85,17 +87,18 @@ class SensorController:
         return dialog.saved
 
     @staticmethod
-    def edit_sensor(sensor, timezone) -> bool:
+    def edit_sensor(sensor: Sensor, timezone: pytz.UTC) -> bool:
         """ Edit and save a sensor in the database. """
+        sensor.timezone = timezone
+
         try:
-            sensor.timezone = timezone
             sensor.save()
             return True
-        except:
+        except PeeweeException:
             return False
 
-    @staticmethod
     def edit_sensor_usage(
+            self,
             sensor_usage: SensorUsage,
             subject: Subject,
             sensor: Sensor,
@@ -103,20 +106,19 @@ class SensorController:
             end_dt: dt.datetime
     ) -> bool:
         """ Edit and save a sensor usage in the database. """
+        sensor_usage.subject = subject
+        sensor_usage.sensor = sensor
+        sensor_usage.start_datetime = naive_to_utc(start_dt, self.project_timezone)
+        sensor_usage.end_datetime = naive_to_utc(end_dt, self.project_timezone)
+
         try:
-            sensor_usage.subject = subject
-            sensor_usage.sensor = sensor
-            sensor_usage.start_datetime = start_dt
-            sensor_usage.end_datetime = end_dt
             sensor_usage.save()
             return True
-        except:
+        except PeeweeException:
             return False
 
     @staticmethod
-    def delete_sensor_usage(
-            sensor_usage: SensorUsage
-    ) -> bool:
+    def delete_sensor_usage(sensor_usage: SensorUsage) -> bool:
         """ Delete a sensor usage instance. """
         try:
             sensor_usage.delete_instance()
@@ -494,6 +496,7 @@ class SensorController:
 
         pass
 
+
 def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
     labels = (Label
               .select(Label.start_time, Label.end_time, LabelType.activity)
@@ -501,7 +504,10 @@ def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
               .where(Label.sensor_data_file == sdf_id &
                      (Label.start_time.between(start_dt, end_dt) |
                       Label.end_time.between(start_dt, end_dt))))
-    return [{'start': label.start_time.replace(tzinfo=pytz.utc),
-             'end': label.end_time.replace(tzinfo=pytz.utc),
-             'activity': label.label_type.activity} for label in labels]
-
+    return [
+        {
+            'start': label.start_time.replace(tzinfo=pytz.utc),
+            'end': label.end_time.replace(tzinfo=pytz.utc),
+            'activity': label.label_type.activity
+        } for label in labels
+    ]

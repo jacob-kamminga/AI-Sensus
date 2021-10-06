@@ -1,11 +1,12 @@
-import datetime as dt
+import datetime
 
-import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
+from PyQt5.QtWidgets import QDateEdit, QTimeEdit
 
 from controllers.sensor_controller import SensorController
 from database.models import Subject, Sensor, SensorUsage
+from date_utils import utc_to_local
 from gui.designer.edit_subject_sensor_map import Ui_Dialog
 
 INDEX_MAP_ID = 0
@@ -67,34 +68,33 @@ class EditSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         self.timeEdit_end.setTime(current_time)
 
     def init_sensor_usage(self):
+        start_dt_local = utc_to_local(self.sensor_usage.start_datetime, self.project_timezone)
+        end_dt_local = utc_to_local(self.sensor_usage.end_datetime, self.project_timezone)
         self.comboBox_subject.setCurrentText(self.sensor_usage.subject.name)
         self.comboBox_sensor.setCurrentText(self.sensor_usage.sensor.name)
-        self.dateEdit_start.setDate(self.sensor_usage.start_datetime.date())
-        self.dateEdit_end.setDate(self.sensor_usage.end_datetime.date())
-        self.timeEdit_start.setTime(self.sensor_usage.start_datetime.time())
-        self.timeEdit_end.setTime(self.sensor_usage.end_datetime.time())
+        self.dateEdit_start.setDate(start_dt_local.date())
+        self.dateEdit_end.setDate(end_dt_local.date())
+        self.timeEdit_start.setTime(start_dt_local.time())
+        self.timeEdit_end.setTime(end_dt_local.time())
 
     def on_value_changed(self) -> None:
         """ Sets value_changed to True when the user edits a value in the dialog. """
         self.value_changed = True
 
-    def on_accepted(self):
+    def on_accepted(self) -> None:
         if self.value_changed:
             subject_name = self.comboBox_subject.currentText()
             sensor_name = self.comboBox_sensor.currentText()
-
-            start_dt = self.dateEdit_start.dateTime()
-            start_dt.setTime(self.timeEdit_start.time())
-            start_dt = start_dt.toPyDateTime()
-            start_dt = self.project_timezone.localize(start_dt).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
-
-            end_dt = self.dateEdit_end.dateTime()
-            end_dt.setTime(self.timeEdit_end.time())
-            end_dt = end_dt.toPyDateTime()
-            # Convert to UTC
-            end_dt = self.project_timezone.localize(end_dt).astimezone(pytz.utc).strftime('%Y-%m-%d %H:%M:%S')
+            start_dt = self.get_py_datetime(self.dateEdit_start, self.timeEdit_start)
+            end_dt = self.get_py_datetime(self.dateEdit_end, self.timeEdit_end)
 
             if start_dt < end_dt:
                 subject = Subject.get(Subject.name == subject_name)
                 sensor = Sensor.get(Sensor.name == sensor_name)
                 self.sensor_controller.edit_sensor_usage(self.sensor_usage, subject, sensor, start_dt, end_dt)
+
+    @staticmethod
+    def get_py_datetime(qt_date: QDateEdit, qt_time: QTimeEdit) -> datetime.datetime:
+        dt = qt_date.dateTime()
+        dt.setTime(qt_time.time())
+        return dt.toPyDateTime()

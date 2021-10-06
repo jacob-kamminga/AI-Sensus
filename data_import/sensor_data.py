@@ -6,7 +6,7 @@ import pytz
 from PyQt5.QtWidgets import QMessageBox
 
 import parse_function.custom_function_parser as parser
-from constants import COL_ABS_DATETIME, RELATIVE_TIME_ITEM, ABSOLUTE_TIME_ITEM
+from constants import ABSOLUTE_DATETIME, RELATIVE_TIME_ITEM, ABSOLUTE_TIME_ITEM
 from data_import import sensor as sens, column_metadata as cm
 from database.models import *
 from date_utils import utc_to_local
@@ -17,7 +17,7 @@ from parse_function.parse_exception import ParseException
 START_TIME_INDEX = 0
 STOP_TIME_INDEX = 1
 LABEL_INDEX = 2
-COLUMN_TIMESTAMP = COL_ABS_DATETIME
+COLUMN_TIMESTAMP = ABSOLUTE_DATETIME
 
 
 class SensorData:
@@ -181,11 +181,11 @@ class SensorData:
 
             # Add absolute datetime column to dataframe
             if use_utc:
-                self._df[COL_ABS_DATETIME] = self.metadata.utc_dt + pd.to_timedelta(self._df.iloc[:, time_col],
-                                                                                    unit=time_unit)
+                self._df[ABSOLUTE_DATETIME] = self.metadata.utc_dt + pd.to_timedelta(self._df.iloc[:, time_col],
+                                                                                     unit=time_unit)
             else:
                 try:
-                    self._df[COL_ABS_DATETIME] = \
+                    self._df[ABSOLUTE_DATETIME] = \
                         utc_to_local(self.metadata.utc_dt, self.project_timezone) + \
                         pd.to_timedelta(self._df.iloc[:, time_col], unit=time_unit)
                 except ValueError as e:
@@ -205,14 +205,14 @@ class SensorData:
 
         # If time column is absolute, rename the column
         if self.sensor_model.relative_absolute == ABSOLUTE_TIME_ITEM:
-            self._df.rename(columns={self._df.columns[time_col]: COL_ABS_DATETIME}, inplace=True)
+            self._df.rename(columns={self._df.columns[time_col]: ABSOLUTE_DATETIME}, inplace=True)
 
             # Make sure the column is datetime
-            if not pd.api.types.is_datetime64_any_dtype(self._df[COL_ABS_DATETIME]):
+            if not pd.api.types.is_datetime64_any_dtype(self._df[ABSOLUTE_DATETIME]):
                 try:
                     # Convert to datetime
-                    self._df[COL_ABS_DATETIME] = pd.to_datetime(
-                        self._df[COL_ABS_DATETIME],
+                    self._df[ABSOLUTE_DATETIME] = pd.to_datetime(
+                        self._df[ABSOLUTE_DATETIME],
                         errors='raise',
                         format=self.sensor_model.format_string,
                         exact=True
@@ -232,9 +232,8 @@ class SensorData:
                     return False
 
                 # Localize to sensor timezone and convert to project timezone
-                self._df[COL_ABS_DATETIME] = \
-                    self._df[COL_ABS_DATETIME].dt.tz_localize(self.metadata.sensor_timezone).dt.tz_convert(
-                        self.project_timezone)
+                self._df[ABSOLUTE_DATETIME] = self._df[ABSOLUTE_DATETIME].dt.tz_localize(
+                    self.metadata.sensor_timezone).dt.tz_convert(self.project_timezone)
 
             # If start datetime of file is not in metadata, then we take the first value as utc_dt
             if self.metadata.utc_dt is None:

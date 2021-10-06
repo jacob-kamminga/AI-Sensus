@@ -17,7 +17,6 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
         self.parent = parent
 
         self.model = model
-        self.fill_existing_data()
 
         # Load comboBoxes
         self.comboBox_relative_absolute.addItems({
@@ -27,6 +26,8 @@ class SensorModelDateDialog(QtWidgets.QDialog, Ui_Dialog):
             FORMAT_STRING_ITEM
         })
         self.comboBox_timestamp_unit.setCurrentText('seconds')
+
+        self.fill_existing_data()
 
         # Connect UI elements
         self.pushButton_previous.pressed.connect(self.open_previous_dialog)

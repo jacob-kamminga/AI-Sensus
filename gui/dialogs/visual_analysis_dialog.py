@@ -18,7 +18,7 @@ from pandas.core.dtypes.common import is_numeric_dtype
 from peewee import JOIN
 
 import parse_function.custom_function_parser as parser
-from constants import COL_ABS_DATETIME
+from constants import ABSOLUTE_DATETIME
 from data_import.sensor_data import SensorData
 from database.models import Subject, LabelType, SensorUsage, SensorDataFile, Sensor, SensorModel
 from gui.designer.visual_analysis import Ui_Dialog
@@ -95,7 +95,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
             return
 
         if event.button == MouseButton.LEFT:
-            label_dt = self.df[COL_ABS_DATETIME][round(event.xdata)]
+            label_dt = self.df[ABSOLUTE_DATETIME][round(event.xdata)]
             QMessageBox.information(self, "Date time", "Date and Time of this segment are: " + str(label_dt))
 
     def draw_graph(self, plot_nr_rows=1, plot_index=1):
@@ -126,7 +126,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
             self.x_max = self.x_min + 1
 
         self.sample_rate = round(
-            10 ** 6 / (self.df[COL_ABS_DATETIME][self.x_min + 1] - self.df[COL_ABS_DATETIME][
+            10 ** 6 / (self.df[ABSOLUTE_DATETIME][self.x_min + 1] - self.df[ABSOLUTE_DATETIME][
                 self.x_min]).microseconds)
 
         # Remove outliers before assessing y_min and y_max value for plot
@@ -193,7 +193,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
 
         data_cols = self.df.columns.tolist()
         for col in data_cols:
-            if col != COL_LABEL and col != COL_ABS_DATETIME and col != COL_TIME and col != COL_TIMESTAMP:
+            if col != COL_LABEL and col != ABSOLUTE_DATETIME and col != COL_TIME and col != COL_TIMESTAMP:
                 self.comboBox_functions.addItem(col)
 
         if self.last_used_function:
