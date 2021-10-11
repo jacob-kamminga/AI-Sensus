@@ -40,7 +40,7 @@ class ProjectController:
         self.settings_dict = {}
         self.settings_changed = False
 
-    def load(self, project_dir, new_project=False):
+    def load_or_create(self, project_dir, new_project=False):
         if project_dir is not None:
             self.project_dir = project_dir
             self.project_config_file = project_dir.joinpath(PROJECT_CONFIG_FILE)
@@ -74,7 +74,7 @@ class ProjectController:
             # Add project name to project directory
             new_project_dir = Path(new_project_dir).joinpath(new_project_name)
 
-            self.load(new_project_dir, new_project=True)
+            self.load_or_create(new_project_dir, new_project=True)
 
             self.project_name = new_project_name
             self.project_dir = new_project_dir
@@ -90,7 +90,7 @@ class ProjectController:
             #     print(e)
 
     def open_existing_project(self, project_dir):
-        self.load(Path(project_dir))
+        self.load_or_create(Path(project_dir))
         # Set project dir as most recent project dir
         self.gui.app_controller.app_config[PREVIOUS_PROJECT_DIR] = project_dir
         self.gui.app_controller.save_app_config()
@@ -125,6 +125,7 @@ class ProjectController:
         :param setting: The project setting to change
         :param new_value: The value the setting should get
         """
+
         self.settings_dict[setting] = new_value
         self.save()
 

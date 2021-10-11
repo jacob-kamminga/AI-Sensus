@@ -1,3 +1,6 @@
+import peewee
+from PyQt5.QtWidgets import QMessageBox
+
 from database.models import Camera
 
 class CameraController:
@@ -16,6 +19,13 @@ class CameraController:
 
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()
+
+    @staticmethod
+    def add_camera(camera_name: str):
+        try:
+            Camera.create(name=camera_name)
+        except peewee.IntegrityError:
+            raise
 
     # def delete_camera(self):
     #     """

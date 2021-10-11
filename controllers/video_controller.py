@@ -64,13 +64,16 @@ class VideoController:
         self.file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Video", path)
         self.open_file()
 
-    def open_file(self):
+    def open_file(self, file_path=None):
         """
         Opens the file specified by self.file_path and sets the video.
         """
+        if file_path:
+            self.file_path = file_path
+
         if self.file_path is not None and os.path.isfile(self.file_path):
             # Save the path for next time
-            self.project_controller.set_setting('last_videofile', self.file_path)
+            self.project_controller.set_setting('last_videofile', str(self.file_path))
 
             self.file_name = ntpath.basename(self.file_path)
 
@@ -78,7 +81,7 @@ class VideoController:
             try:
                 camera_id = Video.get(Video.file_name == self.file_name).camera
                 self.gui.camera_controller.change_camera(camera_id)
-            except Video.DoesNotExist:
+            except Video.DoesNotExist:  # No camera was found
                 self.gui.open_select_camera_dialog()
 
             if self.gui.camera_controller.camera is not None:
