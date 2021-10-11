@@ -138,7 +138,7 @@ def main() -> None:
         sys.stderr = std_err_handler
 
         # Connect err_msg signal to message box method in main window
-        std_err_handler.err_msg.connect(project.std_err_post)
+        std_err_handler.err_msg.connect(main_window.std_err_post)
 
     elif gettrace():  # Running in debug mode.
         print("Running in debug mode.")
