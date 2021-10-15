@@ -23,9 +23,10 @@ class CameraController:
     @staticmethod
     def add_camera(camera_name: str):
         try:
-            Camera.create(name=camera_name)
+            camera = Camera.create(name=camera_name)
         except peewee.IntegrityError:
             raise
+        return camera
 
     # def delete_camera(self):
     #     """

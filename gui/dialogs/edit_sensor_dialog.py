@@ -16,7 +16,7 @@ DT_FORMAT = '%Y-%m-%d %H:%M:%S'
 
 class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, sensor_controller: SensorController, sensor: Sensor):
+    def __init__(self, sensor_controller: SensorController, sensor: Sensor, new_sensor: bool = False):
         super().__init__()
         self.setupUi(self)
         self.init_gui()
@@ -25,6 +25,7 @@ class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.sensor = sensor
         self.value_changed = False
         self.saved = False
+        self.new_sensor = new_sensor
 
         # Fill the fields with the sensor that is currently selected
         self.load_sensor()
@@ -44,6 +45,6 @@ class EditSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.value_changed = True
 
     def on_accepted(self):
-        if self.value_changed:
+        if self.value_changed or self.new_sensor:
             selected_timezone = self.comboBox_timezone.currentText()
             self.saved = self.sensor_controller.edit_sensor(self.sensor, selected_timezone)

@@ -58,9 +58,10 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                     print('[select_sensor_dialog.py]: self.sensor_model_id is None')
                     # TODO: Show warning to user
 
-            saved = self.sensor_controller.add_sensor(name, self.sensor_model)
-
-            if saved:
+            sensor = self.sensor_controller.add_sensor(name, self.sensor_model)
+            dialog = EditSensorDialog(self.sensor_controller, sensor, new_sensor=True)
+            dialog.exec()
+            if dialog.saved:
                 self.comboBox_sensor.addItem(name)
                 self.comboBox_sensor.setCurrentText(name)
                 self.lineEdit_new_sensor_name.clear()

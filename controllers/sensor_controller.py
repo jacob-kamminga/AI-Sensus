@@ -78,13 +78,9 @@ class SensorController:
         self.open_file()
 
     @staticmethod
-    def add_sensor(name, sensor_model) -> bool:
-        from gui.dialogs.edit_sensor_dialog import EditSensorDialog
-        sensor = Sensor(name=name, sensor_model=sensor_model)
-        dialog = EditSensorDialog(sensor)
-        dialog.exec()
-
-        return dialog.saved
+    def add_sensor(name, sensor_model) -> Sensor:
+        sensor = Sensor(name=name, model=sensor_model)
+        return sensor
 
     @staticmethod
     def edit_sensor(sensor: Sensor, timezone: pytz.UTC) -> bool:
