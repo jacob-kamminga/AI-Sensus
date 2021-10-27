@@ -5,7 +5,7 @@ from PyQt5.QtCore import QDate, QTime
 from PyQt5.QtWidgets import QDateEdit, QTimeEdit
 
 from controllers.sensor_controller import SensorController
-from database.models import Subject, Sensor, SensorUsage
+from database.models import Subject, Sensor, SubjectMapping
 from date_utils import utc_to_local
 from gui.designer.edit_subject_sensor_map import Ui_Dialog
 

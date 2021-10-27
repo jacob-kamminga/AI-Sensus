@@ -14,7 +14,7 @@ from peewee import DoesNotExist, JOIN, PeeweeException
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
-from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Label, LabelType, SensorUsage, Subject
+from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Label, LabelType, SubjectMapping, Subject
 from date_utils import naive_to_utc
 import datetime
 
@@ -114,7 +114,7 @@ class SensorController:
             return False
 
     @staticmethod
-    def delete_sensor_usage(sensor_usage: SensorUsage) -> bool:
+    def delete_sensor_usage(subject_mapping: SubjectMapping) -> bool:
         """ Delete a sensor usage instance. """
         try:
             subject_mapping.delete_instance()
