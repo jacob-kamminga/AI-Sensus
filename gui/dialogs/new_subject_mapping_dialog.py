@@ -7,7 +7,7 @@ from database.models import SubjectMapping, Subject, Sensor
 from gui.designer.new_subject_sensor_map import Ui_Dialog
 
 
-class NewSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
+class NewSubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def __init__(self, sensor_controller: SensorController, subjects_dict: dict, sensors_dict: dict, project_timezone):
         super().__init__()

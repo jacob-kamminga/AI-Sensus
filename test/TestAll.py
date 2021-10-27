@@ -148,21 +148,24 @@ class TestAll(unittest.TestCase):
         test_activity2.save()
         test_activity3.save()
 
-        start_time_file = self.gui.sensor_controller.df['absolute_datetime'].iloc[0].to_pydatetime()
-        end_time_file = self.gui.sensor_controller.df['absolute_datetime'].iloc[-1].to_pydatetime()
+        start_time_file_utc = self.gui.sensor_controller.df['absolute_datetime'].iloc[0]\
+            .to_pydatetime().astimezone(pytz.utc)
+        end_time_file_utc = self.gui.sensor_controller.df['absolute_datetime'].iloc[-1]\
+            .to_pydatetime().astimezone(pytz.utc)
 
-        five_seconds = timedelta(weeks=0, days=0, hours=0, minutes=0, seconds=5, milliseconds=0, microseconds=0)
+        five_seconds = timedelta(seconds=5)
+        one_hour = timedelta(hours=1)
 
-        label1 = Label(start_time=start_time_file,
-                       end_time=start_time_file + five_seconds,
+        label1 = Label(start_time=start_time_file_utc,
+                       end_time=start_time_file_utc + five_seconds,
                        label_type=test_activity1.id,
                        sensor_data_file=sdf.id)
-        label2 = Label(start_time=start_time_file + 2*five_seconds,
-                       end_time=start_time_file + 3*five_seconds,
+        label2 = Label(start_time=start_time_file_utc + 2*five_seconds,
+                       end_time=start_time_file_utc + 3*five_seconds,
                        label_type=test_activity2.id,
                        sensor_data_file=sdf.id)
-        label3 = Label(start_time=start_time_file + 4*five_seconds,
-                       end_time=start_time_file + 5*five_seconds,
+        label3 = Label(start_time=start_time_file_utc + 4*five_seconds,
+                       end_time=start_time_file_utc + 5*five_seconds,
                        label_type=test_activity3.id,
                        sensor_data_file=sdf.id)
 
@@ -170,12 +173,10 @@ class TestAll(unittest.TestCase):
         label2.save()
         label3.save()
 
-        start_time = start_time_file.astimezone(pytz.utc)
-        end_time = end_time_file.astimezone(pytz.utc)
         subject_mapping = SubjectMapping.create(subject=Subject.get(Subject.name == "test_subject"),
                                                 sensor_id=Sensor.get(Sensor.name == "test_sensor"),
-                                                start_datetime=start_time,
-                                                end_datetime=end_time)
+                                                start_datetime=start_time_file_utc,
+                                                end_datetime=end_time_file_utc)
         subject_mapping.save()
 
         ########## testExport ##########
@@ -184,7 +185,10 @@ class TestAll(unittest.TestCase):
         # end_time.replace(tzinfo=pytz.timezone('UTC'))
 
         export_file_path = self.project_dir/'test_export.csv'
-        export_dialog = ExportProgressDialog(self.gui, subject_ids, start_time, end_time,
+        export_dialog = ExportProgressDialog(self.gui,
+                                             subject_ids=subject_ids,
+                                             start_dt=start_time_file_utc-one_hour,
+                                             end_dt=end_time_file_utc+one_hour,
                                              test_file_dir=export_file_path)
         export_dialog.exec()
 

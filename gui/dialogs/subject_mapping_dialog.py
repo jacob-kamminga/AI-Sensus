@@ -9,7 +9,7 @@ from controllers.sensor_controller import SensorController
 from database.models import Subject, Sensor, SubjectMapping
 from gui.designer.subject_sensor_map import Ui_Dialog
 from gui.dialogs.edit_sensor_usage_dialog import EditSubjectMappingDialog
-from gui.dialogs.new_sensor_usage_dialog import NewSensorUsageDialog
+from gui.dialogs.new_subject_mapping_dialog import NewSubjectMappingDialog
 
 
 class SubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
@@ -68,7 +68,7 @@ class SubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
         self.tableWidget.blockSignals(False)
 
     def open_new_map_dialog(self):
-        dialog = NewSensorUsageDialog(self.sensor_controller, self.subjects_dict, self.sensors_dict, self.project_timezone)
+        dialog = NewSubjectMappingDialog(self.sensor_controller, self.subjects_dict, self.sensors_dict, self.project_timezone)
         dialog.exec()
         dialog.show()
 

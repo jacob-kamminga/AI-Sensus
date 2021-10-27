@@ -29,22 +29,22 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
         for subject_id in subject_ids:
             subject_name = Subject.get_by_id(subject_id).name
-            sensor_query = (SubjectMapping
-                            .select(SubjectMapping.sensor)
-                            .where((SubjectMapping.subject == subject_id) &
-                                   (
-                                           SubjectMapping.start_datetime.between(start_dt, end_dt) |
-                                           SubjectMapping.end_datetime.between(start_dt, end_dt) |
-                                           (start_dt >= SubjectMapping.start_datetime) & (
-                                                   start_dt <= SubjectMapping.end_datetime) |
-                                           (end_dt >= SubjectMapping.start_datetime) & (
-                                                   end_dt <= SubjectMapping.end_datetime)
-                                   )
-                                   ))
+            subject_mappings = (SubjectMapping
+                                .select(SubjectMapping.sensor)
+                                .where((SubjectMapping.subject == subject_id) &
+                                       (
+                                               SubjectMapping.start_datetime.between(start_dt, end_dt) |
+                                               SubjectMapping.end_datetime.between(start_dt, end_dt) |
+                                               (start_dt >= SubjectMapping.start_datetime) & (
+                                                       start_dt <= SubjectMapping.end_datetime) |
+                                               (end_dt >= SubjectMapping.start_datetime) & (
+                                                       end_dt <= SubjectMapping.end_datetime)
+                                       )
+                                       ))
 
-            print(f"Found {len(sensor_query)} subject mappings for subject_id {subject_id}.")
+            print(f"Found {len(subject_mappings)} subject mappings for subject_id {subject_id}.")
 
-            if len(sensor_query) == 0:
+            if len(subject_mappings) == 0:
                 local_timezone = pytz.timezone(self.gui.project_controller.get_setting('timezone'))
                 start_local = date_utils.utc_to_local(start_dt, local_timezone)
                 end_local = date_utils.utc_to_local(end_dt, local_timezone)
@@ -58,7 +58,7 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                 cancelled_exports += 1
                 continue
 
-            for sensor_usage in sensor_query:
+            for sensor_usage in subject_mappings:
                 sensor_id = sensor_usage.sensor.id
                 if self.gui.testing and test_file_dir is not None:
                     file_path = test_file_dir
@@ -76,10 +76,10 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
                 files = []
                 print(f"Found {len(sdf_query)} files.")
-                for file in sdf_query:
+                for sdf in sdf_query:
                     QApplication.processEvents()
-                    labels = get_labels(file.id, start_dt, end_dt)  # DB
-                    sensor_data = self.gui.sensor_controller.get_sensor_data(file.id)  # DB
+                    labels = get_labels(sdf.id, start_dt, end_dt)  # DB
+                    sensor_data = self.gui.sensor_controller.get_sensor_data(sdf.id)  # DB
 
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
@@ -215,7 +215,7 @@ class ExportWorker(QObject):
                     if not self.paused:
                         QApplication.processEvents()
                         # Append each chunk to output_path CSV using mode='a' (append).
-                        df_split[i].to_csv(file_path, mode='a', header=(i==0), index=False)
+                        df_split[i].to_csv(file_path, mode='a', header=(i == 0), index=False)
                         self.progress.emit(i + 1)
 
             except Exception as e:

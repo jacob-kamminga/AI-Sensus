@@ -507,29 +507,6 @@ def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
               .where(Label.sensor_data_file == sdf_id &
                      (Label.start_time.between(start_dt, end_dt) |
                       Label.end_time.between(start_dt, end_dt))))
-    pprint([x.__dict__ for x in labels])
-    # for label in labels:
-    #     print(label.start_time)  # "2015-09-15 08:37:46.035000-05:00", string
-    #     print(datetime.datetime.fromisoformat(label.start_time))  # 2015-09-15 08:37:46.035000-05:00, datetime
-    #     print(datetime.datetime.fromisoformat(label.start_time).replace(tzinfo=pytz.utc)) #  2015-09-15 08:37:46.035000+00:00
-
-    # labels = []
-    # for label in labels_from_db:
-    #     if type(label.start_time) == str:
-    #         start = datetime.datetime.fromisoformat(label.start_time)
-    #     else:
-    #         start = label.start_time
-    #
-    #     if type(label.end_time) == str:
-    #         end = datetime.datetime.fromisoformat(label.end_time)
-    #     else:
-    #         end = label.end_time
-    #
-    #     start = start.replace(tzinfo=pytz.utc)
-    #     end = end.replace(tzinfo=pytz.utc)
-    #     labels.append({'start': start, 'end': end, 'activity': label.label_type.activity})
-    #
-    # return labels
 
     return [{'start': label.start_time,
              'end': label.end_time,
