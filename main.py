@@ -5,6 +5,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from gui import gui
+from database import migrator
 
 try:
     import apt

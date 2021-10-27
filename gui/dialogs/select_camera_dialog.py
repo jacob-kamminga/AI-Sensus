@@ -1,4 +1,5 @@
 import peewee
+import pytz
 
 import database.models
 from PyQt5 import QtWidgets
@@ -42,8 +43,8 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
         # Fill camera dictionary and add camera names to combobox
         # self.camera_dict = dict()  # Unused
-        current_camera = self.camera_controller.camera
-        self.load_cameras(current_camera.id)
+        if self.camera_controller.camera is not None:
+            self.load_cameras(self.camera_controller.camera.id)
 
         # Connect UI elements
         self.pushButton_new_camera.setEnabled(False)
@@ -76,7 +77,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         # Adding a camera manually and programatically is easier. The ID gets created automatically, a name doesn't.
         if camera_name != '':
             try:
-                camera = self.gui.camera_controller.add_camera(camera_name)
+                self.gui.camera_controller.add_camera(camera_name)
             except peewee.IntegrityError:
                 QMessageBox(
                     QMessageBox.Warning,
@@ -89,7 +90,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
             self.comboBox_camera.addItem(camera_name)  # Add the new camera to the list
             self.comboBox_camera.setCurrentText(camera_name)  # Set the new camera as the selected camera.
-            self.edit_camera(camera.id)
+            self.edit_camera(self.get_selected_camera().id)
 
             # Clear the line on_accepted field
             self.lineEdit_new_camera_name.clear()

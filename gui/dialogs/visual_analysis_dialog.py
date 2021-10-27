@@ -20,7 +20,7 @@ from peewee import JOIN
 import parse_function.custom_function_parser as parser
 from constants import ABSOLUTE_DATETIME
 from data_import.sensor_data import SensorData
-from database.models import Subject, LabelType, SensorUsage, SensorDataFile, Sensor, SensorModel
+from database.models import Subject, LabelType, SubjectMapping, SensorDataFile, Sensor, SensorModel
 from gui.designer.visual_analysis import Ui_Dialog
 from controllers.sensor_controller import get_labels
 from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
@@ -292,18 +292,18 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
             self.timeEdit_end.setTime(QTime.currentTime())
 
     def get_sensor_ids(self, subject_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
-        sensor_usage_query = (SensorUsage
-                              .select(SensorUsage.sensor)
-                              .where((SensorUsage.subject == subject_id) &
+        subject_mapping_query = (SubjectMapping
+                              .select(SubjectMapping.sensor)
+                              .where((SubjectMapping.subject == subject_id) &
                                      (
-                                             SensorUsage.start_datetime.between(start_dt, end_dt) |
-                                             SensorUsage.end_datetime.between(start_dt, end_dt) |
-                                             (start_dt >= SensorUsage.start_datetime) & (
-                                                         start_dt <= SensorUsage.end_datetime) |
-                                             (end_dt >= SensorUsage.start_datetime) & (end_dt <= SensorUsage.end_datetime)
+                                             SubjectMapping.start_datetime.between(start_dt, end_dt) |
+                                             SubjectMapping.end_datetime.between(start_dt, end_dt) |
+                                             (start_dt >= SubjectMapping.start_datetime) & (
+                                                     start_dt <= SubjectMapping.end_datetime) |
+                                             (end_dt >= SubjectMapping.start_datetime) & (end_dt <= SubjectMapping.end_datetime)
                                      )
                                      ))
-        return [sensor_usage.sensor.id for sensor_usage in sensor_usage_query]
+        return [sensor_usage.sensor.id for sensor_usage in subject_mapping_query]
 
     def get_sensor_data_file_ids(self, sensor_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
         sdf_query = (SensorDataFile

@@ -112,8 +112,8 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
 
         self.close()
 
-        # if self.parent is not None:
-        #     self.parent.init()
+        if self.parent is not None and hasattr(self.parent, "init"):
+            self.parent.init()
 
     def previous(self):
         from gui.dialogs.new_sensor_model_comment_style_dialog import SensorModelCommentStyleDialog

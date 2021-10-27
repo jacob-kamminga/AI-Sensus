@@ -1,8 +1,7 @@
-from peewee import *
-
+from peewee import Model, SqliteDatabase
+from peewee import TextField, DoubleField, DateTimeField, ForeignKeyField, IntegerField, DateField, CharField
 
 db = SqliteDatabase(None)
-
 
 class BaseModel(Model):
     class Meta:
@@ -59,7 +58,7 @@ class Subject(BaseModel):
     extra_info = TextField(null=True)
 
 
-class SensorUsage(BaseModel):
+class SubjectMapping(BaseModel):
     subject = ForeignKeyField(Subject)
     sensor = ForeignKeyField(Sensor)
     start_datetime = DateTimeField()

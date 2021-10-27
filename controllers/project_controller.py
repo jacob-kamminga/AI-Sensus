@@ -9,7 +9,8 @@ from PyQt5.QtWidgets import QFileDialog
 from constants import PROJECT_CONFIG_FILE, PREVIOUS_SENSOR_DATA_FILE, PLOT_HEIGHT_FACTOR, PROJECT_DATABASE_FILE, \
     PREVIOUS_PROJECT_DIR, PROJECTS, APP_CONFIG_FILE, PROJECT_NAME, PROJECT_DIR
 from database.models import db, Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, \
-    SensorUsage, Subject, Offset
+    SubjectMapping, Subject, Offset
+from database import migrator
 
 INIT_PROJECT_CONFIG = {
     'subj_map': {},
@@ -58,9 +59,17 @@ class ProjectController:
     def init_db(self):
         db.init(self.database_file)
         db.connect()
+
+        if 'sensorusage' in db.get_tables():
+            migrator.rename_table(self.database_file, 'sensorusage', 'subjectmapping')
+
         db.create_tables(
-            [Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, SensorUsage, Subject,
+            [Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, SubjectMapping, Subject,
              Offset])
+
+    @staticmethod
+    def close_db():
+        db.close()
 
     def create_new_project(self, new_project_name, new_project_dir=None):
         if new_project_name is not None:
@@ -79,6 +88,7 @@ class ProjectController:
             self.project_name = new_project_name
             self.project_dir = new_project_dir
             self.set_setting('project_name', self.project_name)
+            self.gui.app_controller.set_setting("previous_project_dir", new_project_dir.as_posix())
 
             # self.project_controller.create_new_project(project_dir, project_name)
 
