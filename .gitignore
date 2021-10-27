@@ -4,7 +4,4 @@ venv36
 __pycache__
 /tools/
 
-/test/*
-/test/fixtures/*
-!/test/*.py
-
+/test/Unittest-*
