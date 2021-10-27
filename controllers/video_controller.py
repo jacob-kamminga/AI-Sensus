@@ -34,13 +34,12 @@ class VideoController:
         self.init_offset = None
         """The offset between the beginning of the video and the beginning of the sensor data."""
 
-    # def reset(self, gui):
-
     def open_previous_file(self):
         previous_path = self.project_controller.get_setting('last_videofile')
 
         if previous_path is not None:
-            if os.path.isfile(previous_path):
+            previous_path = Path(previous_path)
+            if previous_path.is_file():
                 self.open_file(previous_path)
 
     def prompt_file(self):

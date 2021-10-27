@@ -4,6 +4,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication
 
 from gui import gui
+from database import migrator
 
 class StdErrHandler(QtCore.QObject):
     """

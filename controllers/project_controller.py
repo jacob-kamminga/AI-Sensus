@@ -9,7 +9,8 @@ from PyQt5.QtWidgets import QFileDialog
 from constants import PROJECT_CONFIG_FILE, PREVIOUS_SENSOR_DATA_FILE, PLOT_HEIGHT_FACTOR, PROJECT_DATABASE_FILE, \
     PREVIOUS_PROJECT_DIR, PROJECTS, APP_CONFIG_FILE, PROJECT_NAME, PROJECT_DIR
 from database.models import db, Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, \
-    SensorUsage, Subject, Offset
+    SubjectMapping, Subject, Offset
+from database import migrator
 
 INIT_PROJECT_CONFIG = {
     'subj_map': {},
@@ -58,8 +59,12 @@ class ProjectController:
     def init_db(self):
         db.init(self.database_file)
         db.connect()
+
+        if 'sensorusage' in db.get_tables():
+            migrator.rename_table(self.database_file, 'sensorusage', 'subjectmapping')
+
         db.create_tables(
-            [Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, SensorUsage, Subject,
+            [Label, LabelType, Camera, Video, Sensor, SensorModel, SensorDataFile, SubjectMapping, Subject,
              Offset])
 
     @staticmethod

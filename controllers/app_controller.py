@@ -52,9 +52,10 @@ class AppController:
             self.app_config_file.unlink()  # Delete app_config.json so that it can be recreated properly.
             self.load_settings()
         except MissingProjectDirectoryError as e:
-            QMessageBox.critical(self.gui, "Project directory is missing",
-                                 f"The directory \"{e.directory}\" could not be found. If you deleted the directory, "
-                                 f"you can ignore this.")
+            if not self.gui.testing:
+                QMessageBox.critical(self.gui, "Project directory is missing",
+                                     f"The directory \"{e.directory}\" could not be found. If you deleted the directory,"
+                                     f" you can ignore this.")
 
     def set_setting(self, setting: str, new_value: Any) -> None:
         """

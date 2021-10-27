@@ -14,7 +14,8 @@ from peewee import DoesNotExist, JOIN
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
 from data_import.sensor_data import SensorData
-from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Label, LabelType, SensorUsage, Subject
+from database.models import SensorDataFile, SensorModel, Sensor, Camera, Offset, Label, LabelType, SubjectMapping, Subject
+import datetime
 
 
 class SensorController:
@@ -92,31 +93,31 @@ class SensorController:
             return False
 
     @staticmethod
-    def edit_sensor_usage(
-            sensor_usage: SensorUsage,
+    def edit_subject_mapping(
+            subject_mapping: SubjectMapping,
             subject: Subject,
             sensor: Sensor,
             start_dt: dt.datetime,
             end_dt: dt.datetime
     ) -> bool:
-        """ Edit and save a sensor usage in the database. """
+        """ Edit and save a subject mapping in the database. """
         try:
-            sensor_usage.subject = subject
-            sensor_usage.sensor = sensor
-            sensor_usage.start_datetime = start_dt
-            sensor_usage.end_datetime = end_dt
-            sensor_usage.save()
+            subject_mapping.subject = subject
+            subject_mapping.sensor = sensor
+            subject_mapping.start_datetime = start_dt
+            subject_mapping.end_datetime = end_dt
+            subject_mapping.save()
             return True
         except:
             return False
 
     @staticmethod
-    def delete_sensor_usage(
-            sensor_usage: SensorUsage
+    def delete_subject_mapping(
+            subject_mapping: SubjectMapping
     ) -> bool:
-        """ Delete a sensor usage instance. """
+        """ Delete a subject mapping instance. """
         try:
-            sensor_usage.delete_instance()
+            subject_mapping.delete_instance()
             return True
         except:
             return False
@@ -499,12 +500,37 @@ class SensorController:
 
 
 def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
+    from pprint import pprint
     labels = (Label
               .select(Label.start_time, Label.end_time, LabelType.activity)
               .join(LabelType)
               .where(Label.sensor_data_file == sdf_id &
                      (Label.start_time.between(start_dt, end_dt) |
                       Label.end_time.between(start_dt, end_dt))))
-    return [{'start': label.start_time.replace(tzinfo=pytz.utc),
-             'end': label.end_time.replace(tzinfo=pytz.utc),
+    pprint([x.__dict__ for x in labels])
+    # for label in labels:
+    #     print(label.start_time)  # "2015-09-15 08:37:46.035000-05:00", string
+    #     print(datetime.datetime.fromisoformat(label.start_time))  # 2015-09-15 08:37:46.035000-05:00, datetime
+    #     print(datetime.datetime.fromisoformat(label.start_time).replace(tzinfo=pytz.utc)) #  2015-09-15 08:37:46.035000+00:00
+
+    # labels = []
+    # for label in labels_from_db:
+    #     if type(label.start_time) == str:
+    #         start = datetime.datetime.fromisoformat(label.start_time)
+    #     else:
+    #         start = label.start_time
+    #
+    #     if type(label.end_time) == str:
+    #         end = datetime.datetime.fromisoformat(label.end_time)
+    #     else:
+    #         end = label.end_time
+    #
+    #     start = start.replace(tzinfo=pytz.utc)
+    #     end = end.replace(tzinfo=pytz.utc)
+    #     labels.append({'start': start, 'end': end, 'activity': label.label_type.activity})
+    #
+    # return labels
+
+    return [{'start': label.start_time,
+             'end': label.end_time,
              'activity': label.label_type.activity} for label in labels]

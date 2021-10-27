@@ -33,7 +33,7 @@ from gui.dialogs.project_settings_dialog import ProjectSettingsDialog
 from gui.dialogs.select_camera_dialog import SelectCameraDialog
 from gui.dialogs.select_sensor_dialog import SelectSensorDialog
 from gui.dialogs.sensor_model_dialog import SensorModelDialog
-from gui.dialogs.sensor_usage_dialog import SensorUsageDialog
+from gui.dialogs.sensor_usage_dialog import SubjectMappingDialog
 from gui.dialogs.subject_dialog import SubjectDialog
 from gui.dialogs.visual_analysis_dialog import VisualAnalysisDialog
 from gui.dialogs.welcome_dialog import WelcomeDialog
@@ -386,7 +386,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         dialog.exec()
 
     def open_sensor_usage_dialog(self):
-        dialog = SensorUsageDialog(self.project_controller, self.sensor_controller)
+        dialog = SubjectMappingDialog(self.project_controller, self.sensor_controller)
         dialog.exec()
 
     def open_export(self):

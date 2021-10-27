@@ -6,13 +6,13 @@ from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
 
 from controllers.project_controller import ProjectController
 from controllers.sensor_controller import SensorController
-from database.models import Subject, Sensor, SensorUsage
+from database.models import Subject, Sensor, SubjectMapping
 from gui.designer.subject_sensor_map import Ui_Dialog
-from gui.dialogs.edit_sensor_usage_dialog import EditSensorUsageDialog
+from gui.dialogs.edit_sensor_usage_dialog import EditSubjectMappingDialog
 from gui.dialogs.new_sensor_usage_dialog import NewSensorUsageDialog
 
 
-class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
+class SubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def __init__(self, project_controller: ProjectController, sensor_controller: SensorController):
         super().__init__()
@@ -27,7 +27,7 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         self.sensors = Sensor.select()
         self.sensors_dict = dict((sensor.id, sensor.name) for sensor in self.sensors)
 
-        self.sensor_usages = []
+        self.subject_mappings = []
         self.column_names = ["ID", "Subject", "Sensor", "Start date", "End date"]
 
         self.create_table()
@@ -39,13 +39,13 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
     def create_table(self):
         self.tableWidget.blockSignals(True)
 
-        self.sensor_usages = list(SensorUsage.select())
+        self.subject_mappings = list(SubjectMapping.select())
 
         self.tableWidget.setColumnCount(len(self.column_names))
-        self.tableWidget.setRowCount(len(self.sensor_usages))
+        self.tableWidget.setRowCount(len(self.subject_mappings))
         self.tableWidget.setHorizontalHeaderLabels(self.column_names)
 
-        for i, usage in enumerate(self.sensor_usages):
+        for i, usage in enumerate(self.subject_mappings):
             start_dt = pytz.utc.localize(usage.start_datetime).astimezone(self.project_timezone)\
                 .strftime('%Y-%m-%d %H:%M:%S')
             end_dt = pytz.utc.localize(usage.end_datetime).astimezone(self.project_timezone) \
@@ -81,9 +81,9 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
 
         if len(indices) > 0:
             row = indices[0].row()
-            usage = self.sensor_usages[row]
+            usage = self.subject_mappings[row]
 
-            dialog = EditSensorUsageDialog(
+            dialog = EditSubjectMappingDialog(
                 self.sensor_controller, self.subjects_dict, self.sensors_dict, usage, self.project_timezone
             )
             dialog.exec()
@@ -109,9 +109,9 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
 
         for index in indices:
             row = index.row()
-            sensor_usage = self.sensor_usages[row]
-            deleted = self.sensor_controller.delete_sensor_usage(sensor_usage)
+            sensor_usage = self.subject_mappings[row]
+            deleted = self.sensor_controller.delete_subject_mapping(sensor_usage)
 
             if deleted:
-                self.sensor_usages.pop(row)
+                self.subject_mappings.pop(row)
                 self.tableWidget.removeRow(row)

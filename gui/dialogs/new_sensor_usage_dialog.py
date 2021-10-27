@@ -3,7 +3,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
 
 from controllers.sensor_controller import SensorController
-from database.models import SensorUsage, Subject, Sensor
+from database.models import SubjectMapping, Subject, Sensor
 from gui.designer.new_subject_sensor_map import Ui_Dialog
 
 
@@ -64,5 +64,5 @@ class NewSensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
                 start_dt < end_dt:
             subject_id = Subject.get(Subject.name == subject_name)
             sensor_id = Sensor.get(Sensor.name == sensor_name)
-            SensorUsage.create(subject=subject_id, sensor_id=sensor_id, start_datetime=start_dt, end_datetime=end_dt)
+            SubjectMapping.create(subject=subject_id, sensor_id=sensor_id, start_datetime=start_dt, end_datetime=end_dt)
             self.new_map_added = True
