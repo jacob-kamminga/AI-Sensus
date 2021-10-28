@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QMessageBox, QDialogButtonBox
 
 from controllers.sensor_controller import SensorController
 from gui.designer.sensor_model_list import Ui_Dialog
@@ -26,6 +26,12 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         self.pushButton_settings.pressed.connect(self.edit_sensor_model_name_dialog)
         self.buttonBox.accepted.connect(self.set_selected_model)
         self.buttonBox.rejected.connect(self.close)
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
+        self.listWidget_models.itemSelectionChanged.connect(self.toggle_accept_button)
+
+    def accept(self):
+        print("AAAAAAAAAA")
+        super().accept()
 
     def init_gui(self):
         all_models = SensorModel.select()
@@ -54,3 +60,7 @@ class SensorModelDialog(QDialog, Ui_Dialog):
 
     def closeEvent(self, event):
         self.closed_by_user = True
+
+    def toggle_accept_button(self):
+        model_is_selected = len(self.listWidget_models.selectedItems()) > 0
+        self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(model_is_selected)

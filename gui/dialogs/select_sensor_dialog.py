@@ -40,6 +40,7 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.pushButton_delete_sensor.clicked.connect(self.delete_sensor)
         self.lineEdit_new_sensor_name.textChanged.connect(self.toggle_add_sensor_pushbutton)
 
+
     def add_sensor(self):
         name = self.lineEdit_new_sensor_name.text()
         if name != '':
@@ -56,11 +57,8 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                 if dialog.closed_by_user:
                     return
 
-                self.sensor_model = dialog.selected_model_id
-                if self.sensor_model is None:
-                    print('[select_sensor_dialog.py]: self.sensor_model_id is None')
-                    # TODO: Show warning to user
-
+                if dialog.selected_model_id is not None:
+                    self.sensor_model = dialog.selected_model_id
             sensor = self.sensor_controller.add_sensor(name, self.sensor_model)
             dialog = EditSensorDialog(self.sensor_controller, sensor, new_sensor=True)
             dialog.exec()
