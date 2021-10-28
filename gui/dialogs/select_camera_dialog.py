@@ -40,6 +40,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         self.camera_controller = gui.camera_controller
         self.camera = None
         self.gui = gui
+        self.closed_by_user = False
 
         # Fill camera dictionary and add camera names to combobox
         # self.camera_dict = dict()  # Unused
@@ -122,11 +123,9 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
         if res == QMessageBox.Ok:
             # First delete all videos that assigned this camera to it
-            query = Video.delete().where(Video.camera.name == camera_name)
-            query.execute()
+            self.gui.video_controller.delete_videos_with_camera(camera_id)
+            self.camera_controller.delete_camera(camera_id)
             # Delete camera
-            # camera = Camera.get(Camera.name == camera_name)
-            selected_camera.delete_instance()
             self.comboBox_camera.removeItem(self.comboBox_camera.findText(camera_name))
 
     def toggle_add_camera_pushbutton(self):
@@ -135,3 +134,6 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             self.pushButton_new_camera.setEnabled(False)
         else:
             self.pushButton_new_camera.setEnabled(True)
+
+    def closeEvent(self, event) -> None:
+        self.closed_by_user = True

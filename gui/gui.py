@@ -340,6 +340,8 @@ class GUI(QMainWindow, Ui_MainWindow):
             dialog.setWindowTitle(self.video_controller.file_name)
 
         dialog.exec()
+        if dialog.closed_by_user:
+            return
 
         current_camera = self.camera_controller.camera
         if current_camera is not None:

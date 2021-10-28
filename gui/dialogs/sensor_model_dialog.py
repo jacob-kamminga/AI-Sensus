@@ -19,7 +19,7 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         self.models = None
         self.selected_model_id = None
 
-        self.init_gui()
+        self.load_list()
 
         self.listWidget_models.itemDoubleClicked.connect(self.edit_sensor_model_name_dialog)
         self.pushButton_new.pressed.connect(self.new_sensor_model_name_dialog)
@@ -29,11 +29,7 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         self.buttonBox.button(QDialogButtonBox.Ok).setEnabled(False)
         self.listWidget_models.itemSelectionChanged.connect(self.toggle_accept_button)
 
-    def accept(self):
-        print("AAAAAAAAAA")
-        super().accept()
-
-    def init_gui(self):
+    def load_list(self, new_row_name: str = None):
         all_models = SensorModel.select()
         self.models = dict((model.model_name, model.id) for model in all_models)
 
@@ -41,6 +37,10 @@ class SensorModelDialog(QDialog, Ui_Dialog):
         self.listWidget_models.clear()
         self.listWidget_models.addItems(self.models.keys())
         self.listWidget_models.blockSignals(False)
+
+        if new_row_name is not None:
+            num_rows = self.listWidget_models.count()
+            self.listWidget_models.setCurrentRow(num_rows-1)
 
     def set_selected_model(self):
         if len(self.listWidget_models.selectedItems()) > 0:

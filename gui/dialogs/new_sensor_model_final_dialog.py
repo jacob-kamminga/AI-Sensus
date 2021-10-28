@@ -111,9 +111,8 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         sensor_model.save()
 
         self.close()
+        self.parent.load_list(sensor_model.model_name)
 
-        if self.parent is not None and hasattr(self.parent, "init"):
-            self.parent.init()
 
     def previous(self):
         from gui.dialogs.new_sensor_model_comment_style_dialog import SensorModelCommentStyleDialog
@@ -154,7 +153,4 @@ class SensorModelFinalDialog(QDialog, Ui_Dialog):
         sensor_model.delete_instance()
 
         self.close()
-
-        if self.parent is not None:
-            # Refresh list
-            self.parent.init()
+        self.parent.load_list()

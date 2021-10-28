@@ -128,6 +128,10 @@ class VideoController:
         self.sync_with_sensor_data()
         self.set_position(0)
 
+    def delete_videos_with_camera(self, camera_id: int):
+        query = Video.delete().where(Video.camera.id == camera_id)
+        query.execute()
+
     def update_labels_datetime(self):
         video_hms = self.project_dt.strftime("%H:%M:%S")
         video_date = self.project_dt.strftime("%d-%B-%Y")
