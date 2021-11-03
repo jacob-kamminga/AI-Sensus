@@ -99,7 +99,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         self.actionSensor_models.triggered.connect(self.open_sensor_model_dialog)
         self.actionSubjects.triggered.connect(self.open_subject_dialog)
-        self.actionSubject_Mapping.triggered.connect(self.open_sensor_usage_dialog)
+        self.actionSubject_Mapping.triggered.connect(self.open_subject_mapping_dialog)
         self.actionProject_Settings.triggered.connect(self.open_project_settings_dialog)
         self.actionExit.triggered.connect(qApp.quit)
 
@@ -387,7 +387,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         dialog = SensorModelDialog(self.sensor_controller)
         dialog.exec()
 
-    def open_sensor_usage_dialog(self):
+    def open_subject_mapping_dialog(self):
         dialog = SubjectMappingDialog(self.project_controller, self.sensor_controller)
         dialog.exec()
 

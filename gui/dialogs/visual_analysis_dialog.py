@@ -62,6 +62,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
         self.doubleSpinBox_plot_width.valueChanged.connect(self.change_plot_width)
         self.doubleSpinBox_plot_height.valueChanged.connect(self.change_plot_height)
         self.comboBox_functions.activated.connect(self.change_function)
+
         # Connect the usage of the slider to its appropriate helper function
         self.horizontalSlider_time.sliderMoved.connect(self.update_plot_axis)
 
@@ -303,7 +304,7 @@ class VisualAnalysisDialog(QtWidgets.QDialog, Ui_Dialog):
                                              (end_dt >= SubjectMapping.start_datetime) & (end_dt <= SubjectMapping.end_datetime)
                                      )
                                      ))
-        return [sensor_usage.sensor.id for sensor_usage in subject_mapping_query]
+        return [subject_mapping.sensor.id for subject_mapping in subject_mapping_query]
 
     def get_sensor_data_file_ids(self, sensor_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> [int]:
         sdf_query = (SensorDataFile

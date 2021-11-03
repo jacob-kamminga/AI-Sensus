@@ -58,8 +58,8 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                 cancelled_exports += 1
                 continue
 
-            for sensor_usage in subject_mappings:
-                sensor_id = sensor_usage.sensor.id
+            for subject_mapping in subject_mappings:
+                sensor_id = subject_mapping.sensor.id
                 if self.gui.testing and test_file_dir is not None:
                     file_path = test_file_dir
                 else:

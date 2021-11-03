@@ -64,7 +64,7 @@ class VideoController:
 
     def open_file(self, file_path: Path = None):
         """
-        Opens the file specified by self.file_path and sets the video.
+        Opens the video file from `file_path` and creates the Video object in the database.
         """
         if file_path is not None:
             self.file_path = file_path

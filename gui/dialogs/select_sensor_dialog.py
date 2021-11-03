@@ -68,7 +68,6 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                 self.comboBox_sensor.setCurrentText(name)
                 self.lineEdit_new_sensor_name.clear()
 
-
     def use_sensor(self):
         self.selected_sensor_name = self.comboBox_sensor.currentText()
 
@@ -116,14 +115,16 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                 'Are you sure you want to delete ' + selected_sensor_name + '?',
                 QMessageBox.Ok | QMessageBox.Cancel
             ).exec()
-# todo delete selected sensor
-            # if res == QMessageBox.Ok:
-            #     sensor_id = self.sensor_data_file.sensor_manager.get_sensor_id(selected_sensor_name)
-            #     # First delete all videos that assigned this sensor to it
-            #     self.video_manager.delete_video(sensor_id)
-            #     # Delete sensor
-            #     self.sensor_data_file.sensor_manager.delete_sensor(sensor_id)
-            #     self.comboBox_sensor.removeItem(self.comboBox_sensor.findText(selected_sensor_name))
+
+            if res == QMessageBox.Ok:
+                sensor_id = None
+                self.sensor_controller.delete_sensor(sensor_id)
+
+                # First delete all videos that assigned this sensor to it
+                self.video_manager.delete_video(sensor_id)
+                # Delete sensor
+                self.sensor_data_file.sensor_manager.delete_sensor(sensor_id)
+                self.comboBox_sensor.removeItem(self.comboBox_sensor.findText(selected_sensor_name))
 
     def toggle_add_sensor_pushbutton(self):
         if self.lineEdit_new_sensor_name.text() == '':
