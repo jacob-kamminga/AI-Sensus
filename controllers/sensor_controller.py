@@ -44,7 +44,10 @@ class SensorController:
         """ The model ID. """
         self.sensor_data_file = None
 
-    def open_previous_file(self):
+    def open_previous_file(self) -> None:
+        """
+        Open the sensor data file when loading the project.
+        """
         previous_path = self.project_controller.get_setting(PREVIOUS_SENSOR_DATA_FILE)
 
         if previous_path:
@@ -57,7 +60,7 @@ class SensorController:
                 if hasattr(self.gui, 'video_controller') and self.gui.video_controller.project_dt is not None:
                     self.gui.video_controller.set_position(0)
 
-    def prompt_file(self):
+    def prompt_file(self) -> None:
         """
         Open a file dialog that lets the user select a file.
         """
@@ -78,14 +81,30 @@ class SensorController:
         self.open_file()
 
     @staticmethod
-    def add_sensor(name, sensor_model, timezone=None) -> Sensor:
+    def add_sensor(name: str, sensor_model: SensorModel, timezone: pytz.timezone = None) -> Sensor:
+        """
+        Add a new sensor, created from a name, sensor model object and a timezone.
+
+        :param name: The sensor name
+        :param sensor_model: The SensorModel object specifying the format of the sensor data
+        :param timezone: The timezone in which the sensor was located when used
+
+        :return: The new sensor instance
+        """
         sensor = Sensor(name=name, model=sensor_model, timezone=timezone)
         sensor.save()
         return sensor
 
     @staticmethod
     def edit_sensor(sensor: Sensor, timezone: pytz.UTC) -> bool:
-        """ Edit and save a sensor in the database. """
+        """
+        Edit and save a sensor in the database.
+
+        :param sensor: The sensor to be edited
+        :param timezone: The timezone that the sensor should have
+
+        :return: True if the timezone was set and the sensor was saved, False otherwise.
+        """
         try:
             sensor.timezone = timezone
             sensor.save()
@@ -94,28 +113,56 @@ class SensorController:
             return False
 
     @staticmethod
+    def delete_sensor(sensor: Sensor):
+        """
+        `Stub`\n
+        Delete the sensor, making sure the database objects that use this sensor are handled properly.
+
+        :param sensor: The sensor to be deleted.
+
+        :return: True if the sensor could be deleted, False otherwise.
+        """
+        pass
+
+    @staticmethod
     def edit_subject_mapping(
             subject_mapping: SubjectMapping,
             subject: Subject,
             sensor: Sensor,
             start_dt: dt.datetime,
-            end_dt: dt.datetime
-    ) -> bool:
-        """ Edit and save a sensor usage in the database. """
-        sensor_usage.subject = subject
-        sensor_usage.sensor = sensor
-        sensor_usage.start_datetime = naive_to_utc(start_dt, self.project_timezone)
-        sensor_usage.end_datetime = naive_to_utc(end_dt, self.project_timezone)
+            end_dt: dt.datetime) -> bool:
+
+        """
+        Edit and save a sensor usage in the database.
+
+        :param subject_mapping: The subject mapping instance to be edited
+        :param subject: The new subject for the mapping
+        :param sensor: The new sensor the subject is mapped to
+        :param start_dt: Start time of the mapping
+        :param end_dt: End time of the mapping
+
+        :return: True if the mapping was succesful and could be saved, False otherwise.
+        """
+        subject_mapping.subject = subject
+        subject_mapping.sensor = sensor
+        subject_mapping.start_datetime = naive_to_utc(start_dt, self.project_timezone)
+        subject_mapping.end_datetime = naive_to_utc(end_dt, self.project_timezone)
 
         try:
-            sensor_usage.save()
+            subject_mapping.save()
             return True
         except PeeweeException:
             return False
 
     @staticmethod
-    def delete_sensor_usage(subject_mapping: SubjectMapping) -> bool:
-        """ Delete a sensor usage instance. """
+    def delete_subject_mapping(subject_mapping: SubjectMapping) -> bool:
+        """
+        Delete a subject mapping instance.
+
+        :param subject_mapping: The subject mapping instance to be deleted.
+
+        :returns: True if the subject mapping could be deleted, False otherwise.
+        """
         try:
             subject_mapping.delete_instance()
             return True
@@ -123,6 +170,7 @@ class SensorController:
             return False
 
     def open_sensor_model_dialog(self):
+        # TODO: Move this out.
         from gui.dialogs.sensor_model_dialog import SensorModelDialog
         dialog = SensorModelDialog(self)
         dialog.exec()
@@ -130,7 +178,13 @@ class SensorController:
 
     @staticmethod
     def save_sensor_model(sensor_model: SensorModel) -> bool:
-        """ Save a sensor model instance to the database. """
+        """
+        Save a sensor model instance to the database.
+
+        :param sensor_model: The sensor model that should be saved.
+
+        :return: True if the sensor model could be saved, False otherwise.
+        """
         try:
             sensor_model.save()
             return True
@@ -138,18 +192,25 @@ class SensorController:
             return False
 
     @staticmethod
-    def delete_sensor_model(
-            sensor_model: SensorModel
-    ) -> bool:
-        """ Delete a sensor model instance. """
+    def delete_sensor_model(sensor_model: SensorModel) -> bool:
+        """ Delete a sensor model instance.
+
+        :param sensor_model: The sensor model that should be deleted.
+        :returns: True if the sensor model could be deleted, False otherwise.
+        """
         try:
             sensor_model.delete_instance()
             return True
         except:
             return False
 
-    def get_or_create_sdf(self, file_path):
-        # This also happens in open_file(), but this can also be used for unittests.
+    def get_or_create_sdf(self, file_path) -> SensorDataFile:
+        """
+        Get or create the SensorDataFile object from the database that corresponds to `file_path`.
+
+        :param file_path: The file path of the sensor data file on the user's system.
+        :return: An existing or new SensorDataFile object
+        """
         self.file_name = file_path.name
         self.file_path = file_path
 
@@ -168,9 +229,9 @@ class SensorController:
 
         return sdf
 
-    def open_file(self, file_path: Path = None):
+    def open_file(self, file_path: Path = None) -> None:
         """
-        Open the file specified by self.file_path and set the sensor data.
+        Open the file specified and load the sensor data from the file.
         """
 
         if file_path is not None:
@@ -301,10 +362,12 @@ class SensorController:
             self.gui.update_camera_sensor_offset()
             self.gui.video_controller.sync_with_sensor_data()
 
-    def init_functions(self):
+    def init_functions(self) -> None:
         # TODO: Move to plot_controller.py
-        # Add every column in the DataFrame to the possible Data Series that can be plotted, except for time,
-        # and plot the first one
+        """
+        Add every column in the DataFrame to the possible Data Series that can be plotted, except for time,
+        and plot the first one.
+        """
         self.gui.comboBox_functions.clear()
 
         data_cols = self.df.columns.tolist()
@@ -320,11 +383,16 @@ class SensorController:
         else:
             self.gui.plot_controller.set_current_plot(self.gui.comboBox_functions.currentText())
 
-    def save_last_used_column(self, col_name):
-        self.sensor_data_file.last_used_column = col_name
+    def save_last_used_column(self, function_name) -> None:
+        """
+        Store the last function that was used in the sensor data file object for later reference.
+
+        :param function_name: The function applied to the data to plot.
+        """
+        self.sensor_data_file.last_used_column = function_name
         self.sensor_data_file.save()
 
-    def draw_graph(self):
+    def draw_graph(self) -> None:
         # TODO: Move to plot_controller.py
 
         # Reset the figure and add a new subplot to it
@@ -361,8 +429,11 @@ class SensorController:
         # Draw the graph, set the value of the offset spinbox in the GUI to the correct value
         self.gui.canvas.draw()
 
-    def update_camera_text(self):
-        # TODO: MVC
+    def update_camera_text(self) -> None:
+        """
+        `Obsolete`\n
+        Update the video offset value in the GUI spinbox.
+        """
         camera_name = self.gui.label_camera_name_value.text()
 
         if camera_name:
@@ -375,15 +446,23 @@ class SensorController:
 
             self.gui.doubleSpinBox_video_offset.setValue(offset.offset)
 
-    def update_sensor(self, sensor_id: int):
+    def update_sensor(self, sensor_id: int) -> None:
+        """
+        Change the sensor of the current sensor data file.
+
+        :param sensor_id: The id of the new sensor
+        """
         if self.sensor_data_file is not None:
             self.sensor_data_file.sensor = sensor_id
             self.sensor_data_file.save()
 
-    def change_offset(self, offset: float):
+    def change_offset(self, offset: float) -> None:
         """
         Updates the time offset in the database.
+
+        :param offset: The new offset for this camera and sensor.
         """
+
         if self.sensor_data_file.sensor is not None:
             date = self.sensor_data_file.datetime.date()
 
@@ -394,11 +473,17 @@ class SensorController:
                       added=date)
              .execute())
 
-    def create_file_id(self, file_path, block_size=256):
-        # Function that takes a file and returns the first 10 characters of a hash of
-        # 10 times block size in the middle of the file
-        # Input: File path as string
-        # Output: Hash of 10 blocks of 128 bits of size as string plus file size as string
+    @staticmethod
+    def create_file_id(file_path, block_size=256):
+        """
+        Function that takes a file and returns the first 10 characters of a hash of
+        10 times block size in the middle of the file.
+
+        :param file_path: File path as string
+        :param block_size:
+        :return: Hash of 10 blocks of 128 bits of size as string plus file size as string.
+        """
+
         file_size = os.path.getsize(file_path)
         start_index = int(file_size / 2)
         with file_path.open(mode='r') as f:
@@ -414,6 +499,13 @@ class SensorController:
         return '{}{}'.format(md5.hexdigest()[0:9], str(file_size))
 
     def get_sensor_data(self, sensor_data_file_id: int) -> SensorData:
+        """
+        Get the sensor data from the sensor data file.
+
+        :param sensor_data_file_id: The id of the sensor data file instance containing the desired data
+
+        :return: A new SensorData instance containing the desired data
+        """
         file_path = self.get_file_path(sensor_data_file_id)
 
         query = (SensorDataFile
@@ -444,7 +536,9 @@ class SensorController:
         """
         Check whether the file paths in the database are still valid and update if necessary.
 
-        :param sensor_data_file_id: The list of file names
+        :param sensor_data_file_id: The sensor data file for which the path should be checked.
+
+        :returns: The existing file path if it exists, or a new file path as specified by the user
         """
         file_path = SensorDataFile.get_by_id(sensor_data_file_id).file_path
 
@@ -470,6 +564,7 @@ class SensorController:
 
         :param file_name: The file name
         :param old_path: The old (invalid) file path
+
         :return: The new (valid) file path
         """
         # Split path to obtain the base path
@@ -485,7 +580,14 @@ class SensorController:
 
         return new_path
 
-    def prompt_save_location(self, name_suggestion: str):
+    def prompt_save_location(self, name_suggestion: str) -> str:
+        """
+        Request the user to specify a location to save the file.
+
+        :param name_suggestion: an auto-generated suggestion for the file name based on project settings
+
+        :return: The selected file path
+        """
         # Open QFileDialog
         file_path, _ = QFileDialog.getSaveFileName(self.gui, "Save file",
                                                    self.project_controller.project_dir.as_posix() + "\\" +
@@ -493,13 +595,17 @@ class SensorController:
 
         return file_path
 
-    def export(self, subject_ids: [int], start_dt: dt.datetime, end_dt: dt.datetime,
-               start_dt_local: dt.datetime, end_dt_local: dt.datetime):
 
-        pass
+def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> list:
+    """
+    Get all the labels linked to the desired sensor data file within the specified interval.
 
-
-def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime):
+    :param sdf_id: The SensorDataFile id from which the labels should be retrieved.
+    :param start_dt: The start time of the interval
+    :param end_dt: The end time of the interval
+    :return: A list of dictionaries, each representing one annotation, containing the start time, end time, and activity
+    of that label
+    """
     labels = (Label
               .select(Label.start_time, Label.end_time, LabelType.activity)
               .join(LabelType)
