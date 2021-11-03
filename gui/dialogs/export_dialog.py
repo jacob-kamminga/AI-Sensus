@@ -89,7 +89,7 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
 
         # Loop through each subject that the user wants to export.
         # For each subject, create a separate file.
-        # For each sensor usage (mapping between sensor and subject) within the specified interval, get the data within
+        # For each subject mapping within the specified interval, get the data within
         # that interval from the appropriate sensor data file(s).
         # For each of the found sensor data files, get the annotations (labels) in the interval, append the data
         # to the subject's export file.

@@ -35,7 +35,7 @@ class EditSubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
         self.subjects_dict = subjects_dict
         self.sensors_dict = sensors_dict
         self.project_timezone = project_timezone
-        self.sensor_usage = subject_mapping
+        self.subject_mapping = subject_mapping
 
         self.value_changed = False
 
@@ -68,10 +68,10 @@ class EditSubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
         self.timeEdit_end.setTime(current_time)
 
     def init_sensor_mapping(self):
-        start_dt_local = utc_to_local(self.sensor_usage.start_datetime, self.project_timezone)
-        end_dt_local = utc_to_local(self.sensor_usage.end_datetime, self.project_timezone)
-        self.comboBox_subject.setCurrentText(self.sensor_usage.subject.name)
-        self.comboBox_sensor.setCurrentText(self.sensor_usage.sensor.name)
+        start_dt_local = utc_to_local(self.subject_mapping.start_datetime, self.project_timezone)
+        end_dt_local = utc_to_local(self.subject_mapping.end_datetime, self.project_timezone)
+        self.comboBox_subject.setCurrentText(self.subject_mapping.subject.name)
+        self.comboBox_sensor.setCurrentText(self.subject_mapping.sensor.name)
         self.dateEdit_start.setDate(start_dt_local.date())
         self.dateEdit_end.setDate(end_dt_local.date())
         self.timeEdit_start.setTime(start_dt_local.time())
@@ -91,7 +91,7 @@ class EditSubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
             if start_dt < end_dt:
                 subject = Subject.get(Subject.name == subject_name)
                 sensor = Sensor.get(Sensor.name == sensor_name)
-                self.sensor_controller.edit_subject_mapping(self.sensor_usage, subject, sensor, start_dt, end_dt)
+                self.sensor_controller.edit_subject_mapping(self.subject_mapping, subject, sensor, start_dt, end_dt)
 
     @staticmethod
     def get_py_datetime(qt_date: QDateEdit, qt_time: QTimeEdit) -> datetime.datetime:
