@@ -274,6 +274,8 @@ class PlotController:
                                                 self.sensor_controller.sensor_data.metadata.sensor_timezone)
 
                 self.label_dialog.label.start_time = x_datetime
+                # If user was labeling (self.labeling==TRUE) then cancel that action.
+                self.labeling = False
 
             # If the right mouse button is used, check if this is the first or second time
             elif event.button == MouseButton.RIGHT:
@@ -286,7 +288,6 @@ class PlotController:
                 else:
                     deleting = False
                     delete_label = None
-
                     if x_datetime < self.label_dialog.label.start_time:
                         self.label_dialog.label.end_time = self.label_dialog.label.start_time
                         self.label_dialog.label.start_time = x_datetime
