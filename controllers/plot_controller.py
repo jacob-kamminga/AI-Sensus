@@ -264,10 +264,9 @@ class PlotController:
 
         :param event: Specifies what event triggered this function.
         """
-        if self.sensor_controller.sensor_data is not None:
+        if event.xdata is not None and self.sensor_controller.sensor_data is not None:
             # Convert the x-position to a Python datetime localized as UTC
             x_datetime = num2date(event.xdata).astimezone(pytz.utc)
-
             # If the left mouse button is used, start a new labeling dialog with the right starting time and
             # wait for the onrelease function
             if event.button == MouseButton.LEFT:
@@ -275,6 +274,8 @@ class PlotController:
                                                 self.sensor_controller.sensor_data.metadata.sensor_timezone)
 
                 self.label_dialog.label.start_time = x_datetime
+                # If user was labeling (self.labeling==TRUE) then cancel that action.
+                self.labeling = False
 
             # If the right mouse button is used, check if this is the first or second time
             elif event.button == MouseButton.RIGHT:
@@ -287,7 +288,6 @@ class PlotController:
                 else:
                     deleting = False
                     delete_label = None
-
                     if x_datetime < self.label_dialog.label.start_time:
                         self.label_dialog.label.end_time = self.label_dialog.label.start_time
                         self.label_dialog.label.start_time = x_datetime
@@ -342,7 +342,7 @@ class PlotController:
         Handles the labeling by clicking, but is only triggered when the user releases the mouse button.
         :param event: Specifies the event that triggers this function.
         """
-        if self.sensor_controller.sensor_data is not None:
+        if event.xdata is not None and self.sensor_controller.sensor_data is not None:
             # Convert the x-position to a Python datetime
             x_data_dt_sensor_utc = num2date(event.xdata).astimezone(pytz.utc)
 
