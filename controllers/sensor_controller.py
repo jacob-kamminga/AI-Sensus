@@ -77,11 +77,10 @@ class SensorController:
         self.file_path = Path(self.file_path)
         self.open_file()
 
-    @staticmethod
-    def add_sensor(name, sensor_model) -> bool:
+    def add_sensor(self, name, sensor_model) -> bool:
         from gui.dialogs.edit_sensor_dialog import EditSensorDialog
         sensor = Sensor(name=name, sensor_model=sensor_model)
-        dialog = EditSensorDialog(sensor)
+        dialog = EditSensorDialog(self, sensor)
         dialog.exec()
 
         return dialog.saved

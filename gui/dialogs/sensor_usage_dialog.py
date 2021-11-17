@@ -46,7 +46,7 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         self.tableWidget.setHorizontalHeaderLabels(self.column_names)
 
         for i, usage in enumerate(self.sensor_usages):
-            start_dt = pytz.utc.localize(usage.start_datetime).astimezone(self.project_timezone)\
+            start_dt = pytz.utc.localize(usage.on_click_datetime).astimezone(self.project_timezone)\
                 .strftime('%Y-%m-%d %H:%M:%S')
             end_dt = pytz.utc.localize(usage.end_datetime).astimezone(self.project_timezone) \
                 .strftime('%Y-%m-%d %H:%M:%S')
