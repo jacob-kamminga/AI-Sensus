@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import QMessageBox, QApplication
 
 import date_utils
 from controllers.sensor_controller import get_labels
-from database.models import SensorDataFile, SensorUsage, Subject
+from database.models import SensorDataFile, SubjectMapping, Subject
 from gui.designer.progress_bar import Ui_Dialog
 from numpy import array_split
 
@@ -18,31 +18,34 @@ import datetime as dt
 
 class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, gui, subject_ids: [int], start_dt: dt.datetime, end_dt: dt.datetime):
+    def __init__(self, gui, subject_ids: [int], start_dt: dt.datetime, end_dt: dt.datetime, test_file_dir: Path = None):
         super().__init__()
-
         self.setupUi(self)
+
         self.gui = gui
 
         jobs = []
+        cancelled_exports = 0
 
         for subject_id in subject_ids:
             subject_name = Subject.get_by_id(subject_id).name
-            sensor_query = (SensorUsage
-                            .select(SensorUsage.sensor)
-                            .where((SensorUsage.subject == subject_id) &
-                                   (
-                                           SensorUsage.start_datetime.between(start_dt, end_dt) |
-                                           SensorUsage.end_datetime.between(start_dt, end_dt) |
-                                           (start_dt >= SensorUsage.start_datetime) & (
-                                                   start_dt <= SensorUsage.end_datetime) |
-                                           (end_dt >= SensorUsage.start_datetime) & (
-                                                   end_dt <= SensorUsage.end_datetime)
-                                   )
-                                   ))
+            subject_mappings = (SubjectMapping
+                                .select(SubjectMapping.sensor)
+                                .where((SubjectMapping.subject == subject_id) &
+                                       (
+                                               SubjectMapping.start_datetime.between(start_dt, end_dt) |
+                                               SubjectMapping.end_datetime.between(start_dt, end_dt) |
+                                               (start_dt >= SubjectMapping.start_datetime) & (
+                                                       start_dt <= SubjectMapping.end_datetime) |
+                                               (end_dt >= SubjectMapping.start_datetime) & (
+                                                       end_dt <= SubjectMapping.end_datetime)
+                                       )
+                                       ))
 
-            if len(sensor_query) == 0:
-                local_timezone = pytz.timezone(self.project_controller.get_setting('timezone'))
+            print(f"Found {len(subject_mappings)} subject mappings for subject_id {subject_id}.")
+
+            if len(subject_mappings) == 0:
+                local_timezone = pytz.timezone(self.gui.project_controller.get_setting('timezone'))
                 start_local = date_utils.utc_to_local(start_dt, local_timezone)
                 end_local = date_utils.utc_to_local(end_dt, local_timezone)
                 QMessageBox(
@@ -52,14 +55,19 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                     f"and {end_local.strftime('%d-%m-%Y %H:%M:%S')}.",
                     QMessageBox.Ok
                 ).exec()
+                cancelled_exports += 1
                 continue
 
-            for sensor_usage in sensor_query:
-                sensor_id = sensor_usage.sensor.id
-                file_path = self.gui.sensor_controller.prompt_save_location(subject_name + "_" + str(sensor_id))
+            for subject_mapping in subject_mappings:
+                sensor_id = subject_mapping.sensor.id
+                if self.gui.testing and test_file_dir is not None:
+                    file_path = test_file_dir
+                else:
+                    file_path = self.gui.sensor_controller.prompt_save_location(subject_name + "_" + str(sensor_id))
 
                 if file_path == "":  # The save prompt was closed by the user.
                     raise RuntimeError("No path was chosen. User may have exited manually.")
+
                 # Retrieve all SensorDataFile that have this sensor associated with it.
                 sdf_query = (SensorDataFile
                              .select(SensorDataFile.id)
@@ -67,10 +75,11 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                                     SensorDataFile.datetime.between(start_dt, end_dt)))
 
                 files = []
-                for file in sdf_query:
+                print(f"Found {len(sdf_query)} files.")
+                for sdf in sdf_query:
                     QApplication.processEvents()
-                    labels = get_labels(file.id, start_dt, end_dt)  # DB
-                    sensor_data = self.gui.sensor_controller.get_sensor_data(file.id)  # DB
+                    labels = get_labels(sdf.id, start_dt, end_dt)  # DB
+                    sensor_data = self.gui.sensor_controller.get_sensor_data(sdf.id)  # DB
 
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
@@ -85,8 +94,9 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
                 # sdf_query = [file, file, file] = [(labels, sensor_data), (labels, sensor_data), (labels, sensor_data)]
                 jobs.append((file_path, files, sensor_id))
+
         if len(jobs) > 0:
-            self.worker = ExportWorker(jobs, start_dt, end_dt)
+            self.worker = ExportWorker(jobs, list(self.gui.sensor_controller.df.columns), start_dt, end_dt)
             self.thread = QThread()
             self.worker.progress.connect(self.changeProgress)
             self.worker.text.connect(self.changeText)
@@ -95,8 +105,11 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
             self.thread.finished.connect(self.worker.deleteLater)
             self.worker.finished.connect(self.done_)
             self.pushButton_cancel.clicked.connect(self.abort_export)
-        else:
+        elif not cancelled_exports == len(subject_ids):
+            # Only raise an error if a job isn't queued even though there should be a job.
             raise RuntimeError("No jobs are queued.")
+        else:
+            return
 
         self.thread.start()
 
@@ -133,13 +146,14 @@ class ExportWorker(QObject):
     text = pyqtSignal(str)
     progress = pyqtSignal(int)
 
-    def __init__(self, jobs, start_dt, end_dt):
+    def __init__(self, jobs, column_names, start_dt, end_dt):
         super().__init__()
         self.aborted = False
         self.paused = False
         self.jobs = jobs
         self.start_dt = start_dt
         self.end_dt = end_dt
+        self.column_names = column_names
 
     @pyqtSlot()
     def run(self):
@@ -148,20 +162,25 @@ class ExportWorker(QObject):
         This loop separates the dataframe in 100 roughly equal parts and appends each part to the
         previous parts, so that a progress update can be given in the form of a progress bar. This
         is particularly useful for dataframes that encompass large amounts of time."""
-
+        print("Running...")
         for file_path, files, sensor_id in self.jobs:
-            self.text.emit(f"Collecting data for {file_path}")
-            df: pd.DataFrame = pd.DataFrame()
+
+            file_path = Path(file_path)
+
+            self.text.emit(f"Collecting data for {file_path.as_posix()}")
+            df = pd.DataFrame()
+            # df.to_csv(file_path)  # Write out the columns, which will get lost after the split
 
             for sensor_data in files:
                 # TODO: Indefinite loading bar / loop over deze call plaatsen.
+
                 df = df.append(sensor_data.get_data())
 
             # Because exporting uses append mode, the existing file has to be deleted first in case of
             # the reuse of file name.
             try:
-                if Path.exists(Path(file_path)):
-                    os.remove(file_path)
+                if file_path.is_file():
+                    file_path.unlink()
 
             except FileNotFoundError:  # Export was cancelled on file location prompt.
                 continue
@@ -180,6 +199,10 @@ class ExportWorker(QObject):
 
             try:
                 self.text.emit(f"Writing to {file_path}...")
+
+                # with file_path.open(mode='w') as file:
+                #     file.write(",".join(list(df.columns)))
+
                 for i in range(100):
                     # if debug:  # Slows down the progress bar to check if it works correctly.
                     #     for j in range(100):
@@ -192,7 +215,7 @@ class ExportWorker(QObject):
                     if not self.paused:
                         QApplication.processEvents()
                         # Append each chunk to output_path CSV using mode='a' (append).
-                        df_split[i].to_csv(file_path, mode='a', header=False, index=False)
+                        df_split[i].to_csv(file_path, mode='a', header=(i == 0), index=False)
                         self.progress.emit(i + 1)
 
             except Exception as e:

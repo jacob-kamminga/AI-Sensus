@@ -40,6 +40,7 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
         self.pushButton_delete_sensor.clicked.connect(self.delete_sensor)
         self.lineEdit_new_sensor_name.textChanged.connect(self.toggle_add_sensor_pushbutton)
 
+
     def add_sensor(self):
         name = self.lineEdit_new_sensor_name.text()
         if name != '':
@@ -52,15 +53,17 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                 # Prompt user to select sensor data file
                 dialog = SensorModelDialog(self.sensor_controller)
                 dialog.exec()
-                dialog.show()
-                self.sensor_model = dialog.selected_model_id
-                if self.sensor_model is None:
-                    print('[select_sensor_dialog.py]: self.sensor_model_id is None')
-                    # TODO: Show warning to user
 
-            saved = self.sensor_controller.add_sensor(name, self.sensor_model)
+                if dialog.closed_by_user:
+                    return
 
-            if saved:
+                if dialog.selected_model_id is not None:
+                    self.sensor_model = dialog.selected_model_id
+            sensor = self.sensor_controller.add_sensor(name, self.sensor_model)
+            dialog = EditSensorDialog(self.sensor_controller, sensor, new_sensor=True)
+            dialog.exec()
+
+            if dialog.saved:
                 self.comboBox_sensor.addItem(name)
                 self.comboBox_sensor.setCurrentText(name)
                 self.lineEdit_new_sensor_name.clear()
@@ -112,14 +115,16 @@ class SelectSensorDialog(QtWidgets.QDialog, Ui_Dialog):
                 'Are you sure you want to delete ' + selected_sensor_name + '?',
                 QMessageBox.Ok | QMessageBox.Cancel
             ).exec()
-# todo delete selected sensor
-            # if res == QMessageBox.Ok:
-            #     sensor_id = self.sensor_data_file.sensor_manager.get_sensor_id(selected_sensor_name)
-            #     # First delete all videos that assigned this sensor to it
-            #     self.video_manager.delete_video(sensor_id)
-            #     # Delete sensor
-            #     self.sensor_data_file.sensor_manager.delete_sensor(sensor_id)
-            #     self.comboBox_sensor.removeItem(self.comboBox_sensor.findText(selected_sensor_name))
+
+            if res == QMessageBox.Ok:
+                sensor_id = None
+                self.sensor_controller.delete_sensor(sensor_id)
+
+                # First delete all videos that assigned this sensor to it
+                self.video_manager.delete_video(sensor_id)
+                # Delete sensor
+                self.sensor_data_file.sensor_manager.delete_sensor(sensor_id)
+                self.comboBox_sensor.removeItem(self.comboBox_sensor.findText(selected_sensor_name))
 
     def toggle_add_sensor_pushbutton(self):
         if self.lineEdit_new_sensor_name.text() == '':

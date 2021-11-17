@@ -34,15 +34,13 @@ class VideoController:
         self.init_offset = None
         """The offset between the beginning of the video and the beginning of the sensor data."""
 
-    # def reset(self, gui):
-
     def open_previous_file(self):
         previous_path = self.project_controller.get_setting('last_videofile')
 
         if previous_path is not None:
-            if os.path.isfile(previous_path):
-                self.file_path = previous_path
-                self.open_file()
+            previous_path = Path(previous_path)
+            if previous_path.is_file():
+                self.open_file(previous_path)
 
     def prompt_file(self):
         """
@@ -61,14 +59,14 @@ class VideoController:
                 path = QDir.homePath()
 
         # Get the user input from a dialog window
-        self.file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Video", path)
-        self.open_file()
+        file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Video", path)
+        self.open_file(Path(file_path))
 
-    def open_file(self, file_path=None):
+    def open_file(self, file_path: Path = None):
         """
-        Opens the file specified by self.file_path and sets the video.
+        Opens the video file from `file_path` and creates the Video object in the database.
         """
-        if file_path:
+        if file_path is not None:
             self.file_path = file_path
 
         if self.file_path is not None and os.path.isfile(self.file_path):
@@ -97,16 +95,10 @@ class VideoController:
                                   camera=self.gui.camera_controller.camera.id)
                     video.save()
 
-                file_path = Path(self.file_path)
-                try:
-                    self.gui.label_video_filename.setText(
-                        file_path.parts[-3] + "/" + file_path.parts[-2] + "/" + file_path.parts[-1]
-                    )
-                except:
-                    pass
+                self.gui.label_video_filename.setText("/".join(self.file_path.parts[-3:]))
 
                 # Play the video in the QMediaPlayer and activate the associated widgets
-                self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(self.file_path)))
+                self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(str(self.file_path))))
                 self.gui.pushButton_play.setEnabled(True)
                 self.gui.horizontalSlider_time.setEnabled(True)
 
@@ -135,6 +127,10 @@ class VideoController:
         self.update_datetime()
         self.sync_with_sensor_data()
         self.set_position(0)
+
+    def delete_videos_with_camera(self, camera_id: int):
+        query = Video.delete().where(Video.camera.id == camera_id)
+        query.execute()
 
     def update_labels_datetime(self):
         video_hms = self.project_dt.strftime("%H:%M:%S")
@@ -311,5 +307,3 @@ class VideoController:
             if position is None:
                 position = self.gui.horizontalSlider_time.value()
             self.gui.mediaPlayer.setPosition(position)  # todo is this method different for wmv files?
-
-

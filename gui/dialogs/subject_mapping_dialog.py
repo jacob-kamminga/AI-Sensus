@@ -6,13 +6,13 @@ from PyQt5.QtWidgets import QTableWidgetItem, QMessageBox
 
 from controllers.project_controller import ProjectController
 from controllers.sensor_controller import SensorController
-from database.models import Subject, Sensor, SensorUsage
+from database.models import Subject, Sensor, SubjectMapping
 from gui.designer.subject_sensor_map import Ui_Dialog
-from gui.dialogs.edit_sensor_usage_dialog import EditSensorUsageDialog
-from gui.dialogs.new_sensor_usage_dialog import NewSensorUsageDialog
+from gui.dialogs.edit_subject_mapping_dialog import EditSubjectMappingDialog
+from gui.dialogs.new_subject_mapping_dialog import NewSubjectMappingDialog
 
 
-class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
+class SubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
 
     def __init__(self, project_controller: ProjectController, sensor_controller: SensorController):
         super().__init__()
@@ -27,33 +27,33 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         self.sensors = Sensor.select()
         self.sensors_dict = dict((sensor.id, sensor.name) for sensor in self.sensors)
 
-        self.sensor_usages = []
+        self.subject_mappings = []
         self.column_names = ["ID", "Subject", "Sensor", "Start date", "End date"]
 
         self.create_table()
 
         self.pushButton_add_map.clicked.connect(self.open_new_map_dialog)
-        self.pushButton_edit_map.clicked.connect(self.open_edit_usage_dialog)
-        self.pushButton_remove_map.clicked.connect(self.open_delete_sensor_usage_msg)
+        self.pushButton_edit_map.clicked.connect(self.open_edit_mapping_dialog)
+        self.pushButton_remove_map.clicked.connect(self.open_delete_subject_mapping_msg)
 
     def create_table(self):
         self.tableWidget.blockSignals(True)
 
-        self.sensor_usages = list(SensorUsage.select())
+        self.subject_mappings = list(SubjectMapping.select())
 
         self.tableWidget.setColumnCount(len(self.column_names))
-        self.tableWidget.setRowCount(len(self.sensor_usages))
+        self.tableWidget.setRowCount(len(self.subject_mappings))
         self.tableWidget.setHorizontalHeaderLabels(self.column_names)
 
-        for i, usage in enumerate(self.sensor_usages):
-            start_dt = pytz.utc.localize(usage.on_click_datetime).astimezone(self.project_timezone)\
+        for i, mapping in enumerate(self.subject_mappings):
+            start_dt = pytz.utc.localize(mapping.start_datetime).astimezone(self.project_timezone)\
                 .strftime('%Y-%m-%d %H:%M:%S')
-            end_dt = pytz.utc.localize(usage.end_datetime).astimezone(self.project_timezone) \
+            end_dt = pytz.utc.localize(mapping.end_datetime).astimezone(self.project_timezone) \
                 .strftime('%Y-%m-%d %H:%M:%S')
 
-            self.tableWidget.setItem(i, 0, QTableWidgetItem(usage.id))
-            self.tableWidget.setItem(i, 1, QTableWidgetItem(usage.subject.name))
-            self.tableWidget.setItem(i, 2, QTableWidgetItem(usage.sensor.name))
+            self.tableWidget.setItem(i, 0, QTableWidgetItem(mapping.id))
+            self.tableWidget.setItem(i, 1, QTableWidgetItem(mapping.subject.name))
+            self.tableWidget.setItem(i, 2, QTableWidgetItem(mapping.sensor.name))
             self.tableWidget.setItem(i, 3, QTableWidgetItem(start_dt))
             self.tableWidget.setItem(i, 4, QTableWidgetItem(end_dt))
 
@@ -68,7 +68,7 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         self.tableWidget.blockSignals(False)
 
     def open_new_map_dialog(self):
-        dialog = NewSensorUsageDialog(self.sensor_controller, self.subjects_dict, self.sensors_dict, self.project_timezone)
+        dialog = NewSubjectMappingDialog(self.sensor_controller, self.subjects_dict, self.sensors_dict, self.project_timezone)
         dialog.exec()
         dialog.show()
 
@@ -76,15 +76,15 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
             self.clear_table()
             self.create_table()
 
-    def open_edit_usage_dialog(self):
+    def open_edit_mapping_dialog(self):
         indices = self.tableWidget.selectionModel().selectedRows()
 
         if len(indices) > 0:
             row = indices[0].row()
-            usage = self.sensor_usages[row]
+            mapping = self.subject_mappings[row]
 
-            dialog = EditSensorUsageDialog(
-                self.sensor_controller, self.subjects_dict, self.sensors_dict, usage, self.project_timezone
+            dialog = EditSubjectMappingDialog(
+                self.sensor_controller, self.subjects_dict, self.sensors_dict, mapping, self.project_timezone
             )
             dialog.exec()
             dialog.show()
@@ -93,7 +93,7 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
                 self.clear_table()
                 self.create_table()
 
-    def open_delete_sensor_usage_msg(self):
+    def open_delete_subject_mapping_msg(self):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
 
@@ -102,16 +102,16 @@ class SensorUsageDialog(QtWidgets.QDialog, Ui_Dialog):
         action = msg.exec()
 
         if action == QMessageBox.Ok:
-            self.delete_sensor_usage()
+            self.delete_subject_mapping()
 
-    def delete_sensor_usage(self):
+    def delete_subject_mapping(self):
         indices = self.tableWidget.selectionModel().selectedRows()
 
         for index in indices:
             row = index.row()
-            sensor_usage = self.sensor_usages[row]
-            deleted = self.sensor_controller.delete_sensor_usage(sensor_usage)
+            subject_mapping = self.subject_mappings[row]
+            deleted = self.sensor_controller.delete_subject_mapping(subject_mapping)
 
             if deleted:
-                self.sensor_usages.pop(row)
+                self.subject_mappings.pop(row)
                 self.tableWidget.removeRow(row)

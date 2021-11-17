@@ -1,7 +1,9 @@
 import peewee
+import pytz
 from PyQt5.QtWidgets import QMessageBox
 
 from database.models import Camera
+
 
 class CameraController:
 
@@ -10,6 +12,7 @@ class CameraController:
         self.camera = None
 
     def change_camera(self, camera_id: int):
+
         # Update camera name in main GUI
         self.camera = Camera.get_by_id(camera_id)
         self.gui.label_camera_name_value.setText(self.camera.name)
@@ -20,34 +23,23 @@ class CameraController:
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()
 
-    @staticmethod
-    def add_camera(camera_name: str):
+    def add_camera(self, camera_name: str, timezone: pytz.timezone = None, manual_offset: int = None):
+        if timezone is None:
+            project_tz = self.gui.project_controller.get_setting('timezone')
+            if project_tz is not None:
+                timezone = project_tz
+            else:
+                timezone = 'UTC'
+
+        if manual_offset is None:
+            manual_offset = 0
         try:
-            Camera.create(name=camera_name)
+            Camera.create(name=camera_name,
+                          timezone=timezone,
+                          manual_offset=manual_offset)
+
         except peewee.IntegrityError:
             raise
 
-    # def delete_camera(self):
-    #     """
-    #     Deletes the current camera.
-    #     """
-    #     if self.gui.comboBox_camera_ids.currentText():
-    #         reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete the current camera?",
-    #                                      QMessageBox.Yes, QMessageBox.No)
-    #         if reply == QMessageBox.Yes:
-    #             self.camera_manager.delete_camera(self.gui.comboBox_camera_ids.currentText())
-    #             self.gui.comboBox_camera_ids.clear()
-    #
-    #             for camera in self.camera_manager.get_all_cameras():
-    #                 self.gui.comboBox_camera_ids.addItem(camera)
-    #
-    #             self.gui.doubleSpinBox_video_offset.clear()
-    #
-    #             if self.gui.comboBox_camera_ids.currentText() and self.gui.sensor_data_file.data:
-    #                 self.gui.doubleSpinBox_video_offset.setValue(
-    #                     self.offset_manager.get_offset(self.gui.comboBox_camera_ids.currentText(),
-    #                                                    self.gui.sensor_data_file.data.metadata['sn'],
-    #                                                    self.gui.sensor_data_file.data.metadata['date'])
-    #                 )
-    #             else:
-    #                 self.gui.doubleSpinBox_video_offset.setValue(0)
+    def delete_camera(self, camera_id: int):
+        Camera.get_by_id(camera_id).delete_instance()

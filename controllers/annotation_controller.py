@@ -38,7 +38,6 @@ class AnnotationController:
         label_type.delete_instance()
 
     def add_subject(self, subject_name, subject_color, subject_size, subject_info):
-        # May at some point need its own controller.
         subject = Subject(name=subject_name, color=subject_color, size=subject_size, extra_info=subject_info)
         subject.save()
 

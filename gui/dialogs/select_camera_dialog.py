@@ -1,4 +1,5 @@
 import peewee
+import pytz
 
 import database.models
 from PyQt5 import QtWidgets
@@ -39,6 +40,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         self.camera_controller = gui.camera_controller
         self.camera = None
         self.gui = gui
+        self.closed_by_user = False
 
         # Fill camera dictionary and add camera names to combobox
         # self.camera_dict = dict()  # Unused
@@ -58,7 +60,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         """Get the name of the camera that is currently selected in the combobox."""
         return Camera.get(Camera.name == self.comboBox_camera.currentText())
 
-    def load_cameras(self, camera_id: int):
+    def load_cameras(self, selected_camera_id: int = None):
         """Load all the cameras from the database into the combobox and store their timezones in a dict."""
         self.comboBox_camera.clear()  # Clear the list
 
@@ -68,15 +70,15 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             self.comboBox_camera.addItem(camera.name)  # Fill the list with all the camera names
 
         # Set current camera in combobox
-
-        self.comboBox_camera.setCurrentText(get_camera_from_id(camera_id).name)
+        if selected_camera_id is not None:
+            self.comboBox_camera.setCurrentText(get_camera_from_id(selected_camera_id).name)
 
     def add_camera(self, camera_name: str):
         # Changed this to camera_name for the purpose of more intuitive use, and for testing.
         # Adding a camera manually and programatically is easier. The ID gets created automatically, a name doesn't.
         if camera_name != '':
             try:
-                camera_name = self.gui.camera_controller.add_camera(camera_name)
+                self.gui.camera_controller.add_camera(camera_name)
             except peewee.IntegrityError:
                 QMessageBox(
                     QMessageBox.Warning,
@@ -85,6 +87,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
                     f"(ID={Camera.get(Camera.name == camera_name)}). Please choose a different name.",
                     QMessageBox.Ok
                 ).exec()
+                return
 
             self.comboBox_camera.addItem(camera_name)  # Add the new camera to the list
             self.comboBox_camera.setCurrentText(camera_name)  # Set the new camera as the selected camera.
@@ -120,11 +123,9 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
         if res == QMessageBox.Ok:
             # First delete all videos that assigned this camera to it
-            query = Video.delete().where(Video.camera.name == camera_name)
-            query.execute()
+            self.gui.video_controller.delete_videos_with_camera(camera_id)
+            self.camera_controller.delete_camera(camera_id)
             # Delete camera
-            # camera = Camera.get(Camera.name == camera_name)
-            selected_camera.delete_instance()
             self.comboBox_camera.removeItem(self.comboBox_camera.findText(camera_name))
 
     def toggle_add_camera_pushbutton(self):
@@ -133,3 +134,6 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             self.pushButton_new_camera.setEnabled(False)
         else:
             self.pushButton_new_camera.setEnabled(True)
+
+    def closeEvent(self, event) -> None:
+        self.closed_by_user = True

@@ -2,6 +2,8 @@ import json
 import sys
 from os import getenv
 from pathlib import Path
+from typing import Any
+
 from PyQt5.QtWidgets import QMessageBox
 from constants import APP_CONFIG_FILE, PREVIOUS_PROJECT_DIR, PROJECTS, PROJECT_NAME, PROJECT_DIR
 from controllers.project_controller import INIT_APP_CONFIG
@@ -35,13 +37,13 @@ def user_data_dir(file_name):
 
 class AppController:
 
-    def __init__(self, gui):
+    def __init__(self, gui, app_config_file):
         self.gui = gui
         self.project_name = None
         self.project_dir = None
         self.prev_project_dir = None
 
-        self.app_config_file = user_data_dir(APP_CONFIG_FILE)
+        self.app_config_file = app_config_file if app_config_file is not None else user_data_dir(APP_CONFIG_FILE)
         self.app_config = {}
 
         try:
@@ -50,9 +52,21 @@ class AppController:
             self.app_config_file.unlink()  # Delete app_config.json so that it can be recreated properly.
             self.load_settings()
         except MissingProjectDirectoryError as e:
-            QMessageBox.critical(self.gui, "Project directory is missing",
-                                 f"The directory \"{e.directory}\" could not be found. If you deleted the directory, "
-                                 f"you can ignore this.")
+            if not self.gui.testing:
+                QMessageBox.critical(self.gui, "Project directory is missing",
+                                     f"The directory \"{e.directory}\" could not be found. If you deleted the directory,"
+                                     f" you can ignore this.")
+
+    def set_setting(self, setting: str, new_value: Any) -> None:
+        """
+        Adds or changes a setting with the given name.
+
+        :param setting: The project setting to change
+        :param new_value: The value the setting should get
+        """
+
+        self.app_config[setting] = new_value
+        self.save_app_config()
 
     def save_app_config(self):
         """Write the app configuration dictionary in JSON format to the user directory."""

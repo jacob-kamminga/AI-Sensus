@@ -5,6 +5,7 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication, QMessageBox
 
 from gui import gui
+from database import migrator
 
 try:
     import apt
@@ -101,9 +102,9 @@ def is_lav_filters():
     return True
 
 
-def dependencies_installed() -> bool:
+def dependencies_installed() -> tuple:
     """Check whether all dependencies have been installed on the system."""
-    return is_tool('exiftool') and is_tool('ffmpeg') and is_lav_filters()
+    return is_tool('exiftool'), is_tool('ffmpeg'), is_lav_filters()
 
 
 def main() -> None:
@@ -115,12 +116,15 @@ def main() -> None:
     main_window.show()
 
     # Check whether all dependencies have been installed
-    if not dependencies_installed():
+    installed = dependencies_installed()
+
+    if not all(installed):
+        missing = [dep for dep, inst in zip(['exiftool', 'FFMPEG', 'LAV Filters'], installed) if not inst]
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
         msg.setWindowTitle("Could not find all dependencies")
         msg.setText("Error: Not all dependencies have been installed or are included in PATH. Please make sure that "
-                    "they are installed.")
+                    f"they are installed.\n\nMissing these dependencies: {', '.join(missing)}")
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec()
         exit()
