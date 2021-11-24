@@ -184,14 +184,15 @@ class TestAll(unittest.TestCase):
 
         # end_time.replace(tzinfo=pytz.timezone('UTC'))
 
-        export_file_path = self.project_dir/'test_export.csv'
+        export_file_dir = self.project_dir
         export_dialog = ExportProgressDialog(self.gui,
                                              subject_ids=subject_ids,
                                              start_dt=start_time_file_utc-one_hour,
                                              end_dt=end_time_file_utc+one_hour,
-                                             test_file_dir=export_file_path)
+                                             test_file_dir=export_file_dir)
         export_dialog.exec()
 
+        export_file_path = export_file_dir / 'example_export_file.csv'
         self.assertTrue(export_file_path.is_file(), msg="Export file was not created.")
 
         ########## testCompareOutput ##########

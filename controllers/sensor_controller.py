@@ -112,8 +112,7 @@ class SensorController:
         except PeeweeException:
             return False
 
-    @staticmethod
-    def delete_sensor(sensor: Sensor):
+    def delete_sensor(self, sensor: Sensor):
         """
         `Stub`\n
         Delete the sensor, making sure the database objects that use this sensor are handled properly.
@@ -122,6 +121,9 @@ class SensorController:
 
         :return: True if the sensor could be deleted, False otherwise.
         """
+
+        # Subject mappings, offsets and sensor data files all have references to a sensor.
+
         pass
 
     @staticmethod
