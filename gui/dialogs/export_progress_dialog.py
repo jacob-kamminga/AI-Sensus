@@ -18,7 +18,7 @@ import datetime as dt
 
 class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
-    def __init__(self, gui, subject_ids: [int], start_dt: dt.datetime, end_dt: dt.datetime, test_file_dir: Path = None):
+    def __init__(self, gui, subject_ids: [int], start_dt: dt.datetime, end_dt: dt.datetime, test_file_path: Path = None):
         """
         Finds all the annotations for the subjects in `subject_ids` within the timespan [`start_dt`, `end_dt`]. Covers
         all sensor data files that have been used in the project
@@ -27,7 +27,7 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
         :param subject_ids: list of subject IDs that need to be exported
         :param start_dt: start datetime of the timespan within which the annotations will be exported.
         :param end_dt: end datetime of the timespan within which the annotations will be exported.
-        :param test_file_dir: custom file directory, generally only used for testing.
+        :param test_file_path: custom file path, only used for testing.
         """
 
         super().__init__()
@@ -70,17 +70,17 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                 cancelled_exports += 1
                 continue
 
+            if test_file_path is not None:
+                output_file_path = test_file_path
+            else:
+                output_file_path = self.gui.sensor_controller.prompt_save_location(f"export_subject_{subject_name}.csv")
+
+            if output_file_path == "":  # The save prompt was closed by the user.
+                raise RuntimeError("No path was chosen. User may have exited manually.")
+
             # For each (subject, sensor) combination, create one file.
             for subject_mapping in subject_mappings:
                 sensor_id = subject_mapping.sensor.id
-
-                if self.gui.testing and test_file_dir is not None:
-                    file_path = test_file_dir / f'test_export_sensor_{sensor_id}.csv'
-                else:
-                    file_path = self.gui.sensor_controller.prompt_save_location(subject_name + "_" + str(sensor_id))
-
-                if file_path == "":  # The save prompt was closed by the user.
-                    raise RuntimeError("No path was chosen. User may have exited manually.")
 
                 # Retrieve all SensorDataFiles that have this sensor associated with it.
                 sdf_query = (SensorDataFile
@@ -88,10 +88,10 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                              .where((SensorDataFile.sensor == sensor_id) &
                                     SensorDataFile.datetime.between(start_dt, end_dt)))
 
-                files = []
+                sdfs = []
                 print(f"Found {len(sdf_query)} files.")
                 for sdf in sdf_query:
-                    labels = get_labels(sdf.id, start_dt, end_dt)  # DB
+                    labels = get_labels(sdf.id, start_dt, end_dt)
                     sensor_data = self.gui.sensor_controller.get_sensor_data(sdf.id)  # DB
 
                     if sensor_data is None:
@@ -103,10 +103,9 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                     sensor_data.filter_between_dates(start_dt, end_dt)
                     sensor_data.add_labels(labels)
 
-                    files.append(sensor_data)
-                    temp = sensor_data.get_data()
-                    print()
-                jobs.append((file_path, files))
+                    sdfs.append(sensor_data)
+
+                jobs.append((output_file_path, sdfs))
 
         if len(jobs) > 0:
             self.worker = ExportWorker(jobs, start_dt, end_dt)
@@ -151,7 +150,8 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
     @pyqtSlot()
     def done_(self):
-        QMessageBox.information(self, "Export", "Export completed successfully!")
+        if not self.gui.testing:
+            QMessageBox.information(self, "Export", "Export completed successfully!")
 
 
 class ExportWorker(QObject):
@@ -181,9 +181,13 @@ class ExportWorker(QObject):
             self.text.emit(f"Collecting data for {file_path.as_posix()}")
             df = pd.DataFrame()
 
-            for subject_data in sensor_data:
+            for i, subject_data in enumerate(sensor_data):
                 data = subject_data.get_data()
+                print(f"Labels present in SDF {i+1}/{len(sensor_data)}:")
+                print(data['Label'].value_counts())
                 df = df.append(data)
+
+            df = df.fillna("")
 
             # Because exporting uses append mode, the existing file has to be deleted first in case of
             # the reuse of file name.
@@ -202,29 +206,12 @@ class ExportWorker(QObject):
 
             df_split = array_split(df, 100)  # Divide into 100 (roughly) equal chunks.
 
-            # try:
             self.text.emit(f"Writing to {file_path}...")
 
             for i in range(100):
-
-                # if self.aborted:
-                #     self.text.emit("Aborting...")
-                #     self.close()
-                #     return
-
-                if not self.paused:
-                    # Append each chunk to output_path CSV using mode='a' (append).
-                    df_split[i].to_csv(file_path, mode='a', header=(i == 0), index=False)
-                    self.progress.emit(i + 1)
-
-            # except Exception as e:
-            #     msg = QMessageBox()
-            #     msg.setIcon(QMessageBox.Information)
-            #     msg.setWindowTitle("Error!")
-            #     msg.setText("An error occurred during export: " + str(e))
-            #     msg.setStandardButtons(QMessageBox.Ok)
-            #     msg.exec()
-            #     return
+                # Append each chunk to output_path CSV using mode='a' (append).
+                df_split[i].to_csv(file_path, mode='a', header=(i == 0), index=False)
+                self.progress.emit(i + 1)
 
         self.finished.emit()
 
