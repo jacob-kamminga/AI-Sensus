@@ -4,6 +4,7 @@ from typing import List
 import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDateTime
+from peewee import DoesNotExist
 
 from controllers.sensor_controller import SensorController
 from database.models import LabelType, Label
@@ -12,20 +13,6 @@ from gui.designer.label_specs import Ui_LabelSpecs
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 QDATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss.zzz"
-
-
-def trim_overlap(time, labels: List[Label], pos: str = 'begin') -> str:
-    """
-    If <code>time</code> overlaps with an existing label, snap it to the begin/end of that label.
-    """
-    for label in labels:
-        if label.start_time < time < label.end_time:
-            if pos == 'begin':
-                return label.end_time
-            elif pos == 'end':
-                return label.start_time
-
-    return time
 
 
 class LabelDialog(QtWidgets.QDialog, Ui_LabelSpecs):
@@ -53,13 +40,39 @@ class LabelDialog(QtWidgets.QDialog, Ui_LabelSpecs):
         label_type = LabelType.get(LabelType.activity == activity).id
         self.label.label_type = label_type
 
-    def set_times(self, start, end) -> None:
-        labels = (Label
-                  .select(Label.start_time, Label.end_time, Label.label_type)
-                  .where(Label.sensor_data_file == self.sensor_data_file_id))
+    def trim_overlap(self, time, pos: str = 'begin') -> str:
+        """
+        If <code>time</code> overlaps with an existing label, snap it to the begin/end of that label.
+        """
+        try:
+            overlapping_label = (
+                Label.get(
+                    (Label.sensor_data_file == self.sensor_data_file_id) &
+                    (Label.start_time <= time) &
+                    (Label.end_time >= time)
+                )
+            )
 
-        self.label.start_time = trim_overlap(start, labels, 'begin')
-        self.label.end_time = trim_overlap(end, labels, 'end')
+            if pos == 'begin':
+                return overlapping_label.end_time
+            elif pos == 'end':
+                return overlapping_label.start_time
+            else:
+                raise ValueError("pos is not in ['begin', 'end']")
+        except DoesNotExist:
+            return time
+
+    def set_times(self, datetime1, datetime2) -> None:
+        # Set begin and end datetimes
+        if datetime1 <= datetime2:
+            begin = datetime1
+            end = datetime2
+        else:
+            begin = datetime2
+            end = datetime1
+
+        self.label.start_time = self.trim_overlap(begin, 'begin')
+        self.label.end_time = self.trim_overlap(end, 'end')
 
     def add_label_to_db(self):
         if self.label is not None:
@@ -89,10 +102,7 @@ class LabelDialog(QtWidgets.QDialog, Ui_LabelSpecs):
             QDateTime(self.label.start_time.astimezone(self.sensor_timezone))
         )
         self.dateTimeEdit_end.setDateTime(
-            QDateTime.fromString(
-                self.label.end_time.astimezone(self.sensor_timezone).strftime(DATETIME_FORMAT)[:-3],
-                QDATETIME_FORMAT
-            )
+            QDateTime(self.label.end_time.astimezone(self.sensor_timezone))
         )
         if shortcut_label:
             self.label.label_type = shortcut_label

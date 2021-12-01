@@ -119,8 +119,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.canvas = FigureCanvasQTAgg(self.figure)
         self.canvas.resize(self.canvas.width(), 200)
         self.verticalLayout_plot.addWidget(self.canvas)
-        self.canvas.mpl_connect('button_press_event', self.plot_controller.on_click_plot)
-        self.canvas.mpl_connect('button_release_event', self.plot_controller.on_release_plot)
+        self.canvas.mpl_connect('button_press_event', self.plot_controller.on_plot_click)
+        self.canvas.mpl_connect('button_release_event', self.plot_controller.on_plot_release)
 
         # Connect the QMediaPlayer to the right widget
         # self.videoWidget_player.mediaPlayer = QtWidgetsQmediaPlayer()

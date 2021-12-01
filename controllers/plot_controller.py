@@ -222,9 +222,9 @@ class PlotController:
         )
         self.highlights[label_start] = (span, text)
 
-    def show_label_dialog(self, start: dt.datetime, end: dt.datetime, shortcut):
+    def show_label_dialog(self, datetime1: dt.datetime, datetime2: dt.datetime, shortcut):
         self.label_dialog = LabelDialog(self.sensor_controller)
-        self.label_dialog.set_times(start, end)
+        self.label_dialog.set_times(datetime1, datetime2)
         self.label_dialog.show_dialog(shortcut)
 
         if self.label_dialog.is_accepted:
@@ -235,7 +235,7 @@ class PlotController:
             )
             self.gui.canvas.draw()
 
-    def on_click_plot(self, event):
+    def on_plot_click(self, event):
         """
         Handles the labeling by clicking on the graph.
 
@@ -249,13 +249,10 @@ class PlotController:
 
         if event.button == MouseButton.LEFT:
             self.on_click_datetime = datetime
+        elif event.button == MouseButton.RIGHT and self.on_click_datetime is None:
+            # Right mouse button clicked for first time
+            self.on_click_datetime = datetime
         elif event.button == MouseButton.RIGHT:
-            if not self.labeling_in_progress:
-                # Right mouse button clicked for first time
-                self.on_click_datetime = datetime
-                self.labeling_in_progress = True
-                return
-
             # Right mouse button clicked for second time
             if self.gui.current_key_pressed:
                 label_shortcut = (LabelType.get(LabelType.keyboard_shortcut == self.gui.current_key_pressed)).id
@@ -263,9 +260,9 @@ class PlotController:
                 label_shortcut = None
 
             self.show_label_dialog(self.on_click_datetime, datetime, label_shortcut)
-            self.labeling_in_progress = False
+            self.on_click_datetime = None
 
-    def on_release_plot(self, event):
+    def on_plot_release(self, event):
         """
         Handles the labeling by clicking, but is only triggered when the user releases the mouse button.
         :param event: Specifies the event that triggers this function.
@@ -284,8 +281,8 @@ class PlotController:
                                       (Label.start_time <= datetime) &
                                       (Label.end_time >= datetime))
                     self.delete_label(label)
-                except DoesNotExist:
-                    pass
+                except DoesNotExist as e:
+                    print(e)
             else:
                 if self.gui.current_key_pressed:
                     try:
@@ -296,6 +293,9 @@ class PlotController:
                     label_shortcut = None
 
                 self.show_label_dialog(self.on_click_datetime, datetime, label_shortcut)
+
+            # Set [on_click_datetime] to None to reset on_click behavior
+            self.on_click_datetime = None
 
     def delete_label(self, label):
         reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete this label?",
