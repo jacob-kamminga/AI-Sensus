@@ -112,8 +112,7 @@ class SensorController:
         except PeeweeException:
             return False
 
-    @staticmethod
-    def delete_sensor(sensor: Sensor):
+    def delete_sensor(self, sensor: Sensor):
         """
         `Stub`\n
         Delete the sensor, making sure the database objects that use this sensor are handled properly.
@@ -122,6 +121,9 @@ class SensorController:
 
         :return: True if the sensor could be deleted, False otherwise.
         """
+
+        # Subject mappings, offsets and sensor data files all have references to a sensor.
+
         pass
 
     @staticmethod
@@ -606,10 +608,39 @@ def get_labels(sdf_id: int, start_dt: dt.datetime, end_dt: dt.datetime) -> list:
     :return: A list of dictionaries, each representing one annotation, containing the start time, end time, and activity
     of that label
     """
+
+    # The original query, where only the labels for sdf_id==1 were retrieved, even is sdf_id was actually 2.
+
+    # labels = (Label
+    #           .select(Label.start_time, Label.end_time, LabelType.activity)
+    #           .join(LabelType)
+    #           .where(Label.sensor_data_file == sdf_id & (Label.start_time.between(start_dt, end_dt) |
+    #                   Label.end_time.between(start_dt, end_dt))))
+
+    # labels = (Label
+    #           .select(Label.start_time, Label.end_time, LabelType.activity)
+    #           .join(LabelType)
+    #           .where(Label.sensor_data_file == ([bool(2)] & [Not None] |
+    #                   Label.end_time.between(start_dt, end_dt))))
+
+    # labels = (Label
+    #           .select(Label.start_time, Label.end_time, LabelType.activity)
+    #           .join(LabelType)
+    #           .where(Label.sensor_data_file == [True] |
+    #                   Label.end_time.between(start_dt, end_dt))))
+
+    # labels = (Label
+    #           .select(Label.start_time, Label.end_time, LabelType.activity)
+    #           .join(LabelType)
+    #           .where(Label.sensor_data_file == 1 |
+    #                   Label.end_time.between(start_dt, end_dt))))
+
+    # GEBRUIK HAAKJES!!!
+
     labels = (Label
               .select(Label.start_time, Label.end_time, LabelType.activity)
               .join(LabelType)
-              .where(Label.sensor_data_file == sdf_id &
+              .where((Label.sensor_data_file == sdf_id) &
                      (Label.start_time.between(start_dt, end_dt) |
                       Label.end_time.between(start_dt, end_dt))))
 

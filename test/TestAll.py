@@ -8,13 +8,15 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication
 
 import constants
-from database.models import SensorModel, Camera, SensorDataFile, Sensor, Video, Subject, Label, LabelType, SubjectMapping
+from database.models import SensorModel, Camera, SensorDataFile, Sensor, Video, Subject, Label, LabelType, \
+    SubjectMapping
 from gui import gui
 
 from gui.dialogs.export_progress_dialog import ExportProgressDialog
 import pytz
 
 import pandas as pd
+
 
 class TestAll(unittest.TestCase):
     """
@@ -86,7 +88,7 @@ class TestAll(unittest.TestCase):
                                         timestamp_column=1,
                                         relative_absolute="absolute",
                                         timestamp_unit="seconds",
-                                        format_string="%d-%m-%y %H:%M:%S.%f",
+                                        format_string="%d/%m/%Y %H:%M:%S.%f",
                                         sensor_id_row=-1,
                                         sensor_id_column=-1,
                                         # sensor_id_regex="",
@@ -104,38 +106,6 @@ class TestAll(unittest.TestCase):
 
         self.gui.sensor_controller.update_sensor(sensor_id=test_sensor_model.id)
 
-        ########## testAddSensorDataFile ##########
-        sdf_path = self.cwd / 'fixtures' / 'testdata.csv'
-        sdf = SensorDataFile(file_id_hash=self.gui.sensor_controller.create_file_id(sdf_path),
-                             file_name=sdf_path.name,
-                             file_path=sdf_path,
-                             sensor=Sensor.get(name="test_sensor").id
-                             )
-        sdf.save()
-
-        # See if the SDF is stored in the database and can be retrieved properly.
-        sdf = self.gui.sensor_controller.get_or_create_sdf(sdf_path)
-        self.assertEqual(sdf, SensorDataFile.get_by_id(sdf.id), msg="The created sensor data file was not "
-                                                                    "stored or retrieved from the database properly.")
-
-        # Load the sdf as if it was an ordinary file.
-        self.gui.sensor_controller.open_file(sdf_path)
-        self.assertEqual(list(self.gui.sensor_controller.df.columns), ['Relative Time', 'absolute_datetime',
-                                                                       'Ax', 'Ay', 'Az'],
-                         msg="The columns of the sensor data file have not been loaded properly.")
-        ########## testOpenVideo ##########
-
-        # TODO: If the video has not been loaded in before, the attached camera won't exist, causing a manual prompt
-        #  to select a camera. Verify that this should always be the case, or if the currently selected camera (if any)
-        #  should automatically be attached to the video, and saved in the database together.
-        video_path = self.cwd / 'fixtures' / 'testvideo.MTS'
-        video = Video(file_name=video_path.name,
-                      file_path=video_path,
-                      datetime=datetime.now(),
-                      camera=Camera.get(name="test_camera").id)
-        video.save()
-        self.gui.video_controller.open_file(video_path)
-
         ########## testAddAnnotations ##########
         test_subject = Subject(name="test_subject")
         test_subject.save()
@@ -143,60 +113,128 @@ class TestAll(unittest.TestCase):
         test_activity1 = LabelType(activity='test_activity1', color='red', description="", keyboard_shortcut="a")
         test_activity2 = LabelType(activity='test_activity2', color='green', description="", keyboard_shortcut="b")
         test_activity3 = LabelType(activity='test_activity3', color='blue', description="", keyboard_shortcut="c")
+        test_activity4 = LabelType(activity='test_activity4', color='magenta', description="", keyboard_shortcut="d")
+        test_activity5 = LabelType(activity='test_activity5', color='cyan', description="", keyboard_shortcut="e")
+        test_activity6 = LabelType(activity='test_activity6', color='yellow', description="", keyboard_shortcut="f")
 
         test_activity1.save()
         test_activity2.save()
         test_activity3.save()
+        test_activity4.save()
+        test_activity5.save()
+        test_activity6.save()
 
-        start_time_file_utc = self.gui.sensor_controller.df['absolute_datetime'].iloc[0]\
+        ########## testAddSensorDataFile ##########
+        sdf1_path = self.cwd / 'fixtures' / 'first_half_test_data.csv'
+        sdf1 = SensorDataFile(file_id_hash=self.gui.sensor_controller.create_file_id(sdf1_path),
+                              file_name=sdf1_path.name,
+                              file_path=sdf1_path,
+                              sensor=Sensor.get(name="test_sensor").id
+                              )
+        sdf1.save()
+
+        sdf2_path = self.cwd / 'fixtures' / 'second_half_test_data.csv'
+        sdf2 = SensorDataFile(file_id_hash=self.gui.sensor_controller.create_file_id(sdf2_path),
+                              file_name=sdf2_path.name,
+                              file_path=sdf2_path,
+                              sensor=Sensor.get(name="test_sensor").id)
+        sdf2.save()
+
+        # See if the SDF is stored in the database and can be retrieved properly.
+        sdf1 = self.gui.sensor_controller.get_or_create_sdf(sdf1_path)
+        self.assertEqual(sdf1, SensorDataFile.get_by_id(sdf1.id), msg="The created sensor data file was not "
+                                                                      "stored or retrieved from the database properly.")
+
+        # Load the first sdf as if it was an ordinary file.
+        self.gui.sensor_controller.open_file(sdf1_path)
+        self.assertEqual(list(self.gui.sensor_controller.df.columns), ['Relative Time', 'absolute_datetime',
+                                                                       'Ax', 'Ay', 'Az'],
+                         msg="The columns of the sensor data file have not been loaded properly.")
+        start_time_file1_utc = self.gui.sensor_controller.df['absolute_datetime'].iloc[0] \
             .to_pydatetime().astimezone(pytz.utc)
-        end_time_file_utc = self.gui.sensor_controller.df['absolute_datetime'].iloc[-1]\
+
+        # Load the second sensor data file.
+        self.gui.sensor_controller.open_file(sdf2_path)
+        self.assertEqual(list(self.gui.sensor_controller.df.columns), ['Relative Time', 'absolute_datetime',
+                                                                       'Ax', 'Ay', 'Az'],
+                         msg="The columns of the sensor data file have not been loaded properly.")
+
+        start_time_file2_utc = self.gui.sensor_controller.df['absolute_datetime'].iloc[0] \
+            .to_pydatetime().astimezone(pytz.utc)
+        end_time_file2_utc = self.gui.sensor_controller.df['absolute_datetime'].iloc[-1] \
             .to_pydatetime().astimezone(pytz.utc)
 
         five_seconds = timedelta(seconds=5)
         one_hour = timedelta(hours=1)
 
-        label1 = Label(start_time=start_time_file_utc,
-                       end_time=start_time_file_utc + five_seconds,
+        # Create three annotations for the first SDF.
+        label1 = Label(start_time=start_time_file1_utc + 0 * five_seconds,
+                       end_time=start_time_file1_utc + 1 * five_seconds,
                        label_type=test_activity1.id,
-                       sensor_data_file=sdf.id)
-        label2 = Label(start_time=start_time_file_utc + 2*five_seconds,
-                       end_time=start_time_file_utc + 3*five_seconds,
+                       sensor_data_file=sdf1.id)
+        label2 = Label(start_time=start_time_file1_utc + 2 * five_seconds,
+                       end_time=start_time_file1_utc + 3 * five_seconds,
                        label_type=test_activity2.id,
-                       sensor_data_file=sdf.id)
-        label3 = Label(start_time=start_time_file_utc + 4*five_seconds,
-                       end_time=start_time_file_utc + 5*five_seconds,
+                       sensor_data_file=sdf1.id)
+        label3 = Label(start_time=start_time_file1_utc + 4 * five_seconds,
+                       end_time=start_time_file1_utc + 5 * five_seconds,
                        label_type=test_activity3.id,
-                       sensor_data_file=sdf.id)
+                       sensor_data_file=sdf1.id)
 
         label1.save()
         label2.save()
         label3.save()
 
+        # Create three annotations for the second SDF.
+        label4 = Label(start_time=start_time_file2_utc + 0 * five_seconds,
+                       end_time=start_time_file2_utc + 1 * five_seconds,
+                       label_type=test_activity4.id,
+                       sensor_data_file=sdf2.id)
+        label5 = Label(start_time=start_time_file2_utc + 2 * five_seconds,
+                       end_time=start_time_file2_utc + 3 * five_seconds,
+                       label_type=test_activity5.id,
+                       sensor_data_file=sdf2.id)
+        label6 = Label(start_time=start_time_file2_utc + 4 * five_seconds,
+                       end_time=start_time_file2_utc + 5 * five_seconds,
+                       label_type=test_activity6.id,
+                       sensor_data_file=sdf2.id)
+
+        label4.save()
+        label5.save()
+        label6.save()
+
         subject_mapping = SubjectMapping.create(subject=Subject.get(Subject.name == "test_subject"),
                                                 sensor_id=Sensor.get(Sensor.name == "test_sensor"),
-                                                start_datetime=start_time_file_utc,
-                                                end_datetime=end_time_file_utc)
+                                                start_datetime=start_time_file1_utc,
+                                                end_datetime=end_time_file2_utc)
         subject_mapping.save()
 
+        ########## testOpenVideo ##########
+
+        video_path = self.cwd / 'fixtures' / 'Testbeeld.mp4'
+        video = Video(file_name=video_path.name,
+                      file_path=video_path,
+                      datetime=datetime.now(),
+                      camera=Camera.get(name="test_camera").id)
+        video.save()
+        self.gui.video_controller.open_file(video_path)
+
         ########## testExport ##########
-        subject_ids = [1]
+        subject_ids = [test_subject.id]
 
-        # end_time.replace(tzinfo=pytz.timezone('UTC'))
-
-        export_file_path = self.project_dir/'test_export.csv'
+        exported_file_path = Path(self.project_dir)/"unittest_export.csv"
         export_dialog = ExportProgressDialog(self.gui,
                                              subject_ids=subject_ids,
-                                             start_dt=start_time_file_utc-one_hour,
-                                             end_dt=end_time_file_utc+one_hour,
-                                             test_file_dir=export_file_path)
+                                             start_dt=start_time_file1_utc - five_seconds,  # Extra margin
+                                             end_dt=start_time_file1_utc + 24 * one_hour,  # Make sure it is in range.
+                                             test_file_path=exported_file_path)
         export_dialog.exec()
 
-        self.assertTrue(export_file_path.is_file(), msg="Export file was not created.")
+        self.assertTrue(exported_file_path.is_file(), msg="Export file was not created.")
 
         ########## testCompareOutput ##########
-        example_export_file = pd.read_csv(self.cwd/'fixtures'/'example_export_file.csv')
-        unittest_export_file = pd.read_csv(export_file_path)
+        example_export_file = pd.read_csv(self.cwd/'fixtures'/'example_export_two_sdfs_one_subject.csv')
+        unittest_export_file = pd.read_csv(exported_file_path)
         self.assertTrue(unittest_export_file.equals(example_export_file),
                         msg="The exported file does not match the example file.")
 
