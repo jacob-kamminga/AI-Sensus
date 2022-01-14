@@ -1,5 +1,5 @@
 import datetime as dt
-from typing import Optional
+from typing import Optional, List
 
 import pytz
 from PyQt5.QtWidgets import QMessageBox
@@ -52,10 +52,12 @@ class PlotController:
         self.y_min = None
         self.y_max = None
 
+        self.on_click_datetime = None
+
         self.label_dialog: Optional[LabelDialog] = None
 
         # Initialize the boolean that keeps track if the user is labeling with the right-mouse button
-        self.labeling = False
+        self.labeling_in_progress = False
 
     # def reset(self):
     #     """
@@ -63,85 +65,51 @@ class PlotController:
     #     :return:
     #     """
 
-    def new_plot(self):
+    def new_plot(self, function_name, function_regex):
         """
         Adds a function to the DataFrame as new column.
         """
-        try:
-            # If no function is selected, raise an exception
-            if not self.gui.lineEdit_function_name.text():
-                raise Exception
+        # Add a column to the sensor data, based on the selected function
+        self.sensor_controller.sensor_data.add_column_from_func(function_name, function_regex)
 
-            # Add a column to the sensor data, based on the selected function
-            self.sensor_controller.sensor_data.add_column_from_func(
-                self.gui.lineEdit_function_name.text(),
-                self.gui.lineEdit_function_regex.text()
-            )
+        # Get the dataframe
+        self.sensor_controller.df = self.sensor_controller.sensor_data.get_data()
 
-            # Get the dataframe
-            self.sensor_controller.df = self.sensor_controller.sensor_data.get_data()
+        self.formulas[function_name] = function_regex
+        stored_formulas = self.project_controller.get_setting("formulas")
+        stored_formulas[function_name] = function_regex
+        self.project_controller.set_setting("formulas", stored_formulas)
 
-            # Add the new function to the combobox
-            self.gui.comboBox_functions.addItem(self.gui.lineEdit_function_name.text())
-
-            self.formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
-            stored_formulas = self.project_controller.get_setting("formulas")
-            stored_formulas[self.gui.lineEdit_function_name.text()] = self.gui.lineEdit_function_regex.text()
-            self.project_controller.set_setting("formulas", stored_formulas)
-            self.gui.lineEdit_function_regex.clear()
-            self.gui.lineEdit_function_name.clear()
-        except Exception as e:
-            print(e)
-            QMessageBox.warning(self.gui, 'Warning', "Please enter a valid regular expression",
-                                QMessageBox.Cancel)
-
-    def change_plot(self):
+    def change_plot(self, plot_name):
         """
         If the user changes the variable on the y-axis, this function changes the label if necessary and redraws the
         plot.
         """
-        self.set_current_plot(self.gui.comboBox_functions.currentText())
-
-        if self.current_plot in self.formulas:
-            self.gui.label_current_function_value.setText(self.formulas[self.current_plot])
-        else:
-            self.gui.label_current_function_value.clear()
-
-        self.draw_graph()
+        self.set_current_plot(plot_name)
 
         # Save the column in the database
-        self.sensor_controller.save_last_used_column(self.current_plot)
+        # TODO: When a plot is deleted, the new plot value is not saved to the database
+        self.sensor_controller.save_last_used_column(plot_name)
 
-    def set_current_plot(self, new_plot):
+        if plot_name in self.formulas:
+            self.draw_graph()
+            return self.formulas[plot_name]
+
+        return None
+
+    def set_current_plot(self, plot_name):
         # test if this column has numeric values
-        if is_numeric_dtype(self.sensor_controller.df[new_plot]):
-            self.current_plot = new_plot
+        if is_numeric_dtype(self.sensor_controller.df[plot_name]):
+            self.current_plot = plot_name
             return True
         else:
             # self.current_plot = None
             return False
 
-    def delete_formula(self):
-        selected_plot = self.gui.comboBox_functions.currentText()
-        index = self.gui.comboBox_functions.findText(selected_plot)
-
-        if selected_plot in self.formulas:
-            res = QMessageBox.warning(
-                self.gui,
-                'Confirm delete',
-                'Are you sure you want to delete the selected formula?',
-                QMessageBox.Ok | QMessageBox.Cancel
-            )
-
-            if res == QMessageBox.Ok:
-                # Delete the selected plot from settings
-                self.formulas.pop(selected_plot)
-                self.project_controller.set_setting('formulas', self.formulas)
-
-                # Delete the selected plot from the combobox and update the plot
-                self.gui.comboBox_functions.removeItem(index)
-                self.gui.comboBox_functions.setCurrentIndex(0)
-                self.change_plot()
+    def delete_formula(self, selected_plot: str):
+        self.formulas.pop(selected_plot)
+        self.project_controller.set_setting('formulas', self.formulas)
+        self.change_plot(selected_plot)
 
     def change_plot_width(self, value):  # TODO: An error occurs where there is an infinite loop of change_plot_width
         self.project_controller.set_setting('plot_width', value)
@@ -240,181 +208,101 @@ class PlotController:
         label_start_num = date2num(label_start)
         label_end_num = date2num(label_end)
         alpha = self.project_controller.get_setting('label_opacity') / 100
-        span = self.data_plot.axvspan(label_start_num,
-                                      label_end_num,
-                                      facecolor=label_type.color,
-                                      alpha=alpha)
-        text = self.data_plot.text((label_start_num + label_end_num) / 2,
-                                   self.y_max * 0.75,
-                                   label_type.activity,
-                                   horizontalalignment='center')
+        span = self.data_plot.axvspan(
+            label_start_num,
+            label_end_num,
+            facecolor=label_type.color,
+            alpha=alpha
+        )
+        text = self.data_plot.text(
+            (label_start_num + label_end_num) / 2,
+            self.y_max * 0.75,
+            label_type.activity,
+            horizontalalignment='center'
+        )
         self.highlights[label_start] = (span, text)
 
-    def add_suggestion_highlight(self, start: float, end: float, label: str):
-        span = self.data_plot.axvspan(start, end, facecolor='gold', alpha=0.4)
-        text = self.data_plot.text((start + end) / 2, self.y_max * 0.5, "Suggested label:\n" + label,
-                                   horizontalalignment='center')
+    def show_label_dialog(self, datetime1: dt.datetime, datetime2: dt.datetime, shortcut):
+        self.label_dialog = LabelDialog(self.sensor_controller)
+        self.label_dialog.set_times(datetime1, datetime2)
+        self.label_dialog.show_dialog(shortcut)
 
-        self.gui.canvas.draw()
-        return span, text
+        if self.label_dialog.is_accepted:
+            self.add_label_highlight(
+                self.label_dialog.label.start_time,
+                self.label_dialog.label.end_time,
+                self.label_dialog.label.label_type
+            )
+            self.gui.canvas.draw()
 
-    def onclick(self, event):
+    def on_plot_click(self, event):
         """
         Handles the labeling by clicking on the graph.
 
         :param event: Specifies what event triggered this function.
         """
-        if event.xdata is not None and self.sensor_controller.sensor_data is not None:
-            # Convert the x-position to a Python datetime localized as UTC
-            x_datetime = num2date(event.xdata).astimezone(pytz.utc)
-            # If the left mouse button is used, start a new labeling dialog with the right starting time and
-            # wait for the onrelease function
-            if event.button == MouseButton.LEFT:
-                self.label_dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
-                                                self.sensor_controller.sensor_data.metadata.sensor_timezone)
+        if self.sensor_controller.sensor_data is None:
+            return  # TODO: Raise error
 
-                self.label_dialog.label.start_time = x_datetime
-                # If user was labeling (self.labeling==TRUE) then cancel that action.
-                self.labeling = False
+        # Convert x-position to UTC datetime
+        datetime = num2date(event.xdata).astimezone(pytz.utc).replace(tzinfo=None)
 
-            # If the right mouse button is used, check if this is the first or second time
-            elif event.button == MouseButton.RIGHT:
-                if not self.labeling:
-                    self.label_dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
-                                                    self.sensor_controller.sensor_data.metadata.sensor_timezone)
-                    self.label_dialog.label.start_time = x_datetime
-                # If it is the second time, check if the user wants to delete the label or if the label should start
-                # or end at the start or end of another label
-                else:
-                    deleting = False
-                    delete_label = None
-                    if x_datetime < self.label_dialog.label.start_time:
-                        self.label_dialog.label.end_time = self.label_dialog.label.start_time
-                        self.label_dialog.label.start_time = x_datetime
-                    else:
-                        self.label_dialog.label.end_time = x_datetime
+        if event.button == MouseButton.LEFT:
+            self.on_click_datetime = datetime
+        elif event.button == MouseButton.RIGHT and self.on_click_datetime is None:
+            # Right mouse button clicked for first time
+            self.on_click_datetime = datetime
+        elif event.button == MouseButton.RIGHT:
+            # Right mouse button clicked for second time
+            if self.gui.current_key_pressed:
+                label_shortcut = (LabelType.get(LabelType.keyboard_shortcut == self.gui.current_key_pressed)).id
+            else:
+                label_shortcut = None
 
-                    new_start = self.label_dialog.label.start_time.replace(tzinfo=None)
-                    new_end = self.label_dialog.label.end_time.replace(tzinfo=None)
+            self.show_label_dialog(self.on_click_datetime, datetime, label_shortcut)
+            self.on_click_datetime = None
 
-                    labels = (Label
-                              .select(Label.start_time, Label.end_time, Label.label_type)
-                              .where(Label.sensor_data_file == self.sensor_controller.sensor_data_file.id))
-
-                    for label in labels:
-                        start = label.start_time
-                        end = label.end_time
-
-                        if start < new_start < end and \
-                                start < new_end < end:
-                            deleting = True
-                            delete_label = label
-                            break
-                        elif start < new_start < end or \
-                                start < new_end < end:
-                            if start < new_start < end:
-                                self.label_dialog.label.start_time = end
-                            else:
-                                self.label_dialog.label.end_time = start
-
-                    if deleting:
-                        self.delete_label(delete_label)
-                    else:
-                        if self.gui.current_key_pressed:
-                            label_shortcut = (LabelType
-                                              .get(LabelType.keyboard_shortcut == self.gui.current_key_pressed)
-                                              ).id
-                        else:
-                            label_shortcut = None
-
-                        self.label_dialog.show_dialog(label_shortcut)
-
-                    if self.label_dialog.is_accepted:
-                        self.add_label_highlight(self.label_dialog.label.start_time,
-                                                 self.label_dialog.label.end_time,
-                                                 self.label_dialog.label.label_type)
-                        self.gui.canvas.draw()
-
-                self.labeling = not self.labeling
-
-    def onrelease(self, event):
+    def on_plot_release(self, event):
         """
         Handles the labeling by clicking, but is only triggered when the user releases the mouse button.
         :param event: Specifies the event that triggers this function.
         """
-        if event.xdata is not None and self.sensor_controller.sensor_data is not None:
+        if event.button == MouseButton.LEFT:
+            if self.sensor_controller.sensor_data is None:
+                return
+
             # Convert the x-position to a Python datetime
-            x_data_dt_sensor_utc = num2date(event.xdata).astimezone(pytz.utc)
+            datetime = num2date(event.xdata).astimezone(pytz.utc).replace(tzinfo=None)
 
-            # If the left mouse button is released, delete or label the right area, similar to the latter
-            # part of onclick.
-            if event.button == MouseButton.LEFT:
-                deleting = False
-                delete_label = None
-                if x_data_dt_sensor_utc < self.label_dialog.label.start_time:
-                    # Switch the values of start and end
-                    self.label_dialog.label.end_time = self.label_dialog.label.start_time
-                    self.label_dialog.label.start_time = x_data_dt_sensor_utc
-                else:
-                    self.label_dialog.label.end_time = x_data_dt_sensor_utc
-
-                new_start = self.label_dialog.label.start_time.replace(tzinfo=None)
-                new_end = self.label_dialog.label.end_time.replace(tzinfo=None)
-
-                labels = (Label
-                          .select(Label.start_time, Label.end_time, Label.label_type)
-                          .where(Label.sensor_data_file == self.sensor_controller.sensor_data_file.id))
-
-                for label in labels:
-                    start = label.start_time
-                    end = label.end_time
-                    # TODO implement the possibility for label overlap here (and in export of course)
-                    # If 'onclick' and 'onrelease' are both inside the label, then delete the label
-                    if start < new_start < end and \
-                            start < new_end < end:
-                        deleting = True
-                        delete_label = label
-                        break
-                    # Else if only 'onclick' is inside the label, then set the new start value equal to the end of
-                    # the existing label
-                    elif start < new_start < end:
-                        self.label_dialog.label.start_time = end
-                    # Else if only 'onrelease' is inside the label, then set the end value equal to the start of the
-                    # existing label
-                    elif start < new_end < end:
-                        self.label_dialog.label.end_time = start
-
-                if deleting:
-                    self.delete_label(delete_label)
-                else:
-                    if self.gui.current_key_pressed:
-                        try:
-                            label_shortcut = (LabelType
-                                              .get(LabelType.keyboard_shortcut == self.gui.current_key_pressed)
-                                              ).id
-                        except DoesNotExist:
-                            label_shortcut = None
-                    else:
+            # Delete the label if the on_click datetime is the same as the on_release datetime
+            if datetime == self.on_click_datetime:
+                try:
+                    label = Label.get((Label.sensor_data_file == self.sensor_controller.sensor_data_file.id) &
+                                      (Label.start_time <= datetime) &
+                                      (Label.end_time >= datetime))
+                    self.delete_label(label)
+                except DoesNotExist as e:
+                    print(e)
+            else:
+                if self.gui.current_key_pressed:
+                    try:
+                        label_shortcut = LabelType.get(LabelType.keyboard_shortcut == self.gui.current_key_pressed).id
+                    except DoesNotExist:
                         label_shortcut = None
+                else:
+                    label_shortcut = None
 
-                    self.label_dialog.show_dialog(label_shortcut)
+                self.show_label_dialog(self.on_click_datetime, datetime, label_shortcut)
 
-                if self.label_dialog.is_accepted:
-                    self.add_label_highlight(self.label_dialog.label.start_time,
-                                             self.label_dialog.label.end_time,
-                                             self.label_dialog.label.label_type)
-                    self.gui.canvas.draw()
-            elif event.button == MouseButton.RIGHT:
-                pass
+            # Set [on_click_datetime] to None to reset on_click behavior
+            self.on_click_datetime = None
 
-    def delete_label(self, delete_label):
+    def delete_label(self, label):
         reply = QMessageBox.question(self.gui, "Message", "Are you sure you want to delete this label?",
                                      QMessageBox.Yes, QMessageBox.No)
         if reply == QMessageBox.Yes:
-            label = Label.get(Label.start_time == delete_label.start_time,
-                              Label.sensor_data_file == self.sensor_controller.sensor_data_file.id)
             label.delete_instance()
 
             # Remove label highlight and text from plot
-            self.highlights[delete_label.start_time][0].remove()
-            self.highlights[delete_label.start_time][1].remove()
+            self.highlights[label.start_time][0].remove()
+            self.highlights[label.start_time][1].remove()

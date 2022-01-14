@@ -90,7 +90,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionNew_Project.triggered.connect(self.open_new_project_dialog)
         self.actionOpen_Video.triggered.connect(self.video_controller.prompt_file)
         self.actionOpen_Sensor_Data.triggered.connect(self.sensor_controller.prompt_file)
-        self.pushButton_delete_formula.clicked.connect(self.plot_controller.delete_formula)
+        self.pushButton_delete_formula.clicked.connect(self.show_delete_formula_message_box)
 
         self.actionCamera_Settings.triggered.connect(self.open_select_camera_dialog)
         self.actionLabel_Settings.triggered.connect(self.open_label_settings_dialog)
@@ -103,14 +103,14 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.actionProject_Settings.triggered.connect(self.open_project_settings_dialog)
         self.actionExit.triggered.connect(qApp.quit)
 
-        self.lineEdit_function_regex.returnPressed.connect(self.plot_controller.new_plot)
+        self.lineEdit_function_regex.returnPressed.connect(self.add_plot)
         self.doubleSpinBox_video_offset.valueChanged.connect(self.sensor_controller.change_offset)
         self.doubleSpinBox_video_offset.setMaximum(43200)  # 12 hours range
         self.doubleSpinBox_video_offset.setMinimum(-43200)
         self.doubleSpinBox_speed.valueChanged.connect(self.video_controller.change_speed)
         self.doubleSpinBox_plot_width.valueChanged.connect(self.plot_controller.change_plot_width)
         self.doubleSpinBox_plot_height.valueChanged.connect(self.plot_controller.change_plot_height)
-        self.comboBox_functions.activated.connect(self.plot_controller.change_plot)
+        self.comboBox_functions.activated.connect(self.update_plot)
         self.actionExport_Sensor_Data.triggered.connect(self.open_export)
         # self.actionMachine_Learning.triggered.connect(self.open_machine_learning_dialog)
 
@@ -119,8 +119,8 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.canvas = FigureCanvasQTAgg(self.figure)
         self.canvas.resize(self.canvas.width(), 200)
         self.verticalLayout_plot.addWidget(self.canvas)
-        self.canvas.mpl_connect('button_press_event', self.plot_controller.onclick)
-        self.canvas.mpl_connect('button_release_event', self.plot_controller.onrelease)
+        self.canvas.mpl_connect('button_press_event', self.plot_controller.on_plot_click)
+        self.canvas.mpl_connect('button_release_event', self.plot_controller.on_plot_release)
 
         # Connect the QMediaPlayer to the right widget
         # self.videoWidget_player.mediaPlayer = QtWidgetsQmediaPlayer()
@@ -324,8 +324,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         if not self.sensor_controller.sensor_data:
             QMessageBox.Warning(self, "No sensor data found", "You need to import sensor data first.")
         else:
-            dialog = LabelDialog(self.sensor_controller.sensor_data_file.id,
-                                 self.sensor_controller.sensor_data.metadata.sensor_timezone)
+            dialog = LabelDialog(self.sensor_controller)
             dialog.exec()
 
             if dialog.is_accepted:
@@ -408,7 +407,6 @@ class GUI(QMainWindow, Ui_MainWindow):
     def open_visual_inspection_dialog(self):
         """
         Plot all sensor data per subject per activity for visual inspection of annotated data.
-        :return:
         """
         if self.sensor_controller is not None:
             file_date = self.sensor_controller.utc_dt
@@ -420,6 +418,58 @@ class GUI(QMainWindow, Ui_MainWindow):
             file_date
         )
         dialog.exec()
+
+    def show_delete_formula_message_box(self):
+        """Shows a message box that asks the user for confirmation to delete the selected formula."""
+        selected_plot = self.comboBox_functions.currentText()
+        index = self.comboBox_functions.findText(selected_plot)
+
+        if selected_plot in self.plot_controller.formulas:
+            res = QMessageBox.warning(
+                self,
+                'Confirm delete',
+                'Are you sure you want to delete the selected formula?',
+                QMessageBox.Ok | QMessageBox.Cancel
+            )
+
+            if res == QMessageBox.Ok:
+                self.plot_controller.delete_formula(selected_plot)
+
+                # Delete the selected plot from the combobox
+                self.comboBox_functions.removeItem(index)
+                self.comboBox_functions.setCurrentIndex(0)
+
+    def add_plot(self):
+        """
+        Adds a new plot.
+        """
+        function_name = self.lineEdit_function_name.text()
+        function_regex = self.lineEdit_function_regex.text()
+        try:
+            # If no function is selected, raise an exception
+            if not function_name:
+                raise Exception  # TODO: Raise a specific exception
+
+            self.plot_controller.new_plot(function_name, function_regex)
+
+            # Add the new function to the combobox
+            self.comboBox_functions.addItem(function_name)
+
+            self.lineEdit_function_regex.clear()
+            self.lineEdit_function_name.clear()
+        except Exception as e:  # TODO: Replace catch-all exception with more specific exception
+            print(e)
+            QMessageBox.warning(self, 'Warning', "Please enter a valid regular expression",
+                                QMessageBox.Cancel)
+
+    def update_plot(self):
+        plot_name = self.comboBox_functions.currentText()
+        plot_function = self.plot_controller.change_plot(plot_name)
+
+        if plot_function is not None:
+            self.label_current_function_value.setText(plot_function)
+        else:
+            self.label_current_function_value.clear()
 
     def keyPressEvent(self, event) -> None:
         self.current_key_pressed = event.text()
