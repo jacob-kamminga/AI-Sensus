@@ -150,8 +150,12 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
     @pyqtSlot()
     def done_(self):
+        print("A")
         if not self.gui.testing:
             QMessageBox.information(self, "Export", "Export completed successfully!")
+            print("B")
+        print("C")
+        self.thread.quit()
 
 
 class ExportWorker(QObject):
