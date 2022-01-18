@@ -257,7 +257,7 @@ class SensorController:
                 sensor_model = (SensorModel
                                 .select(SensorModel.id)
                                 .join(Sensor, JOIN.LEFT_OUTER)
-                                .where(SensorModel.id == self.sensor_data_file.sensor.id)
+                                .where(SensorModel.id == self.sensor_data_file.sensor.model_id)
                                 .get())
                 sensor_model_id = sensor_model.id
 
@@ -394,7 +394,7 @@ class SensorController:
         self.sensor_data_file.last_used_column = function_name
         self.sensor_data_file.save()
 
-    def draw_graph(self) -> None:
+    def init_graph(self) -> None:
         # TODO: Move to plot_controller.py
 
         # Reset the figure and add a new subplot to it
