@@ -94,13 +94,12 @@ class SensorData:
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Critical)
                     msg.setWindowTitle("Error")
-                    msg.setText("Datetime column not relative.")
-                    msg.setInformativeText("The sensor data datetime format was set to be relative "
-                                           "but may actually be absolute. Please verify in the sensor model settings. "
-                                           "The data will be parsed as absolute.")
+                    msg.setText("Could not parse timestamps")
+                    msg.setInformativeText("The timestamps in your sensor data file could not be parsed."
+                                           "\nPlease verify that all settings are correct, including the "
+                                           "absolute/relative time option and the comment style.")
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec()
-                    # TODO: Change relative/absolute value in database to relative.
 
     def set_column_metadata(self, columns):
         """
@@ -195,7 +194,7 @@ class SensorData:
                     msg.setText("Error: " + str(e))
                     msg.setInformativeText("The sensor datetime string format you entered is invalid. "
                                            f"Please change it to the correct format under Sensor > Sensor models > "
-                                           f"{self.sensor_name} > View settings.")
+                                           f"[sensor model name] > View settings.")
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec()
                     return False
@@ -254,12 +253,19 @@ class SensorData:
         time_col = self.sensor_model.timestamp_column
         first_val = self._df.iloc[0, time_col]
 
-        if type(first_val) == str:
-            raise TypeError("Datetime is not relative.")
+        # Relative time can be wrongfully parsed as a string, so check if it can be parsed to a float.
+        try:
+            first_val = float(first_val)
+            self._df = self._df.astype({self._df.columns[time_col]: float})
+        except ValueError:
+            raise TypeError("Datetime is not a floating point number, so cannot be parsed as relative.")
+
+        # If yes, parse the entire column as float.
 
         if first_val != 0:
             # Subtract the (non-zero) first value from all values in the timestamp column to normalize the data
-            self._df.iloc[:, time_col] = self._df.iloc[:, time_col].subtract(first_val)
+            # self._df.iloc[:, time_col] = self._df.iloc[:, time_col].subtract(first_val)
+            self._df.iloc[:, time_col] -= first_val
 
     def add_labels_ml(self, label_data: [], label_col: str):
         """

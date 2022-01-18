@@ -158,7 +158,7 @@ class GUI(QMainWindow, Ui_MainWindow):
 
         if not self.testing:
             if self.sensor_controller.df is not None:
-                self.sensor_controller.draw_graph()
+                self.sensor_controller.init_graph()
 
             try:
                 self.label_sensor_data_filename.setText(
