@@ -240,6 +240,7 @@ class Ui_MainWindow(object):
         self.doubleSpinBox_plot_height = QtWidgets.QDoubleSpinBox(self.layoutWidget2)
         self.doubleSpinBox_plot_height.setSuffix("")
         self.doubleSpinBox_plot_height.setMaximum(1000.0)
+        self.doubleSpinBox_plot_height.setMinimum(0.01)
         self.doubleSpinBox_plot_height.setObjectName("doubleSpinBox_plot_height")
         self.horizontalLayout.addWidget(self.doubleSpinBox_plot_height)
         self.verticalLayout_settings.addLayout(self.horizontalLayout)
