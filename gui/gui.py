@@ -160,12 +160,10 @@ class GUI(QMainWindow, Ui_MainWindow):
             if self.sensor_controller.df is not None:
                 self.sensor_controller.init_graph()
 
-            try:
-                self.label_sensor_data_filename.setText(
-                    self.file_path.parts[-3] + "/" + self.file_path.parts[-2] + "/" + self.file_path.parts[-1]
-                )
-            except:
-                pass
+            self.label_sensor_data_filename.setText(
+                self.sensor_controller.file_path.as_posix()
+                # self.file_path.parts[-3] + "/" + self.file_path.parts[-2] + "/" + self.file_path.parts[-1]
+            )
 
             self.label_project_name_value.setText(project_name)
             self.setWindowTitle("AI Sensus - " + project_name)
@@ -370,7 +368,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         """
         Open the select sensor dialog window.
         """
-        if self.sensor_controller is not None:# and self.sensor_controller.file_name is not None:
+        if self.sensor_controller is not None:  # and self.sensor_controller.file_name is not None:
             dialog = SelectSensorDialog(self.sensor_controller)
             file_name = self.sensor_controller.file_name
             dialog.setWindowTitle(file_name if file_name is not None else "Sensor")

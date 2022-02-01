@@ -95,7 +95,7 @@ class VideoController:
                                   camera=self.gui.camera_controller.camera.id)
                     video.save()
 
-                self.gui.label_video_filename.setText("/".join(self.file_path.parts[-3:]))
+                self.gui.label_video_filename.setText(self.file_path.as_posix())
 
                 # Play the video in the QMediaPlayer and activate the associated widgets
                 self.gui.mediaPlayer.setMedia(QMediaContent(QUrl.fromLocalFile(str(self.file_path))))
