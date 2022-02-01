@@ -428,13 +428,17 @@ class SensorController:
 
         if self.sensor_data_file.sensor is not None:
             date = self.sensor_data_file.datetime.date()
+            camera = self.gui.camera_controller.camera
 
-            (Offset
-             .replace(camera=self.gui.camera_controller.camera.id,
-                      sensor=self.sensor_data_file.sensor,
-                      offset=offset,
-                      added=date)
-             .execute())
+            if camera is not None:
+                (Offset
+                 .replace(camera=self.gui.camera_controller.camera.id,
+                          sensor=self.sensor_data_file.sensor,
+                          offset=offset,
+                          added=date)
+                 .execute())
+            else:
+                self.gui.doubleSpinBox_video_offset.setValue(0)
 
     @staticmethod
     def create_file_id(file_path, block_size=256):
