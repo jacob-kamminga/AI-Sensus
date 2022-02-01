@@ -9,7 +9,7 @@ from typing import Optional
 import pandas as pd
 import pytz
 from PyQt5.QtCore import QDir
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, qApp
 from peewee import DoesNotExist, JOIN, PeeweeException
 
 from constants import PREVIOUS_SENSOR_DATA_FILE
@@ -240,6 +240,10 @@ class SensorController:
             self.file_path = file_path
 
         if self.file_path and self.file_path.is_file():
+
+            self.gui.label_sensor_data_filename.setText(f"Loading \"{self.file_path.name}\"...")
+            qApp.processEvents()  # Force GUI to refresh to show loading text before loading the sensor data file.
+
             # Store the selected file path in the configuration
             self.project_controller.set_setting(PREVIOUS_SENSOR_DATA_FILE, self.file_path.as_posix())
 
@@ -362,6 +366,7 @@ class SensorController:
             self.init_functions()
             self.gui.update_camera_sensor_offset()
             self.gui.video_controller.sync_with_sensor_data()
+            self.gui.label_sensor_data_filename.setText(self.file_path.as_posix())
 
     def init_functions(self) -> None:
         """
