@@ -72,9 +72,13 @@ class PlotController:
         self.data_plot = self.gui.figure.add_subplot(1, 1, 1)
 
         if self.current_plot is None:
-            QMessageBox.warning(self.gui, "No, or an incompatible, function selected",
-                                "Cannot plot the function that is currently selected. "
-                                "Please select a different function.")
+            last_used_column = self.gui.sensor_controller.sensor_data_file.last_used_column
+            if last_used_column is not None:
+                QMessageBox.warning(self.gui, "Last used function could not be found",
+                                    f"Cannot plot the function \"{last_used_column}\", because it could not be found "
+                                    f"in the list of formulas. If you removed it yourself, you can ignore this. "
+                                    f"Please select a different function.")
+                self.gui.sensor_controller.save_last_used_column(None)
             return
 
         self.draw_graph()
@@ -116,36 +120,44 @@ class PlotController:
         stored_formulas[function_name] = function_regex
         self.project_controller.set_setting("formulas", stored_formulas)
 
-    def change_plot(self, plot_name):
+    def change_plot(self, function_name: str):
         """
         If the user changes the variable on the y-axis, this function changes the label if necessary and redraws the
         plot.
+
+        :param function_name: The name of the function to plot.
         """
-        self.set_current_plot(plot_name)
+        if not self.set_current_plot(function_name):
+            return
 
-        # Save the column in the database
-        # TODO: When a plot is deleted, the new plot value is not saved to the database
-        self.sensor_controller.save_last_used_column(plot_name)
+        self.sensor_controller.save_last_used_column(function_name)
+        self.draw_graph()
 
-        if plot_name in self.formulas:
-            self.draw_graph()
-            return self.formulas[plot_name]
-
-        return None
-
-    def set_current_plot(self, plot_name):
-        # test if this column has numeric values
-        if is_numeric_dtype(self.sensor_controller.df[plot_name]):
-            self.current_plot = plot_name
-            return True
+        if function_name in self.formulas.keys():
+            return self.formulas[function_name]
         else:
-            # self.current_plot = None
+            return ""
+
+    def set_current_plot(self, function_name: str):
+        """
+        Test if this column has numeric values. If so, set it as the new plot.
+
+        :param function_name: The name of the function_name to plot, used to look up the literal expression.
+        """
+        # TODO: Turn into try/except.
+        try:
+            if is_numeric_dtype(self.sensor_controller.df[function_name]):
+                self.current_plot = function_name
+                return True
+            else:
+                return False
+        except KeyError:  # Function name could be found in the DataFrame.
             return False
 
-    def delete_formula(self, selected_plot: str):
-        self.formulas.pop(selected_plot)
+    def delete_formula(self, selected_function: str):
+        self.formulas.pop(selected_function)
         self.project_controller.set_setting('formulas', self.formulas)
-        self.change_plot(selected_plot)
+        self.change_plot(selected_function)
 
     def change_plot_width(self, value):  # TODO: An error occurs where there is an infinite loop of change_plot_width
         self.project_controller.set_setting('plot_width', value)

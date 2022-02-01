@@ -9,6 +9,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import Qt
 from PyQt5.QtMultimedia import QMediaContent
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QShortcut, QFileDialog, qApp, QDialog
+
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 from pandas.plotting import register_matplotlib_converters
 from sklearn.naive_bayes import GaussianNB
@@ -110,7 +111,7 @@ class GUI(QMainWindow, Ui_MainWindow):
         self.doubleSpinBox_speed.valueChanged.connect(self.video_controller.change_speed)
         self.doubleSpinBox_plot_width.valueChanged.connect(self.plot_controller.change_plot_width)
         self.doubleSpinBox_plot_height.valueChanged.connect(self.plot_controller.change_plot_height)
-        self.comboBox_functions.activated.connect(self.update_plot)
+        self.comboBox_functions.activated.connect(lambda: self.update_plot(self.comboBox_functions.currentText()))
         self.actionExport_Sensor_Data.triggered.connect(self.open_export)
         # self.actionMachine_Learning.triggered.connect(self.open_machine_learning_dialog)
 
@@ -162,7 +163,6 @@ class GUI(QMainWindow, Ui_MainWindow):
 
             self.label_sensor_data_filename.setText(
                 self.sensor_controller.file_path.as_posix()
-                # self.file_path.parts[-3] + "/" + self.file_path.parts[-2] + "/" + self.file_path.parts[-1]
             )
 
             self.label_project_name_value.setText(project_name)
@@ -460,14 +460,11 @@ class GUI(QMainWindow, Ui_MainWindow):
             QMessageBox.warning(self, 'Warning', "Please enter a valid regular expression",
                                 QMessageBox.Cancel)
 
-    def update_plot(self):
-        plot_name = self.comboBox_functions.currentText()
-        plot_function = self.plot_controller.change_plot(plot_name)
-
-        if plot_function is not None:
-            self.label_current_function_value.setText(plot_function)
-        else:
-            self.label_current_function_value.clear()
+    def update_plot(self, function_name: str):
+        self.label_current_function_value.setText(f"Loading {function_name}...")
+        qApp.processEvents()  # Force GUI to update now to show the loading text, before drawing the graph.
+        function = self.plot_controller.change_plot(function_name)
+        self.label_current_function_value.setText(function)
 
     def keyPressEvent(self, event) -> None:
         self.current_key_pressed = event.text()
