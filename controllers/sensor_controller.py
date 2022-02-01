@@ -394,43 +394,6 @@ class SensorController:
         self.sensor_data_file.last_used_column = function_name
         self.sensor_data_file.save()
 
-    def init_graph(self) -> None:
-        # TODO: Move to plot_controller.py
-
-        # Reset the figure and add a new subplot to it
-        self.gui.figure.clear()
-        self.gui.plot_controller.data_plot = self.gui.figure.add_subplot(1, 1, 1)
-        if self.gui.plot_controller.current_plot is None:
-            QMessageBox.warning(self.gui, "No, or an incompatible, function selected",
-                                "Cannot plot the function that is currently selected. "
-                                "Please select a different function.")
-            return
-        self.gui.plot_controller.draw_graph()
-
-        x_window_start = self.gui.plot_controller.x_min - (self.gui.plot_controller.plot_width / 2)
-        x_window_end = self.gui.plot_controller.x_min + (self.gui.plot_controller.plot_width / 2)
-
-        if self.project_controller.get_setting("plot_height_factor") is None:
-            self.gui.plot_controller.plot_height_factor = 1.0
-            self.project_controller.set_setting("plot_height_factor", self.gui.plot_controller.plot_height_factor)
-
-        # Set the axis of the data plot
-        self.gui.plot_controller.data_plot.axis([
-            x_window_start,
-            x_window_end,
-            self.gui.plot_controller.y_min - (
-                    (self.gui.plot_controller.plot_height_factor - 1) * self.gui.plot_controller.y_min),
-            self.gui.plot_controller.y_max + (
-                    (self.gui.plot_controller.plot_height_factor - 1) * self.gui.plot_controller.y_max)
-        ])
-
-        # Start the timer that makes the graph scroll smoothly
-        self.gui.timer.timeout.connect(self.gui.plot_controller.update_plot_axis)
-        self.gui.timer.start(25)
-
-        # Draw the graph, set the value of the offset spinbox in the GUI to the correct value
-        self.gui.canvas.draw()
-
     def update_camera_text(self) -> None:
         """
         `Obsolete`\n

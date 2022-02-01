@@ -65,6 +65,42 @@ class PlotController:
     #     :return:
     #     """
 
+    def init_graph(self) -> None:
+        """ Reset the figure and add a new subplot to it."""
+
+        self.gui.figure.clear()
+        self.data_plot = self.gui.figure.add_subplot(1, 1, 1)
+
+        if self.current_plot is None:
+            QMessageBox.warning(self.gui, "No, or an incompatible, function selected",
+                                "Cannot plot the function that is currently selected. "
+                                "Please select a different function.")
+            return
+
+        self.draw_graph()
+
+        x_window_start = self.x_min - (self.plot_width / 2)
+        x_window_end = self.x_min + (self.plot_width / 2)
+
+        if self.gui.project_controller.get_setting("plot_height_factor") is None:
+            self.plot_height_factor = 1.0
+            self.gui.project_controller.set_setting("plot_height_factor", self.plot_height_factor)
+
+        # Set the axis of the data plot
+        self.data_plot.axis([
+            x_window_start,
+            x_window_end,
+            self.y_min - ((self.plot_height_factor - 1) * self.y_min),
+            self.y_max + ((self.plot_height_factor - 1) * self.y_max)
+        ])
+
+        # Start the timer that makes the graph scroll smoothly
+        self.gui.timer.timeout.connect(self.update_plot_axis)
+        self.gui.timer.start(25)
+
+        # Draw the graph, set the value of the offset spinbox in the GUI to the correct value
+        self.gui.canvas.draw()
+
     def new_plot(self, function_name, function_regex):
         """
         Adds a function to the DataFrame as new column.
