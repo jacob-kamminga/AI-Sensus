@@ -100,7 +100,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         """
         Change the camera to the one that is selected when pressing "Save changes".
         """
-        self.camera_controller.camera = get_camera_from_id(camera_id)
+        self.camera_controller.change_camera(camera_id)
         self.close()
 
     def edit_camera(self, camera_id: int):
