@@ -93,11 +93,10 @@ class SensorData:
                 except TypeError:
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Critical)
-                    msg.setWindowTitle("Error")
-                    msg.setText("Could not parse timestamps")
-                    msg.setInformativeText("The timestamps in your sensor data file could not be parsed."
-                                           "\nPlease verify that all settings are correct, including the "
-                                           "absolute/relative time option and the comment style.")
+                    msg.setWindowTitle("Could not parse timestamps")
+                    msg.setText("The timestamps in your sensor data file could not be parsed."
+                                "Please verify that all settings are correct, including the "
+                                "absolute/relative time option and the comment style.")
                     msg.setStandardButtons(QMessageBox.Ok)
                     msg.exec()
 

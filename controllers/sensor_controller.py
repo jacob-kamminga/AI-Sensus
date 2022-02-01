@@ -77,8 +77,8 @@ class SensorController:
 
         # Get the user input from a dialog window
         self.file_path, _ = QFileDialog.getOpenFileName(self.gui, "Open Sensor Data", path, filter="csv (*.csv)")
-        self.file_path = Path(self.file_path)
-        self.open_file()
+        self.open_file(Path(self.file_path))
+        self.gui.plot_controller.draw_graph()
 
     @staticmethod
     def add_sensor(name: str, sensor_model: SensorModel, timezone: pytz.timezone = None) -> Sensor:
@@ -360,12 +360,10 @@ class SensorController:
 
             # self.gui.setCursor(QtGui.QCursor(0))
             self.init_functions()
-
             self.gui.update_camera_sensor_offset()
             self.gui.video_controller.sync_with_sensor_data()
 
     def init_functions(self) -> None:
-        # TODO: Move to plot_controller.py
         """
         Add every column in the DataFrame to the possible Data Series that can be plotted, except for time,
         and plot the first one.
@@ -380,7 +378,7 @@ class SensorController:
 
         last_used_col = self.sensor_data_file.last_used_column
 
-        if last_used_col and self.gui.plot_controller.set_current_plot(last_used_col):
+        if last_used_col is not None and self.gui.plot_controller.set_current_plot(last_used_col):
             self.gui.comboBox_functions.setCurrentText(last_used_col)
         else:
             self.gui.plot_controller.set_current_plot(self.gui.comboBox_functions.currentText())
@@ -389,7 +387,7 @@ class SensorController:
         """
         Store the last function that was used in the sensor data file object for later reference.
 
-        :param function_name: The function applied to the data to plot.
+        :param function_name: The function name to be saved.
         """
         self.sensor_data_file.last_used_column = function_name
         self.sensor_data_file.save()
