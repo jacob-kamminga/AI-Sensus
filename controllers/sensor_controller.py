@@ -365,6 +365,8 @@ class SensorController:
             # self.gui.setCursor(QtGui.QCursor(0))
             self.init_functions()
             self.gui.update_camera_sensor_offset()
+            self.gui.plot_controller.init_graph()
+            self.gui.plot_controller.draw_graph()
             self.gui.video_controller.sync_with_sensor_data()
             self.gui.label_sensor_data_filename.setText(self.file_path.as_posix())
 

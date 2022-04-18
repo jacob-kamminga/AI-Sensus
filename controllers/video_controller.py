@@ -150,7 +150,7 @@ class VideoController:
         Synchronizes the start time of the video with the sensor data.
         """
         if self.project_dt is not None and self.gui.plot_controller.x_min_dt is not None:
-            # First update plot according to the camera offset value
+            # Update plot according to the camera offset value
             self.gui.plot_controller.update_plot_axis()
 
             self.init_offset = self.gui.plot_controller.x_min_dt - self.project_dt

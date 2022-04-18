@@ -206,7 +206,8 @@ class PlotController:
             return
 
         # Clear the plot
-        self.data_plot.clear()
+        if self.data_plot:
+            self.data_plot.clear()
 
         # Get the boundaries of the plot axis
         self.x_min_dt = self.sensor_controller.df[ABSOLUTE_DATETIME].min()

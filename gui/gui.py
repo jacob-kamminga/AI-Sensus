@@ -158,12 +158,13 @@ class GUI(QMainWindow, Ui_MainWindow):
         project_name = self.project_controller.get_setting('project_name')
 
         if not self.testing:
-            if self.sensor_controller.df is not None:
-                self.plot_controller.init_graph()
+            # if self.sensor_controller.df is not None:
+            #     self.plot_controller.init_graph()
 
-            self.label_sensor_data_filename.setText(
-                self.sensor_controller.file_path.as_posix()
-            )
+            if self.sensor_controller.file_path:
+                self.label_sensor_data_filename.setText(
+                    self.sensor_controller.file_path.as_posix()
+                )
 
             self.label_project_name_value.setText(project_name)
             self.setWindowTitle("AI Sensus - " + project_name)
