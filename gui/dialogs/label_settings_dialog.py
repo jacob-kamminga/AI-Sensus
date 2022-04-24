@@ -97,7 +97,7 @@ class LabelSettingsDialog(QtWidgets.QDialog, Ui_Dialog):
             return
 
         self.settings_changed = True
-        self.remove_label(activity)
+        self.gui.annotation_controller.remove_label(activity)
 
         self.comboBox_label.clear()
         self.label_type_dict.pop(activity)
