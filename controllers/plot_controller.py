@@ -202,12 +202,11 @@ class PlotController:
         """
         Redraws the graph with the right colors, labels, etc.
         """
-        if self.sensor_controller.sensor_data is None or self.current_plot is None:
+        if self.sensor_controller.sensor_data is None or self.current_plot is None or self.data_plot is None:
             return
 
         # Clear the plot
-        if self.data_plot:
-            self.data_plot.clear()
+        self.data_plot.clear()
 
         # Get the boundaries of the plot axis
         self.x_min_dt = self.sensor_controller.df[ABSOLUTE_DATETIME].min()

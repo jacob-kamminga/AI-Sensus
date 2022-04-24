@@ -1,9 +1,11 @@
 import datetime as dt
 from typing import List
 
+import peewee
 import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDateTime
+from PyQt5.QtWidgets import QMessageBox
 from peewee import DoesNotExist
 
 from controllers.sensor_controller import SensorController
@@ -85,7 +87,13 @@ class LabelDialog(QtWidgets.QDialog, Ui_LabelSpecs):
 
             if self.label.label_type is not None:
                 # Save the label to the database
-                self.is_accepted = self.label.save()
+                try:
+                    self.is_accepted = self.label.save()
+                except peewee.IntegrityError:
+                    msg = QMessageBox()
+                    msg.setWindowTitle('Error')
+                    msg.setText('There already exists a label with the same start time.')
+                    msg.exec()
 
     def show_dialog(self, shortcut_label):
         if self.label.start_time.tzinfo is None:

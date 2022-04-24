@@ -129,7 +129,7 @@ class VideoController:
         self.set_position(0)
 
     def delete_videos_with_camera(self, camera_id: int):
-        query = Video.delete().where(Video.camera.id == camera_id)
+        query = Video.delete().where(Video.camera == camera_id)
         query.execute()
 
     def update_labels_datetime(self):
