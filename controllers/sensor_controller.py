@@ -401,7 +401,7 @@ class SensorController:
 
     def update_camera_text(self) -> None:
         """
-        `Obsolete`\n
+        `DEPRECATED`\n
         Update the video offset value in the GUI spinbox.
         """
         camera_name = self.gui.label_camera_name_value.text()

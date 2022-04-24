@@ -26,7 +26,7 @@ class VideoController:
         self.file_name = None
         self.file_path = None
 
-        self.id_: Optional[int] = None
+        self.video = None
         self.utc_dt: Optional[dt.datetime] = None
         self.project_dt: Optional[dt.datetime] = None
         self.position = None
@@ -86,14 +86,14 @@ class VideoController:
                 self.update_datetime()
 
                 try:
-                    video = Video.get(Video.file_name == self.file_name)
-                    video.file_path = self.file_path
-                    video.save()
+                    self.video = Video.get(Video.file_name == self.file_name)
+                    self.video.file_path = self.file_path
+                    self.video.save()
                 except DoesNotExist:
                     # Video not yet in database
-                    video = Video(file_name=self.file_name, file_path=self.file_path, datetime=self.utc_dt,
-                                  camera=self.gui.camera_controller.camera.id)
-                    video.save()
+                    self.video = Video(file_name=self.file_name, file_path=self.file_path, datetime=self.utc_dt,
+                                       camera=self.gui.camera_controller.camera.id)
+                    self.video.save()
 
                 self.gui.label_video_filename.setText(self.file_path.as_posix())
 
@@ -118,12 +118,10 @@ class VideoController:
             self.project_dt = utc_to_local(self.utc_dt, pytz.timezone(self.project_controller.get_setting('timezone')))
 
     def update_camera(self, camera_id: int):
-        if self.id_ is not None:
-            video = Video.get_by_id(self.id_)
-            video.camera = camera_id
-            video.save()
+        if self.video is not None:
+            self.video.camera = camera_id
+            self.video.save()
 
-        self.gui.camera_controller.change_camera(camera_id)
         self.update_datetime()
         self.sync_with_sensor_data()
         self.set_position(0)

@@ -314,7 +314,8 @@ class GUI(QMainWindow, Ui_MainWindow):
                                     Offset.added == self.sensor_controller.sensor_data_file.datetime.date())
                 self.doubleSpinBox_video_offset.setValue(offset.offset)
             except Offset.DoesNotExist:
-                pass
+                # If no offset could be found, set the value to zero
+                self.doubleSpinBox_video_offset.setValue(0)
 
     def open_label_dialog(self):
         """

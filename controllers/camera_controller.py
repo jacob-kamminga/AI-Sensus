@@ -17,8 +17,8 @@ class CameraController:
         self.camera = Camera.get_by_id(camera_id)
         self.gui.label_camera_name_value.setText(self.camera.name)
 
-        if self.gui.video_controller.file_path is not None:
-            self.gui.video_controller.update_datetime()
+        if self.gui.video_controller.video is not None:
+            self.gui.video_controller.update_camera(camera_id)
 
         # Update offset between camera and sensor data
         self.gui.update_camera_sensor_offset()
