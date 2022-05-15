@@ -104,7 +104,7 @@ def is_lav_filters():
 
 def dependencies_installed() -> tuple:
     """Check whether all dependencies have been installed on the system."""
-    return is_tool('exiftool'), is_tool('ffmpeg'), is_lav_filters()
+    return is_tool('exiftool'), is_lav_filters()
 
 
 def main() -> None:
@@ -119,7 +119,7 @@ def main() -> None:
     installed = dependencies_installed()
 
     if not all(installed):
-        missing = [dep for dep, inst in zip(['exiftool', 'FFMPEG', 'LAV Filters'], installed) if not inst]
+        missing = [dep for dep, inst in zip(['exiftool', 'LAV Filters'], installed) if not inst]
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
         msg.setWindowTitle("Could not find all dependencies")
