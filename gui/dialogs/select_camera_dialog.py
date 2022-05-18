@@ -42,22 +42,22 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         self.gui = gui
         self.closed_by_user = False
 
+        # Fill camera dictionary and add camera names to combobox
+        # self.camera_dict = dict()  # Unused
+        if self.camera_controller.camera is not None:
+            self.load_cameras(self.camera_controller.camera.id)
+            self.toggle_use_edit_delete_pushbutton(True)
+        else:
+            self.toggle_use_edit_delete_pushbutton(False)
         # Connect UI elements
         self.pushButton_new_camera.setEnabled(False)
         self.pushButton_new_camera.clicked.connect(lambda: self.add_camera(self.lineEdit_new_camera_name.text()))
         self.pushButton_use_camera.clicked.connect(lambda: self.use_camera(self.get_selected_camera().id))
         self.pushButton_edit_camera.clicked.connect(lambda: self.edit_camera(self.get_selected_camera().id))
-        self.pushButton_edit_camera.setEnabled(False)
         self.pushButton_cancel_select_camera.clicked.connect(self.close)
         self.pushButton_delete_camera.clicked.connect(lambda: self.delete_camera(self.get_selected_camera().id))
-        self.pushButton_delete_camera.setEnabled(False)
         self.lineEdit_new_camera_name.textChanged.connect(self.toggle_add_camera_pushbutton)
         
-        # Fill camera dictionary and add camera names to combobox
-        # self.camera_dict = dict()  # Unused
-        if self.camera_controller.camera is not None:
-            self.load_cameras(self.camera_controller.camera.id)
-            self.toggle_edit_delete_pushbutton(True)
     def get_selected_camera(self):
         """Get the name of the camera that is currently selected in the combobox."""
         return Camera.get(Camera.name == self.comboBox_camera.currentText())
@@ -97,7 +97,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
 
             # Clear the line on_accepted field
             self.lineEdit_new_camera_name.clear()
-            self.toggle_edit_delete_pushbutton(True)
+            self.toggle_use_edit_delete_pushbutton(True)
 
 
     def use_camera(self, camera_id: int):
@@ -131,7 +131,7 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             self.camera_controller.delete_camera(camera_id)
             # Delete camera
             self.comboBox_camera.removeItem(self.comboBox_camera.findText(camera_name))
-            if len(self.comboBox_camera)== 0: self.toggle_edit_delete_pushbutton(False)
+            if len(self.comboBox_camera)== 0: self.toggle_use_edit_delete_pushbutton(False)
 
     def toggle_add_camera_pushbutton(self):
         """Disable the "Add" button if the camera name field is empty."""
@@ -140,11 +140,13 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
         else:
             self.pushButton_new_camera.setEnabled(True)
 
-    def toggle_edit_delete_pushbutton(self,enable=None):
+    def toggle_use_edit_delete_pushbutton(self,enable=None):
         if (self.pushButton_delete_camera.isEnabled and enable==None) or enable==False:
+            self.pushButton_use_camera.setEnabled(False)
             self.pushButton_edit_camera.setEnabled(False)
             self.pushButton_delete_camera.setEnabled(False)
         elif (not self.pushButton_delete_camera.isEnabled and enable==None) or enable==True:
+            self.pushButton_use_camera.setEnabled(True)
             self.pushButton_edit_camera.setEnabled(True)
             self.pushButton_delete_camera.setEnabled(True)
 
