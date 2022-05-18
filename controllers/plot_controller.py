@@ -289,7 +289,7 @@ class PlotController:
 
         :param event: Specifies what event triggered this function.
         """
-        if self.sensor_controller.sensor_data is None:
+        if self.sensor_controller.sensor_data is None or event.xdata is None:
             return  # TODO: Raise error
 
         # Convert x-position to UTC datetime
@@ -316,7 +316,7 @@ class PlotController:
         :param event: Specifies the event that triggers this function.
         """
         if event.button == MouseButton.LEFT:
-            if self.sensor_controller.sensor_data is None:
+            if self.sensor_controller.sensor_data is None or event.xdata is None:
                 return
 
             # Convert the x-position to a Python datetime
