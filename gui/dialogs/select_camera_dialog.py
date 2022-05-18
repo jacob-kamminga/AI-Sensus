@@ -23,7 +23,7 @@ def get_camera_from_id(camera_id: int) -> Camera:
 
     try:
         return Camera.get(Camera.id == camera_id)
-    except database.models.DoesNotExist:
+    except Camera.DoesNotExist:
         QMessageBox(
             QMessageBox.Warning,
             'Could not find camera',
@@ -72,8 +72,10 @@ class SelectCameraDialog(QtWidgets.QDialog, Ui_Dialog):
             self.comboBox_camera.addItem(camera.name)  # Fill the list with all the camera names
 
         # Set current camera in combobox
-        if selected_camera_id is not None:
+        if selected_camera_id is not None and get_camera_from_id(selected_camera_id) is not None:
             self.comboBox_camera.setCurrentText(get_camera_from_id(selected_camera_id).name)
+        else:
+            self.toggle_use_edit_delete_pushbutton(False)
 
     def add_camera(self, camera_name: str):
         # Changed this to camera_name for the purpose of more intuitive use, and for testing.
