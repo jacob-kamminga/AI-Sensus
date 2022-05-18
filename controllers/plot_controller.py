@@ -330,7 +330,8 @@ class PlotController:
                                       (Label.end_time >= datetime))
                     self.delete_label(label)
                 except DoesNotExist as e:
-                    print(e)
+                    # print(e)
+                    pass
             else:
                 if self.gui.current_key_pressed:
                     try:
@@ -339,6 +340,9 @@ class PlotController:
                         label_shortcut = None
                 else:
                     label_shortcut = None
+
+                # If on_click_datetime was never set (clicking outside of table) skip
+                if self.on_click_datetime is None: return
 
                 self.show_label_dialog(self.on_click_datetime, datetime, label_shortcut)
 
