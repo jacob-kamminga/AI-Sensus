@@ -5,6 +5,7 @@ from pathlib import Path
 import pytz
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QDate, QTime
+from PyQt5.QtWidgets import QMessageBox
 
 from database.models import Subject
 from date_utils import naive_to_utc
@@ -99,7 +100,10 @@ class ExportDialog(QtWidgets.QDialog, Ui_Dialog):
         start_dt = naive_to_utc(start_dt_local, self.project_timezone)
         end_dt_local = self.get_end_datetime()
         end_dt = naive_to_utc(end_dt_local, self.project_timezone)
-
+        
+        if len(subject_ids) == 0:
+           QMessageBox.information(self, "Export", "Please select a subject")
+           return
         try:
             export_progess_dialog = ExportProgressDialog(self.gui, subject_ids, start_dt, end_dt)
             export_progess_dialog.exec()
