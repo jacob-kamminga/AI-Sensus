@@ -73,7 +73,7 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
             if test_file_path is not None:
                 output_file_path = test_file_path
             else:
-                output_file_path = self.gui.sensor_controller.prompt_save_location(f"export_subject_{subject_name}.csv")
+                output_file_path = self.gui.sensor_controller.prompt_save_location(f"export_subject_{subject_name}")
 
             if output_file_path == "":  # The save prompt was closed by the user.
                 raise RuntimeError("No path was chosen. User may have exited manually.")
