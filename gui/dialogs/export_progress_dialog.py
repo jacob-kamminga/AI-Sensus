@@ -135,7 +135,8 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
             while not self.worker.aborted:
                 self.thread.sleep(1)
 
-            self.thread.exit()
+            self.thread.quit()
+            QMessageBox.information(self, "Abort", "Aborted export.")
             self.close()
 
     @pyqtSlot(str)
@@ -150,9 +151,9 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
     @pyqtSlot()
     def done_(self):
+        self.thread.quit()
         if not self.gui.testing:
             QMessageBox.information(self, "Export", "Export completed successfully!")
-        self.thread.quit()
 
 
 class ExportWorker(QObject):
