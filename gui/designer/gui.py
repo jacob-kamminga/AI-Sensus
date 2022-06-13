@@ -425,7 +425,7 @@ class Ui_MainWindow(object):
         self.menuSettings.setTitle(_translate("MainWindow", "Settings"))
         self.menuSensors.setTitle(_translate("MainWindow", "Sensor"))
         self.menuLearning.setTitle(_translate("MainWindow", "Learning"))
-        self.menuStatistics.setTitle(_translate("MainWindow", "Analysis"))
+        # self.menuStatistics.setTitle(_translate("MainWindow", "Analysis"))
         self.actionOpen_Video.setText(_translate("MainWindow", "Open Video"))
         self.actionOpen_Sensor_Data.setText(_translate("MainWindow", "Open Sensor Data"))
         self.actionExport_Sensor_Data.setText(_translate("MainWindow", "Export Sensor Data"))
