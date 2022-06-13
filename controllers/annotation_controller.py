@@ -22,11 +22,11 @@ class AnnotationController:
             raise NonUniqueActivityNameException(activity)
 
         try:
-            LabelType.get(LabelType.keyboard_shortcut == shortcut).activity
+            existing_activity = LabelType.get(LabelType.keyboard_shortcut == shortcut).activity
         except peewee.DoesNotExist:
             pass  # The above query failed, so there is currently no activity with the specified shortcut.
         else:
-            raise NonUniqueShortcutException(shortcut, activity)  # An activity has been found with the shortcut.
+            raise NonUniqueShortcutException(shortcut, existing_activity)  # An activity has been found with the shortcut.
 
         LabelType(activity=activity, color=color, description="", keyboard_shortcut=shortcut).save()
 
