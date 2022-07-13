@@ -127,7 +127,7 @@ class SensorController:
         pass
 
     @staticmethod
-    def edit_subject_mapping(
+    def edit_subject_mapping(self,
             subject_mapping: SubjectMapping,
             subject: Subject,
             sensor: Sensor,

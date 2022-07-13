@@ -97,7 +97,7 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
 
-                    if not sensor_data.add_abs_dt_col(use_utc=True):
+                    if not sensor_data.add_abs_dt_col(use_utc=False):
                         continue
 
                     sensor_data.filter_between_dates(start_dt, end_dt)

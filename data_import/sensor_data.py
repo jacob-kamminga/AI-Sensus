@@ -289,7 +289,10 @@ class SensorData:
             ] = label
 
     def filter_between_dates(self, start: dt.datetime, end: dt.datetime):
-        self._df = self._df[(self._df[COLUMN_TIMESTAMP] >= start) & (self._df[COLUMN_TIMESTAMP] < end)]
+        df_tz = self._df[COLUMN_TIMESTAMP][0].tzname()
+        start = start.replace(tzinfo=pytz.timezone(df_tz))
+        end = end.replace(tzinfo=pytz.timezone(df_tz))
+        self._df = self._df[(self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() >= start) & (self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() < end)]
 
     def add_labels(self, labels):
         """
@@ -299,12 +302,12 @@ class SensorData:
         :return:
         """
         self._df["Label"] = ""
-
+        df_tz = self._df[COLUMN_TIMESTAMP][0].tzname()
         for label in labels:
-            start = label["start"]
-            end = label["end"]
+            start = label["start"].replace(tzinfo=pytz.timezone(df_tz))
+            end = label["end"].replace(tzinfo=pytz.timezone(df_tz))
             activity = label["activity"]
 
             # Select all rows with timestamp between start and end and set activity label
-            self._df.loc[(self._df[COLUMN_TIMESTAMP] >= start) & (self._df[COLUMN_TIMESTAMP] < end),
-                         "Label"] = activity
+            self._df.loc[(self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() >= start) & (self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() < end),
+                "Label"] = activity
