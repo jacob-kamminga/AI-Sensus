@@ -37,6 +37,8 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
         jobs = []
         cancelled_exports = 0
 
+        print(start_dt, end_dt)
+
         for subject_id in subject_ids:
             subject_name = Subject.get_by_id(subject_id).name  # Retrieve the subject's name
 
@@ -92,16 +94,11 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                 print(f"Found {len(sdf_query)} files.")
                 for sdf in sdf_query:
                     labels = get_labels(sdf.id, start_dt, end_dt)
-                    print("Labels", len(labels))
-                    for label in labels:
-                        print(label["start"],label["end"],label["activity"])
                     sensor_data = self.gui.sensor_controller.get_sensor_data(sdf.id)  # DB
-
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
 
-                    if not sensor_data.add_abs_dt_col(use_utc=False):
-                        # Should not happen.
+                    if not sensor_data.add_abs_dt_col(use_tznaive=True):
                         continue
 
                     sensor_data.filter_between_dates(start_dt, end_dt)

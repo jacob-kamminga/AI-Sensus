@@ -167,7 +167,7 @@ class SensorData:
             pd.to_timedelta(self._df[time_col], unit=time_unit) + \
             utc_to_local(self.metadata.utc_dt, self.project_timezone)
 
-    def add_abs_dt_col(self, use_utc=False):
+    def add_abs_dt_col(self, use_tznaive=False):
         """
         Add an absolute time column to the existing dataframe.
         """
@@ -178,9 +178,10 @@ class SensorData:
             time_unit = self.sensor_model.timestamp_unit
 
             # Add absolute datetime column to dataframe
-            if use_utc:
-                self._df[ABSOLUTE_DATETIME] = self.metadata.utc_dt + pd.to_timedelta(self._df.iloc[:, time_col],
-                                                                                     unit=time_unit)
+            if use_tznaive:
+                self._df[ABSOLUTE_DATETIME] = \
+                    utc_to_local(self.metadata.utc_dt, self.project_timezone).replace(tzinfo=None) + \
+                    pd.to_timedelta(self._df.iloc[:, time_col],unit=time_unit)
             else:
                 try:
                     self._df[ABSOLUTE_DATETIME] = \
@@ -289,13 +290,7 @@ class SensorData:
             ] = label
 
     def filter_between_dates(self, start: dt.datetime, end: dt.datetime):
-        df_tz = self._df[COLUMN_TIMESTAMP][0].tzname()
-        start = start.replace(tzinfo=pytz.timezone(df_tz))
-        end = end.replace(tzinfo=pytz.timezone(df_tz))
-        print("Before Filter",len(self._df))
         self._df = self._df[(self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() >= start) & (self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() < end)]
-        print(self._df[COLUMN_TIMESTAMP])
-        print("After Filter",len(self._df))
 
     def add_labels(self, labels):
         """
@@ -305,16 +300,11 @@ class SensorData:
         :return:
         """
         self._df["Label"] = ""
-        df_tz = self._df[COLUMN_TIMESTAMP][0].tzname()
         for label in labels:
-            start = label["start"].replace(tzinfo=pytz.timezone(df_tz))
-            end = label["end"].replace(tzinfo=pytz.timezone(df_tz))
+            start = label["start"]
+            end = label["end"]
             activity = label["activity"]
-            print(start,end,activity)
 
             # Select all rows with timestamp between start and end and set activity label
             self._df.loc[(self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() >= start) & (self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() < end),
                 "Label"] = activity
-    
-    def get_df_timezone(self):
-        return self._df[COLUMN_TIMESTAMP][0].tzname()
