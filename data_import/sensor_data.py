@@ -290,6 +290,9 @@ class SensorData:
             ] = label
 
     def filter_between_dates(self, start: dt.datetime, end: dt.datetime):
+        start = utc_to_local(start, self.project_timezone).replace(tzinfo=None)
+        end = utc_to_local(end, self.project_timezone).replace(tzinfo=None)
+
         self._df = self._df[(self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() >= start) & (self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() < end)]
 
     def add_labels(self, labels):
