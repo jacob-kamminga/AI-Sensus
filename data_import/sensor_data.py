@@ -292,7 +292,10 @@ class SensorData:
         df_tz = self._df[COLUMN_TIMESTAMP][0].tzname()
         start = start.replace(tzinfo=pytz.timezone(df_tz))
         end = end.replace(tzinfo=pytz.timezone(df_tz))
+        print("Before Filter",len(self._df))
         self._df = self._df[(self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() >= start) & (self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() < end)]
+        print(self._df[COLUMN_TIMESTAMP])
+        print("After Filter",len(self._df))
 
     def add_labels(self, labels):
         """
@@ -307,7 +310,11 @@ class SensorData:
             start = label["start"].replace(tzinfo=pytz.timezone(df_tz))
             end = label["end"].replace(tzinfo=pytz.timezone(df_tz))
             activity = label["activity"]
+            print(start,end,activity)
 
             # Select all rows with timestamp between start and end and set activity label
             self._df.loc[(self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() >= start) & (self._df[COLUMN_TIMESTAMP].dt.to_pydatetime() < end),
                 "Label"] = activity
+    
+    def get_df_timezone(self):
+        return self._df[COLUMN_TIMESTAMP][0].tzname()
