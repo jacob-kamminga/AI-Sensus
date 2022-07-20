@@ -301,8 +301,13 @@ class SensorData:
         """
         self._df["Label"] = ""
         for label in labels:
-            start = label["start"]
-            end = label["end"]
+            ''' 
+            !!! This is not as convention. !!!
+            The absolute datatime column in the datafile is in naive project timezone.
+            In order to compare the labels (from database in UTC), it has to be converted to project timezone as well.
+            '''
+            start = utc_to_local(label["start"], self.project_timezone).replace(tzinfo=None)
+            end = utc_to_local(label["end"], self.project_timezone).replace(tzinfo=None)
             activity = label["activity"]
 
             # Select all rows with timestamp between start and end and set activity label
