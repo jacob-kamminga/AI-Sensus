@@ -91,7 +91,7 @@ class EditSubjectMappingDialog(QtWidgets.QDialog, Ui_Dialog):
             if start_dt < end_dt:
                 subject = Subject.get(Subject.name == subject_name)
                 sensor = Sensor.get(Sensor.name == sensor_name)
-                self.sensor_controller.edit_subject_mapping(self.subject_mapping, subject, sensor, start_dt, end_dt)
+                self.sensor_controller.edit_subject_mapping(self, self.subject_mapping, subject, sensor, start_dt, end_dt)
 
     @staticmethod
     def get_py_datetime(qt_date: QDateEdit, qt_time: QTimeEdit) -> datetime.datetime:

@@ -37,6 +37,8 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
         jobs = []
         cancelled_exports = 0
 
+        print(start_dt, end_dt)
+
         for subject_id in subject_ids:
             subject_name = Subject.get_by_id(subject_id).name  # Retrieve the subject's name
 
@@ -73,7 +75,7 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
             if test_file_path is not None:
                 output_file_path = test_file_path
             else:
-                output_file_path = self.gui.sensor_controller.prompt_save_location(f"export_subject_{subject_name}.csv")
+                output_file_path = self.gui.sensor_controller.prompt_save_location(f"export_subject_{subject_name}")
 
             if output_file_path == "":  # The save prompt was closed by the user.
                 raise RuntimeError("No path was chosen. User may have exited manually.")
@@ -93,11 +95,10 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
                 for sdf in sdf_query:
                     labels = get_labels(sdf.id, start_dt, end_dt)
                     sensor_data = self.gui.sensor_controller.get_sensor_data(sdf.id)  # DB
-
                     if sensor_data is None:
                         raise Exception('Sensor data not found')
 
-                    if not sensor_data.add_abs_dt_col(use_utc=True):
+                    if not sensor_data.add_abs_dt_col(use_tznaive=True):
                         continue
 
                     sensor_data.filter_between_dates(start_dt, end_dt)
@@ -135,7 +136,8 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
             while not self.worker.aborted:
                 self.thread.sleep(1)
 
-            self.thread.exit()
+            self.thread.quit()
+            QMessageBox.information(self, "Abort", "Aborted export.")
             self.close()
 
     @pyqtSlot(str)
@@ -150,9 +152,9 @@ class ExportProgressDialog(QtWidgets.QDialog, Ui_Dialog):
 
     @pyqtSlot()
     def done_(self):
+        self.thread.quit()
         if not self.gui.testing:
             QMessageBox.information(self, "Export", "Export completed successfully!")
-        self.thread.quit()
 
 
 class ExportWorker(QObject):
