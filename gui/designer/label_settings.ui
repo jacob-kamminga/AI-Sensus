@@ -26,7 +26,7 @@
     <item>
      <widget class="QLabel" name="label_2">
       <property name="text">
-       <string>To add a label enter all settings and press enter or click Ok. To edit an existing label select a label from the drop down and chane its settings. Then press Ok.</string>
+       <string>To add a label enter all settings and press enter or click Ok. To on_accepted an existing label select a label from the drop down and chane its settings. Then press Ok.</string>
       </property>
       <property name="wordWrap">
        <bool>true</bool>

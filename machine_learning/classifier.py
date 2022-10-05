@@ -1,12 +1,5 @@
-import numpy as np
 import pandas as pd
-from sklearn.naive_bayes import GaussianNB
 
-from data_export import windowing as wd
-from data_import import label_data as ld
-from data_import import sensor_data as sd
-from data_import import sensor_data_test as sdt
-from database import label_manager as ls
 
 """ Constants """
 

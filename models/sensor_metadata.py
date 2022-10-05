@@ -1,10 +1,9 @@
 import datetime as dt
 
 import dateutil.parser
-import pytz
 
+from database.models import SensorModel
 from date_utils import naive_to_utc
-from models.sensor_model import SensorModel
 
 
 class SensorMetadata:
@@ -26,7 +25,7 @@ class SensorMetadata:
         comment = self.sensor_model.comment_style
         header_rows = []
 
-        with self.file_path.open() as f:
+        with self.file_path.open(mode='r') as f:
             # Parse all
             for i in range(self.sensor_model.col_names_row + 1):
                 line = f.readline()
@@ -75,7 +74,7 @@ class SensorMetadata:
 
     def load_values(self):
         if self.sensor_model.sensor_id_row > 0:
-            self.sensor_name = self._get_value(self.sensor_model.sensor_id_row, self.sensor_model.sensor_id_col)
+            self.sensor_name = self._get_value(self.sensor_model.sensor_id_row, self.sensor_model.sensor_id_column)
 
 
 

@@ -1,0 +1,3 @@
+The "test_data.csv" file is a couple of hours of IMU data: Ax, Ay, and Az.
+The files "first_half_test_data.csv" and "second_half_test_data.csv" are, as the name suggests, the first half and second half of "test_data.csv", respectively, so that they can be treated as two separate sensor data files.
+If one subject is mapped to one sensor, which is used by both sensor data files, then these two files should be concatenated on export.

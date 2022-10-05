@@ -16,20 +16,19 @@ def get_hms_sum(time1, time2): # TODO replace this function. It causes errors in
     return ''
 
 
-def ms_to_hms(duration):
+def ms_to_hms(millis):
     """
     Translates a certain amount of milliseconds to a readable HH:MM:SS string.
 
-    :param duration: The number of milliseconds that corresponds to the position of the video.
+    :param millis: The number of milliseconds that corresponds to the position of the video.
     :return: A readable string that corresponds to duration in the format HH:MM:SS.
     """
-    if duration < 0:
-        return None
-    seconds = round((duration // 1000) % 60)
-    seconds_str = "0" + str(seconds) if seconds < 10 else str(seconds)
-    minutes = round((duration // (1000 * 60)) % 60)
-    minutes_str = "0" + str(minutes) if minutes < 10 else str(minutes)
-    hours = round(duration // (1000 * 60 * 60))
-    hours_str = "0" + str(hours) if hours < 10 else str(hours)
+    delta = timedelta(milliseconds=millis)
+    abs_seconds = delta.seconds
 
-    return hours_str + ":" + minutes_str + ":" + seconds_str
+    hours = abs_seconds // 3600
+    minutes = (abs_seconds // 60) - (hours * 60)
+    seconds = abs_seconds % 60
+
+    hours, minutes, abs_seconds = str(hours).zfill(2), str(minutes).zfill(2), str(seconds).zfill(2)
+    return f"{hours}:{minutes}:{abs_seconds}"
